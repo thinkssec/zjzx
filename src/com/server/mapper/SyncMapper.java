@@ -19,4 +19,5 @@ public interface SyncMapper extends MainMapper {
     public List<HashMap> gettjblist(Map m);
     public void updsycnt(Map m);
     public String getCurrentTime();
+    public void getDataBb(Map m);
 }

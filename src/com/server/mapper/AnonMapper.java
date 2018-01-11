@@ -15,4 +15,5 @@ import java.util.Map;
 public interface AnonMapper extends MainMapper {
     public HashMap selectRegistInf(Map m);
     public void insertRegistInf(Map m);
+
 }

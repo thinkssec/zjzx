@@ -6,11 +6,13 @@ import com.common.utils.StringUtils;
 import com.server.Entity.RequestBody;
 import com.server.Entity.ResponseBody;
 import com.server.mapper.AnonMapper;
+import com.server.mapper.SyncMapper;
 import com.server.mapper.SysControlMapper;
 import com.server.mapper.UserMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -27,9 +29,12 @@ public class AnonService {
     @Autowired
     AnonMapper anonMapper;
     @Autowired
+    SyncMapper syncMapper;
+    @Autowired
     UserMapper userMapper;
     private static String upgradeDec="upgrade";
-    private static String upgradeFilePath="C:\\\\upload\\\\softwarefiles\\\\upgrade";
+    private static String databbDec="databb";
+    private static String upgradeFilePath="C:\\\\upload\\\\softwarefiles\\\\";
     public ResponseBody testConnect(RequestBody rq, Map params, String id){
         ResponseBody r=new ResponseBody(params,"1","连接成功",id,rq.getTaskid());
         return r;
@@ -126,7 +131,7 @@ public class AnonService {
         try{
             File file = new File(Global.getUserfilesBaseDir() + Global.SOFTWAREFILES_BASE_URL+upgradeDec);
             List<String> ul=new ArrayList<String>();
-            traverseFolder2(ul,Global.getUserfilesBaseDir() + Global.SOFTWAREFILES_BASE_URL+upgradeDec);
+            traverseFolder2(ul,Global.getUserfilesBaseDir() + Global.SOFTWAREFILES_BASE_URL+upgradeDec,upgradeDec);
             rp.setDatas(com.common.annotation.mapper.JsonMapper.toJsonString(ul));
         }catch(Exception e){
             rp.setIssuccess("0");
@@ -135,7 +140,33 @@ public class AnonService {
         }
         return rp;
     }
-    public void traverseFolder2(List<String> l,String path) {
+    @Transactional
+    public ResponseBody getDatabbList(RequestBody rq, Map params, String id){
+        ResponseBody rp=new ResponseBody(params,"1","获取数据升级包列表",id,rq.getTaskid());
+        try{
+            /*File file = new File(Global.getUserfilesBaseDir() + Global.SOFTWAREFILES_BASE_URL+databbDec);
+            List<String> ul=new ArrayList<String>();
+            traverseFolder2(ul,Global.getUserfilesBaseDir() + Global.SOFTWAREFILES_BASE_URL+databbDec,databbDec);
+            rp.setDatas(com.common.annotation.mapper.JsonMapper.toJsonString(ul));*/
+
+            try{
+                syncMapper.updsycnt(null);
+                String sycnTime=syncMapper.getCurrentTime();
+
+            }catch (Exception e){
+                e.printStackTrace();
+                rp.setIssuccess("0");
+                rp.setMessage("获取数据升级包列表失败！"+e.getMessage());
+            }
+        }catch(Exception e){
+            rp.setIssuccess("0");
+            rp.setMessage("获取数据升级包列表失败！"+e.getMessage());
+            e.printStackTrace();
+        }
+        return rp;
+    }
+
+    public void traverseFolder2(List<String> l,String path,String doc) {
 
         File file = new File(path);
         if (file.exists()) {
@@ -148,10 +179,10 @@ public class AnonService {
                     if (file2.isDirectory()) {
                         //System.out.println("文件夹:" + file2.getAbsolutePath());
                         //l.add(file2.getAbsolutePath());
-                        traverseFolder2(l,file2.getAbsolutePath());
+                        traverseFolder2(l,file2.getAbsolutePath(),doc);
                     } else {
                         System.out.println("文件:" + file2.getAbsolutePath());
-                        l.add(file2.getPath().replaceAll(upgradeFilePath,""));
+                        l.add(file2.getPath().replaceAll(upgradeFilePath+doc,""));
                     }
                 }
             }

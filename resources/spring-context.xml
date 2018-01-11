@@ -164,8 +164,8 @@
 		<property name="driverClassName" value="org.sqlite.JDBC" />
 
 		<!-- 基本属性 url、user、password -->
-		<property name="url" value="jdbc:sqlite::resource:zjzxALL.db" />
-		<!--<property name="url" value="jdbc:sqlite::memory:" />-->
+		<!--<property name="url" value="jdbc:sqlite::resource:zjzxALL.db" />-->
+		<property name="url" value="jdbc:sqlite::memory:" />
 		<!--<property name="username" value="root" />-->
 		<property name="password" value="123" />
 
