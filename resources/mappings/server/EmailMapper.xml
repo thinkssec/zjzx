@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.server.mapper.EmailMapper">
+    <insert id="sendMail">
+        insert into APP_EMAIL (ID, HFID, FJRYHM,
+          FJRXM, SJRYHM, SJRXM,
+          SFYJS, XMBH, XMMC,
+          ZT, ZWNR, FSRQ, JSRQ,
+          DKRQ, BZ)
+        values (#{ID,jdbcType=VARCHAR}, #{HFID,jdbcType=VARCHAR}, #{FJRYHM,jdbcType=VARCHAR},
+          #{FJRXM,jdbcType=VARCHAR}, #{SJRYHM,jdbcType=VARCHAR}, #{SJRXM,jdbcType=VARCHAR},
+          #{SFYJS,jdbcType=VARCHAR}, #{XMBH,jdbcType=VARCHAR}, #{XMMC,jdbcType=VARCHAR},
+          #{ZT,jdbcType=VARCHAR}, #{ZWNR,jdbcType=VARCHAR}, #{FSRQ,jdbcType=DATE},
+          #{JSRQ,jdbcType=DATE},
+          #{DKRQ,jdbcType=DATE}, #{BZ,jdbcType=VARCHAR})
+    </insert>
+
+    <insert id="sendAttach">
+        insert into APP_EMAIL_ATTACH (ID, EID, PATH)
+        values (#{id,jdbcType=VARCHAR}, #{eid,jdbcType=VARCHAR}, #{path,jdbcType=VARCHAR})
+    </insert>
+    <select id="getMailList" resultType="java.util.HashMap">
+        select * from APP_EMAIL where FJRYHM=#{USERNAME}
+        <if test="ID!='' and ID!=null">
+            id=#{ID}
+        </if>
+    </select>
+    <select id="getMailAList" resultType="java.util.HashMap">
+        select * from APP_EMAIL_ATTACH where mid=#{ID}
+    </select>
+
+</mapper>

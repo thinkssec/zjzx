@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.server.mapper.SyncMapper">
+    <insert id="updsycnt">
+        insert into t_sycntime (t) values (systimestamp)
+    </insert>
+    <select id="getzblist" resultType="java.util.HashMap">
+        <![CDATA[
+        select to_char(sjc,'yyyymmdd hh24:mi:ss:ff3') SJC,t.* from tzgs_zbb@zbk t where sjc<(select t from T_SYCNTIME)
+        ]]>
+        <if test="SJC != null and SJC !=''">
+            and sjc>=to_timestamp(#{SJC},'yyyymmdd hh24:mi:ss:ff3')
+        </if>
+        <if test="BBH != null and BBH !=''">
+            and bbh=#{BBH}
+        </if>
+        <if test="LB != null and LB !=''">
+            and lb=#{LB}
+        </if>
+    </select>
+    <select id="getzbmllist" resultType="java.util.HashMap">
+        <![CDATA[
+        select to_char(sjc,'yyyymmdd hh24:mi:ss:ff3') SJC,t.* from tzgs_zbml@zbk t where sjc<(select t from T_SYCNTIME)
+        ]]>
+        <if test="SJC != null and SJC !=''">
+            and sjc>=to_timestamp(#{SJC},'yyyymmdd hh24:mi:ss:ff3')
+        </if>
+        <if test="BBH != null and BBH !=''">
+            and bbh=#{BBH}
+        </if>
+        <if test="LB != null and LB !=''">
+            and lb=#{LB}
+        </if>
+    </select>
+    <select id="getCurrentTime" resultType="java.lang.String">
+        select to_char(T,'yyyymmdd hh24:mi:ss:ff3') t from T_SYCNTIME
+    </select>
+    <select id="gettjblist" resultType="java.util.HashMap">
+        select to_char(intime,'yyyymmdd hh24:mi:ss') INTIME,t.* from TZGS_TJB@zbk t where 1=1
+        <if test="BB!=null and BB!=''">
+          and   bb=#{BB}
+        </if>
+        <if test="SJC != null and SJC !=''">
+            and intime>=to_date(substr(#{SJC},1,17),'yyyymmdd hh24:mi:ss')
+        </if>
+    </select>
+
+    <!--<select id="getzblist" resultType="java.util.HashMap">
+       select a.*, b.zbid, b.zbmc
+         from (with t as (select * from TZGS_ZBML where bbh = 1)
+                select sys_connect_by_path(mlmc, '@') path, mlid
+                  from t
+                connect by prior mlid = mlpid
+                 start with mlpid = 0) a
+                  left join TZGS_ZBB b
+                    on a.mlid = b.mlid
+   </select>-->
+</mapper>

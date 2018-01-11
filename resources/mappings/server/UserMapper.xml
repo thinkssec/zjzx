@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.server.mapper.UserMapper">
+    <update id="updUserList">
+        BEGIN
+        <foreach collection="list" item="record" index="index">
+            merge into sys_user a using (select #{record.username,jdbcType=VARCHAR} yhm,
+            #{record.password,jdbcType=VARCHAR} mm,#{record.yhdw,jdbcType=VARCHAR} yhdw,#{record.role,jdbcType=VARCHAR} role from dual) b
+            on (a.yhm=b.yhm)
+            when matched then update set a.mm=b.mm,a.role=b.role,a.yhdw=b.yhdw
+            when not matched then insert (yhm,mm,yhdw,role) values(b.yhm,b.mm,b.yhdw,b.role);
+        </foreach>
+        commit;
+        END;
+    </update>
+    <delete id="delUserList">
+
+    </delete>
+    <select id="getUserOne" resultType="java.util.HashMap">
+        select * from SYS_USER where yhm=#{username}
+    </select>
+    <select id="getUserList" resultType="java.util.HashMap">
+        select * from sys_user
+    </select>
+    <select id="getDeptList" resultType="java.util.HashMap">
+      select * from SYS_DEPARTMENT t
+    </select>
+    <select id="validRegstUser" resultType="java.util.HashMap">
+        select a.* from sys_user a,APP_REGISTINFO b where a.yhdw=b.deptid and a.yhm=#{username}
+    </select>
+</mapper>

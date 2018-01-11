@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.server.mapper.SysControlMapper">
+    <insert id="insertRequest">
+      insert into  sys_request (id,username,password,ip,mac,call,params,status,taskid,subid,pri)
+      values (#{id,jdbcType=VARCHAR},#{username,jdbcType=VARCHAR},#{password,jdbcType=VARCHAR},
+      #{ip,jdbcType=VARCHAR},#{mac,jdbcType=VARCHAR},#{call,jdbcType=VARCHAR},#{params,jdbcType=VARCHAR},
+      '1',#{taskid,jdbcType=VARCHAR},#{subid,jdbcType=VARCHAR},#{pri,jdbcType=VARCHAR})
+    </insert>
+    <insert id="insertTest">
+        insert into test(t) values(sysdate)
+    </insert>
+    <update id="updateRequest">
+        begin
+        update sys_request set status='2',outtime=sysdate,attach=#{attach,jdbcType=VARCHAR} where id=#{id,jdbcType=VARCHAR};
+        insert into SYS_HANDLEMSG (
+        id,
+        USERNAME	,
+                                    CALL	,
+                                    PARAMS	,
+                                    STATUS	,
+                                    TASKID	,
+                                    SUBID	,
+                                    PRI
+                                    ) values (#{id,jdbcType=VARCHAR},#{username,jdbcType=VARCHAR},
+                                      #{call,jdbcType=VARCHAR},
+                                      #{params,jdbcType=VARCHAR},
+                                      '1',#{taskid,jdbcType=VARCHAR},
+                                      #{subid,jdbcType=VARCHAR},
+                                      #{pri,jdbcType=VARCHAR});
+                                    commit;
+        end;
+    </update>
+
+    <update id="updateHdlMsg">
+        update SYS_HANDLEMSG set outtime=sysdate,status=2 where id=#{id,jdbcType=VARCHAR}
+    </update>
+
+    <update id="doBuzByin">
+        update sys_request set status='2',outtime=sysdate,attach=#{attach,jdbcType=VARCHAR} where 1=1
+        <if test="id!='' and id!=null">
+           and id=#{id}
+        </if>
+
+    </update>
+    <update id="updateRequest2">
+        update sys_request set status='2',outtime=sysdate,attach=#{attach,jdbcType=VARCHAR} where id=#{id,jdbcType=VARCHAR}
+    </update>
+
+    <update id="updateRequest3">
+        insert into SYS_HANDLEMSG (
+        id,
+        USERNAME	,
+                                    CALL	,
+                                    PARAMS	,
+                                    STATUS	,
+                                    TASKID	,
+                                    SUBID	,
+                                    PRI
+                                    ) values (#{id,jdbcType=VARCHAR},#{username,jdbcType=VARCHAR},
+                                      #{call,jdbcType=VARCHAR},
+                                      #{params,jdbcType=VARCHAR},
+                                      '1',#{taskid,jdbcType=VARCHAR},
+                                      #{subid,jdbcType=VARCHAR},
+                                      #{pri,jdbcType=VARCHAR})
+    </update>
+    <delete id="deleteRequest">
+        delete from sys_request
+    </delete>
+    <select id="getRequestList" resultType="java.util.HashMap">
+        select t.*,to_char(intime,'yyyymmdd hh24:mi:ss') i,
+        to_char(outtime,'yyyymmdd hh24:mi:ss') o,
+        decode(status,1,'正在接收','接收成功') s
+        from sys_request t where 1=1
+        <if test="id!=null and id!=''">
+            id=#{id}
+        </if>
+        <if test="pri!=null and pri!=''">
+            pri=#{pri}
+        </if>
+        order by intime desc
+    </select>
+    <select id="getRequestOne" resultType="java.util.HashMap">
+        select * from sys_request where id=#{id} and status=1
+    </select>
+    <select id="getHandleMsgList" resultType="java.util.HashMap">
+        select t.*,to_char(intime,'yyyymmdd hh24:mi:ss') i,
+        to_char(outtime,'yyyymmdd hh24:mi:ss') o,
+        decode(status,1,'正在处理','处理完成') s
+        from SYS_HANDLEMSG t where 1=1
+        order by intime desc
+
+    </select>
+</mapper>
