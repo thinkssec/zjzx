@@ -6,6 +6,7 @@ package com.common.utils;
 import com.common.realm.StatelessRealm;
 import com.common.sys.entity.Role;
 import com.common.sys.entity.User;
+import com.server.mapper.UserMapper;
 import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.UnavailableSecurityManagerException;
 import org.apache.shiro.session.InvalidSessionException;
@@ -20,7 +21,7 @@ import org.apache.shiro.subject.Subject;
  */
 public class UserUtils {
 
-
+	private static UserMapper userDao = SpringContextHolder.getBean(UserMapper.class);
 
 	/**
 	 * 根据ID获取用户
@@ -31,6 +32,7 @@ public class UserUtils {
 		User user = null;
 		if (user ==  null){
 			//user = userDao.get(id);
+
 			if (user == null){
 				return null;
 			}
@@ -43,9 +45,10 @@ public class UserUtils {
 	 * @return 取不到返回 new User()
 	 */
 	public static User getUser(){
-		StatelessRealm.Principal principal = getPrincipal();
+		//StatelessRealm.Principal principal = getPrincipal();
+		String principal = getPrincipal2();
 		if (principal!=null){
-			User user = get(principal.getId());
+			User user = get(principal);
 			if (user != null){
 				return user;
 			}
@@ -78,6 +81,21 @@ public class UserUtils {
 			
 		}catch (InvalidSessionException e){
 			
+		}
+		return null;
+	}
+	public static String getPrincipal2(){
+		try{
+			Subject subject = SecurityUtils.getSubject();
+			String principal = (String)subject.getPrincipal();
+			if (principal != null){
+				return principal;
+			}
+//			subject.logout();
+		}catch (UnavailableSecurityManagerException e) {
+
+		}catch (InvalidSessionException e){
+
 		}
 		return null;
 	}

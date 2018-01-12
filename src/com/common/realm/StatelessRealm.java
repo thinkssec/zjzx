@@ -60,6 +60,11 @@ public class StatelessRealm extends AuthorizingRealm {
                 username,
                 serverDigest,
                 getName());
+        /*User user=null;
+        return new SimpleAuthenticationInfo(
+                new Principal(user, token.isMobileLogin()),
+                serverDigest,
+                getName());*/
     }
 
     private String getKey(String username) {//得到密钥，此处硬编码一个

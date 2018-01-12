@@ -13,7 +13,7 @@ import java.util.Map;
  * Created by Administrator on 2017/10/17.
  */
 @MyBatisDao
-@SqlServerDao
+//@SqlServerDao
 public interface UserMapper extends MainMapper {
     HashMap getUserOne(String username);
     void updUserList(HashMap param);

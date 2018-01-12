@@ -86,7 +86,7 @@
     <servlet-mapping>
         <servlet-name>SoftWareUpgradeServlet</servlet-name>
         <url-pattern>/upgrade/*</url-pattern>
-        <url-pattern>/upgrade/databb/*</url-pattern>
+        <url-pattern>/databb/*</url-pattern>
     </servlet-mapping>
     <mime-mapping>
          <extension>ndxml</extension>

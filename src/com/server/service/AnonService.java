@@ -2,6 +2,7 @@ package com.server.service;
 
 import com.common.config.Global;
 import com.common.mapper.JsonMapper;
+import com.common.utils.AppUtils;
 import com.common.utils.StringUtils;
 import com.server.Entity.RequestBody;
 import com.server.Entity.ResponseBody;
@@ -140,31 +141,7 @@ public class AnonService {
         }
         return rp;
     }
-    @Transactional
-    public ResponseBody getDatabbList(RequestBody rq, Map params, String id){
-        ResponseBody rp=new ResponseBody(params,"1","获取数据升级包列表",id,rq.getTaskid());
-        try{
-            /*File file = new File(Global.getUserfilesBaseDir() + Global.SOFTWAREFILES_BASE_URL+databbDec);
-            List<String> ul=new ArrayList<String>();
-            traverseFolder2(ul,Global.getUserfilesBaseDir() + Global.SOFTWAREFILES_BASE_URL+databbDec,databbDec);
-            rp.setDatas(com.common.annotation.mapper.JsonMapper.toJsonString(ul));*/
 
-            try{
-                syncMapper.updsycnt(null);
-                String sycnTime=syncMapper.getCurrentTime();
-
-            }catch (Exception e){
-                e.printStackTrace();
-                rp.setIssuccess("0");
-                rp.setMessage("获取数据升级包列表失败！"+e.getMessage());
-            }
-        }catch(Exception e){
-            rp.setIssuccess("0");
-            rp.setMessage("获取数据升级包列表失败！"+e.getMessage());
-            e.printStackTrace();
-        }
-        return rp;
-    }
 
     public void traverseFolder2(List<String> l,String path,String doc) {
 

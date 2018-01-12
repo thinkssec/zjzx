@@ -4,6 +4,9 @@ import com.common.annotation.CompResponseBody;
 import com.common.annotation.SqliteDao;
 import com.common.annotation.mapper.JsonMapper;
 import com.common.config.DataSourceContextHolder;
+import com.common.sys.entity.User;
+import com.common.utils.AppUtils;
+import com.common.utils.UserUtils;
 import com.fasterxml.jackson.databind.JavaType;
 import com.server.Entity.RequestBody;
 import com.server.Entity.ResponseBody;
@@ -44,6 +47,8 @@ public class SysService{
     SyncService syncService;
     @Autowired
     SysControlMapper2 sysControlMapper2;
+    @Autowired
+    SyncMapper syncMapper;
     @Autowired
     PanService panService;
     //同步用户信息
@@ -187,7 +192,37 @@ public class SysService{
             e.printStackTrace();
         }
     }
+    @Transactional
+    public ResponseBody getDatabbList(RequestBody rq, Map params, String id){
+        ResponseBody rp=new ResponseBody(params,"1","获取数据升级包列表",id,rq.getTaskid());
+        try{
+            /*File file = new File(Global.getUserfilesBaseDir() + Global.SOFTWAREFILES_BASE_URL+databbDec);
+            List<String> ul=new ArrayList<String>();
+            traverseFolder2(ul,Global.getUserfilesBaseDir() + Global.SOFTWAREFILES_BASE_URL+databbDec,databbDec);
+            rp.setDatas(com.common.annotation.mapper.JsonMapper.toJsonString(ul));*/
+            User user=UserUtils.getUser();
+            params.put("DEPTS", AppUtils.getParentDept((String)params.get("DEPTID")));
+            try{
+                //syncMapper.updsycnt(null);
+                //String sycnTime=syncMapper.getCurrentTime();
+                List<HashMap> bbls=syncMapper.getDataBb(params);
 
+                HashMap datas=new HashMap();
+                datas.put("BBXX",bbls);
+                rp.setDatas(com.common.annotation.mapper.JsonMapper.toJsonString(datas));
+
+            }catch (Exception e){
+                e.printStackTrace();
+                rp.setIssuccess("0");
+                rp.setMessage("获取数据升级包列表失败！"+e.getMessage());
+            }
+        }catch(Exception e){
+            rp.setIssuccess("0");
+            rp.setMessage("获取数据升级包列表失败！"+e.getMessage());
+            e.printStackTrace();
+        }
+        return rp;
+    }
     /*@CompResponseBody
     //@Transactional
     public ResponseBody testNormal(RequestBody rq, Map params, String id){

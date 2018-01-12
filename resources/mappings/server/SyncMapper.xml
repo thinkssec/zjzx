@@ -44,10 +44,11 @@
             and intime>=to_date(substr(#{SJC},1,17),'yyyymmdd hh24:mi:ss')
         </if>
     </select>
-    <select id="getDataBb">
-        select * from APP_DATA_BB where bbh=#{BBH} and oilid=#{OILID}
+    <select id="getDataBb" resultType="java.util.HashMap">
+        select glbbh,bbh,sjfw,bz,path,to_char(fbsj,'yyyymmdd hh24:mi:ss') fbsj from APP_DATA_BB where bbh=#{BBH} and oilid=#{OILID}
         and bblx=#{BBLX} and fbsj >=to_date(substr(#{SJC},1,17),'yyyymmdd hh24:mi:ss')
         and sjfw in ${DEPTS}
+        order by fbsj
     </select>
 
     <!--<select id="getzblist" resultType="java.util.HashMap">

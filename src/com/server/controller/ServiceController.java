@@ -30,11 +30,9 @@ public class ServiceController {
     public static Logger log = Logger.getLogger(ServiceController.class);
     @Autowired
     FileService fileService;
-
     /*
     接受参数
      */
-
     @RequestMapping("request")
     public String request(String requestBody, String id) throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
         ResponseBody res = new ResponseBody();
