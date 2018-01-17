@@ -13,6 +13,8 @@ import org.apache.shiro.session.InvalidSessionException;
 import org.apache.shiro.session.Session;
 import org.apache.shiro.subject.Subject;
 
+import java.util.HashMap;
+
 
 /**
  * 用户工具类
@@ -21,7 +23,7 @@ import org.apache.shiro.subject.Subject;
  */
 public class UserUtils {
 
-	private static UserMapper userDao = SpringContextHolder.getBean(UserMapper.class);
+	private static UserMapper userMapper = SpringContextHolder.getBean(UserMapper.class);
 
 	/**
 	 * 根据ID获取用户
@@ -32,7 +34,18 @@ public class UserUtils {
 		User user = null;
 		if (user ==  null){
 			//user = userDao.get(id);
-
+			HashMap u=userMapper.getUserOne2(id);
+			if(u!=null){
+				user=new User();
+				user.setLoginName((String)u.get("LOGINID"));
+                user.setDeptId((String)u.get("DEPTID"));
+				user.setIsDel((String)u.get("ISDEL"));
+				user.setOilId((String)u.get("OILID"));
+				user.setName((String)u.get("NAME"));
+				user.setId((String)u.get("ID"));
+				user.setRoleList(userMapper.getRoleList(user.getId()));
+				user.setPermissionList(userMapper.getPermissionList(user.getId()));
+			}
 			if (user == null){
 				return null;
 			}

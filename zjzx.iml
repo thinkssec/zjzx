@@ -427,5 +427,6 @@
     <orderEntry type="library" name="javax.servlet.jsp.jstl-1.2.0.v201105211821" level="project" />
     <orderEntry type="library" name="servlet-api-2.5" level="project" />
     <orderEntry type="library" name="jna4.5.0" level="project" />
+    <orderEntry type="library" name="jedis-2.9.0" level="project" />
   </component>
 </module>

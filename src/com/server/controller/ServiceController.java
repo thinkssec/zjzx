@@ -2,6 +2,8 @@ package com.server.controller;
 
 import com.common.annotation.Queuen;
 import com.common.annotation.mapper.JsonMapper;
+import com.common.sys.entity.User;
+import com.common.utils.UserUtils;
 import com.server.Entity.RequestBody;
 import com.server.Entity.ResponseBody;
 import com.server.service.FileService;
@@ -15,6 +17,7 @@ import org.springframework.web.multipart.commons.CommonsMultipartFile;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -40,6 +43,19 @@ public class ServiceController {
         RequestBody r = (RequestBody) JsonMapper.fromJsonString(requestBody, RequestBody.class);
         Map<String, String> params = (Map<String, String>) JsonMapper.fromJsonString(r.getParams(), Map.class);
         String call = r.getCall();
+        User user= UserUtils.getUser();
+        HashMap qx=user.getPermissionList();
+        if(qx!=null){
+            if(qx.get(call)==null){
+                res.setIssuccess("0");
+                res.setMessage("权限不足，请联系管理员！");
+                return JsonMapper.toJsonString(res);
+            }
+        }else{
+            res.setIssuccess("0");
+            res.setMessage("权限不足，请联系管理员！");
+            return JsonMapper.toJsonString(res);
+        }
         Method m = SysService.class.getMethod(call, new Class[]{RequestBody.class,Map.class, String.class});
         res = (ResponseBody) m.invoke(sysService,r, params, id);
         return JsonMapper.toJsonString(res);

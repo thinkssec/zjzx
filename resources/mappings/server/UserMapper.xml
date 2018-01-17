@@ -28,4 +28,17 @@
     <select id="validRegstUser" resultType="java.util.HashMap">
         select a.* from sys_user a,APP_REGISTINFO b where a.yhdw=b.deptid and a.yhm=#{username}
     </select>
+    <select id="getUserOne2" resultType="java.util.HashMap">
+      select a.*,t.deptid,t.oilid from SYS_USERS a,SYS_USER_DEPT t where a.id=t.userid and a.loginid=#{username}
+    </select>
+    <select id="getRoleList" resultType="java.util.HashMap">
+      select t.* from sys_userrole a,SYS_ROLE t where
+          userid=#{userid} and a.roleid=t.roleid
+    </select>
+    <select id="getPermissionList" resultType="java.util.HashMap">
+        select nvl(d.url,d.id) KEY,d.* from sys_resources d,
+            SYS_ROLEPERMISSION a,sys_userrole c
+            where c.userid=#{userid}
+            and c.roleid=a.roleid and a.mcode=d.id
+    </select>
 </mapper>

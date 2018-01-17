@@ -201,16 +201,16 @@ public class SysService{
             traverseFolder2(ul,Global.getUserfilesBaseDir() + Global.SOFTWAREFILES_BASE_URL+databbDec,databbDec);
             rp.setDatas(com.common.annotation.mapper.JsonMapper.toJsonString(ul));*/
             User user=UserUtils.getUser();
-            params.put("DEPTS", AppUtils.getParentDept((String)params.get("DEPTID")));
+            System.out.println("--------"+user);
+            params.put("OILID",user.getOilId());
+            params.put("DEPTS", AppUtils.getParentDept(user.getDeptId()));
             try{
                 //syncMapper.updsycnt(null);
                 //String sycnTime=syncMapper.getCurrentTime();
                 List<HashMap> bbls=syncMapper.getDataBb(params);
-
                 HashMap datas=new HashMap();
                 datas.put("BBXX",bbls);
                 rp.setDatas(com.common.annotation.mapper.JsonMapper.toJsonString(datas));
-
             }catch (Exception e){
                 e.printStackTrace();
                 rp.setIssuccess("0");

@@ -45,10 +45,13 @@
         </if>
     </select>
     <select id="getDataBb" resultType="java.util.HashMap">
-        select glbbh,bbh,sjfw,bz,path,to_char(fbsj,'yyyymmdd hh24:mi:ss') fbsj from APP_DATA_BB where bbh=#{BBH} and oilid=#{OILID}
-        and bblx=#{BBLX} and fbsj >=to_date(substr(#{SJC},1,17),'yyyymmdd hh24:mi:ss')
-        and sjfw in ${DEPTS}
-        order by fbsj
+        <![CDATA[
+                select glbbh,bbh,sjfw,bz,path,to_char(fbsj,'yyyymmdd hh24:mi:ss') fbsj,lsh
+                from APP_DATA_BB where bbh=#{BBH} and oilid=#{OILID}
+                and bblx=#{BBLX} and lsh >#{LSH}
+                and sjfw in ${DEPTS}
+                order by lsh
+        ]]>
     </select>
 
     <!--<select id="getzblist" resultType="java.util.HashMap">

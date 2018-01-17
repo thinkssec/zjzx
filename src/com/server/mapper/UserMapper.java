@@ -4,6 +4,7 @@ import com.common.annotation.MyBatisDao;
 import com.common.annotation.SqlServerDao;
 import com.server.Entity.MainMapper;
 import com.server.Entity.RequestBody;
+import org.apache.ibatis.annotations.MapKey;
 
 import java.util.HashMap;
 import java.util.List;
@@ -21,5 +22,8 @@ public interface UserMapper extends MainMapper {
     List<HashMap> getUserList(Map params);
     List<HashMap> getDeptList(Map params);
     List<HashMap> validRegstUser(String username);
-
+    HashMap getUserOne2(String username);
+    List<HashMap> getRoleList(String userid);
+    @MapKey("KEY")
+    HashMap<String,HashMap> getPermissionList(String userid);
 }
