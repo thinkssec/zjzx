@@ -3,6 +3,7 @@ package com.server.controller;
 import com.common.annotation.Queuen;
 import com.common.annotation.mapper.JsonMapper;
 import com.common.sys.entity.User;
+import com.common.utils.CacheManage;
 import com.common.utils.UserUtils;
 import com.server.Entity.RequestBody;
 import com.server.Entity.ResponseBody;
@@ -33,6 +34,8 @@ public class ServiceController {
     public static Logger log = Logger.getLogger(ServiceController.class);
     @Autowired
     FileService fileService;
+    @Autowired
+    CacheManage cacheManage;
     /*
     接受参数
      */
@@ -43,7 +46,11 @@ public class ServiceController {
         RequestBody r = (RequestBody) JsonMapper.fromJsonString(requestBody, RequestBody.class);
         Map<String, String> params = (Map<String, String>) JsonMapper.fromJsonString(r.getParams(), Map.class);
         String call = r.getCall();
+        //System.out.println("1111111111"+cacheManage.get("testCache")+"1111111111");
         User user= UserUtils.getUser();
+        //user.setId("你好！@#￥%……&*（）");
+        cacheManage.set("testCache",user);
+        //System.out.println("2222222222"+(User)cacheManage.get("testCache")+"2222222222");
         HashMap qx=user.getPermissionList();
         if(qx!=null){
             if(qx.get(call)==null){

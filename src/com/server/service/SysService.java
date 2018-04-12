@@ -201,7 +201,7 @@ public class SysService{
             traverseFolder2(ul,Global.getUserfilesBaseDir() + Global.SOFTWAREFILES_BASE_URL+databbDec,databbDec);
             rp.setDatas(com.common.annotation.mapper.JsonMapper.toJsonString(ul));*/
             User user=UserUtils.getUser();
-            System.out.println("--------"+user);
+            //System.out.println("--------"+user);
             params.put("OILID",user.getOilId());
             params.put("DEPTS", AppUtils.getParentDept(user.getDeptId()));
             try{

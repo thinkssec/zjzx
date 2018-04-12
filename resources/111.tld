@@ -1,0 +1,211 @@
+
+<DocumentElement>
+    <ctUnitProjectIndex  OBJCOSTTYPE="指标类型（显示）"
+                         ZBDXLX="指标对象类型FX/DW/DX（加载数据对象）"
+                         TZXS="调整系数(R C J)" ZYLB="专业类别（枚举类型，每个设计单位自主定义）"
+                         ID="ID" BM="指标编码 (位数)" MC="指标名称(位数)"
+                         DW="单位" ZHDJ="综合单价" GCL="工程量" CONSTRUCTIONFEE="建筑费"
+                         INSTALLFEE="安装费"   ZCDJ="主材单价" SBDJ="设备单价"
+                         ZCHJ="主材费" SBHJ="设备费"    DQJG="地区单价"
+                         DQRGDJ="地区人工单价" DQJXDJ="地区机械单价"
+                         DQCLDJ="地区材料单价" SCJG="市场单价"
+                         SCRGDJ="市场人工单价" SCJXDJ="市场机械单价"
+                         SCCLDJ="市场材料单价"  DEDJ="定额单价"
+                         DERGDJ="定额人工单价"  DEJXDJ="定额机械单价" DECLDJ="定额材料单价"
+                         BASICUNITS="基本单位" ZHXS="转换系数" WORKCONTENT="工作内容"
+                         CALCRULE="计算规则"  USEDLABORNUMBER="使用的人工数"
+                         USEDMATERIALNUMBER="使用的材料数">
+        <WBS>
+            <ctUnitWBS  ID="ID"  MC="指标名称" DW="单位"  GCL="工程量" DEDJ="定额单价" SCJG="市场单价" DQJG="地区单价" ZHDJ="综合单价" ZCDJ="主材单价" SBDJ="设备单价"  DQRGDJ="地区人工单价" DQJXDJ="地区机械单价" DQCLDJ="地区材料单价" SCRGDJ="市场人工单价" SCJXDJ="市场机械单价" SCCLDJ="市场材料单价" DERGDJ="定额人工单价" DEJXDJ="定额机械单价" DECLDJ="定额材料单价"   CONSTRUCTIONFEE="建筑费" INSTALLFEE="安装费" USEDLABORNUMBER="使用的人工数" USEDMATERIALNUMBER="使用的材料数">
+                <ctUnitWBS  ID="ID"  MC="指标名称" DW="单位"  GCL="工程量" DEDJ="定额单价" SCJG="市场单价" DQJG="地区单价" ZHDJ="综合单价" ZCDJ="主材单价" SBDJ="设备单价"  DQRGDJ="地区人工单价" DQJXDJ="地区机械单价" DQCLDJ="地区材料单价" SCRGDJ="市场人工单价" SCJXDJ="市场机械单价" SCCLDJ="市场材料单价" DERGDJ="定额人工单价" DEJXDJ="定额机械单价" DECLDJ="定额材料单价"   CONSTRUCTIONFEE="建筑费" INSTALLFEE="安装费" USEDLABORNUMBER="使用的人工数" USEDMATERIALNUMBER="使用的材料数">
+                    <ctSectionProjectIndex  OBJCOSTTYPE="指标类型（显示）"  ZBDXLX="指标对象类型FX/DW/DX（加载数据对象）" TZXS="调整系数(R C J)" ZYLB="专业类别（枚举类型，每个设计单位自主定义）" ID="ID" BM="指标编码 (位数)" MC="指标名称(位数)" DW="单位" ZHDJ="综合单价" GCL="工程量" CONSTRUCTIONFEE="建筑费" INSTALLFEE="安装费"   ZCDJ="主材单价" SBDJ="设备单价" ZCHJ="主材费" SBHJ="设备费"    DQJG="地区单价" DQRGDJ="地区人工单价" DQJXDJ="地区机械单价" DQCLDJ="地区材料单价" SCJG="市场单价"  SCRGDJ="市场人工单价" SCJXDJ="市场机械单价" SCCLDJ="市场材料单价"  DEDJ="定额单价" DERGDJ="定额人工单价"  DEJXDJ="定额机械单价" DECLDJ="定额材料单价" BASICUNITS="基本单位" ZHXS="转换系数" WORKCONTENT="工作内容" CALCRULE="计算规则"  USEDLABORNUMBER="使用的人工数" USEDMATERIALNUMBER="使用的材料数">
+                        <zbxmtz>
+                            <ctOtherAssist TZMC="特征名称" TZMS="特征描述" DW="单位" LX="特征类型" GCL="数量">
+                            </ctOtherAssist>
+                            <ctOtherAssist TZMC="特征名称" TZMS="特征描述" DW="单位" LX="特征类型" GCL="数量">
+                            </ctOtherAssist>
+                            <ctOtherAssist TZMC="特征名称" TZMS="特征描述" DW="单位" LX="特征类型" GCL="数量">
+                            </ctOtherAssist>
+                            <ctOtherAssist TZMC="特征名称" TZMS="特征描述" DW="单位" LX="特征类型" GCL="数量">
+                            </ctOtherAssist>
+                        </zbxmtz>
+                        <zbsbzc>
+                            <ctZhuCai BM="编码"  MC="设备主材名称"  DW="单位" SL="数量"  DJ="单价" FY="费用">
+                            </ctZhuCai>
+                            <ctSheBei BM="编码"  MC="设备主材名称"  DW="单位" SL="数量"  DJ="单价" FY="费用">
+                            </ctSheBei>
+                        </zbsbzc>
+                    </ctSectionProjectIndex>
+                    <ctSectionProjectIndex  OBJCOSTTYPE="指标类型（显示）"  ZBDXLX="指标对象类型FX/DW/DX（加载数据对象）" TZXS="调整系数(R C J)" ZYLB="专业类别（枚举类型，每个设计单位自主定义）" ID="ID" BM="指标编码 (位数)" MC="指标名称(位数)" DW="单位" ZHDJ="综合单价" GCL="工程量" CONSTRUCTIONFEE="建筑费" INSTALLFEE="安装费"   ZCDJ="主材单价" SBDJ="设备单价" ZCHJ="主材费" SBHJ="设备费"    DQJG="地区单价" DQRGDJ="地区人工单价" DQJXDJ="地区机械单价" DQCLDJ="地区材料单价" SCJG="市场单价"  SCRGDJ="市场人工单价" SCJXDJ="市场机械单价" SCCLDJ="市场材料单价"  DEDJ="定额单价" DERGDJ="定额人工单价"  DEJXDJ="定额机械单价" DECLDJ="定额材料单价" BASICUNITS="基本单位" ZHXS="转换系数" WORKCONTENT="工作内容" CALCRULE="计算规则"  USEDLABORNUMBER="使用的人工数" USEDMATERIALNUMBER="使用的材料数">
+                        <zbxmtz>
+                            <ctOtherAssist TZMC="特征名称" TZMS="特征描述" DW="单位" LX="特征类型" GCL="数量">
+                            </ctOtherAssist>
+                            <ctOtherAssist TZMC="特征名称" TZMS="特征描述" DW="单位" LX="特征类型" GCL="数量">
+                            </ctOtherAssist>
+                            <ctOtherAssist TZMC="特征名称" TZMS="特征描述" DW="单位" LX="特征类型" GCL="数量">
+                            </ctOtherAssist>
+                            <ctOtherAssist TZMC="特征名称" TZMS="特征描述" DW="单位" LX="特征类型" GCL="数量">
+                            </ctOtherAssist>
+                        </zbxmtz>
+                        <zbsbzc>
+                            <ctZhuCai BM="编码"  MC="设备主材名称"  DW="单位" SL="数量"  DJ="单价" FY="费用">
+                            </ctZhuCai>
+                            <ctSheBei BM="编码"  MC="设备主材名称"  DW="单位" SL="数量"  DJ="单价" FY="费用">
+                            </ctSheBei>
+                        </zbsbzc>
+                    </ctSectionProjectIndex>
+                    <ctSectionProjectIndex  OBJCOSTTYPE="指标类型（显示）"  ZBDXLX="指标对象类型FX/DW/DX（加载数据对象）" TZXS="调整系数(R C J)" ZYLB="专业类别（枚举类型，每个设计单位自主定义）" ID="ID" BM="指标编码 (位数)" MC="指标名称(位数)" DW="单位" ZHDJ="综合单价" GCL="工程量" CONSTRUCTIONFEE="建筑费" INSTALLFEE="安装费"   ZCDJ="主材单价" SBDJ="设备单价" ZCHJ="主材费" SBHJ="设备费"    DQJG="地区单价" DQRGDJ="地区人工单价" DQJXDJ="地区机械单价" DQCLDJ="地区材料单价" SCJG="市场单价"  SCRGDJ="市场人工单价" SCJXDJ="市场机械单价" SCCLDJ="市场材料单价"  DEDJ="定额单价" DERGDJ="定额人工单价"  DEJXDJ="定额机械单价" DECLDJ="定额材料单价" BASICUNITS="基本单位" ZHXS="转换系数" WORKCONTENT="工作内容" CALCRULE="计算规则"  USEDLABORNUMBER="使用的人工数" USEDMATERIALNUMBER="使用的材料数">
+                        <zbxmtz>
+                            <ctOtherAssist TZMC="特征名称" TZMS="特征描述" DW="单位" LX="特征类型" GCL="数量">
+                            </ctOtherAssist>
+                            <ctOtherAssist TZMC="特征名称" TZMS="特征描述" DW="单位" LX="特征类型" GCL="数量">
+                            </ctOtherAssist>
+                            <ctOtherAssist TZMC="特征名称" TZMS="特征描述" DW="单位" LX="特征类型" GCL="数量">
+                            </ctOtherAssist>
+                            <ctOtherAssist TZMC="特征名称" TZMS="特征描述" DW="单位" LX="特征类型" GCL="数量">
+                            </ctOtherAssist>
+                        </zbxmtz>
+                        <zbsbzc>
+                            <ctZhuCai BM="编码"  MC="设备主材名称"  DW="单位" SL="数量"  DJ="单价" FY="费用">
+                            </ctZhuCai>
+                            <ctSheBei BM="编码"  MC="设备主材名称"  DW="单位" SL="数量"  DJ="单价" FY="费用">
+                            </ctSheBei>
+                        </zbsbzc>
+                    </ctSectionProjectIndex>
+                </ctUnitWBS>
+            </ctUnitWBS>
+            <ctUnitWBS  ID="ID"  MC="指标名称" DW="单位"  GCL="工程量" DEDJ="定额单价" SCJG="市场单价" DQJG="地区单价" ZHDJ="综合单价" ZCDJ="主材单价" SBDJ="设备单价"  DQRGDJ="地区人工单价" DQJXDJ="地区机械单价" DQCLDJ="地区材料单价" SCRGDJ="市场人工单价" SCJXDJ="市场机械单价" SCCLDJ="市场材料单价" DERGDJ="定额人工单价" DEJXDJ="定额机械单价" DECLDJ="定额材料单价"   CONSTRUCTIONFEE="建筑费" INSTALLFEE="安装费" USEDLABORNUMBER="使用的人工数" USEDMATERIALNUMBER="使用的材料数">
+                <ctSectionProjectIndex  OBJCOSTTYPE="指标类型（显示）"  ZBDXLX="指标对象类型FX/DW/DX（加载数据对象）" TZXS="调整系数(R C J)" ZYLB="专业类别（枚举类型，每个设计单位自主定义）" ID="ID" BM="指标编码 (位数)" MC="指标名称(位数)" DW="单位" ZHDJ="综合单价" GCL="工程量" CONSTRUCTIONFEE="建筑费" INSTALLFEE="安装费"   ZCDJ="主材单价" SBDJ="设备单价" ZCHJ="主材费" SBHJ="设备费"    DQJG="地区单价" DQRGDJ="地区人工单价" DQJXDJ="地区机械单价" DQCLDJ="地区材料单价" SCJG="市场单价"  SCRGDJ="市场人工单价" SCJXDJ="市场机械单价" SCCLDJ="市场材料单价"  DEDJ="定额单价" DERGDJ="定额人工单价"  DEJXDJ="定额机械单价" DECLDJ="定额材料单价" BASICUNITS="基本单位" ZHXS="转换系数" WORKCONTENT="工作内容" CALCRULE="计算规则"  USEDLABORNUMBER="使用的人工数" USEDMATERIALNUMBER="使用的材料数">
+                    <zbxmtz>
+                        <ctOtherAssist TZMC="特征名称" TZMS="特征描述" DW="单位" LX="特征类型" GCL="数量">
+                        </ctOtherAssist>
+                        <ctOtherAssist TZMC="特征名称" TZMS="特征描述" DW="单位" LX="特征类型" GCL="数量">
+                        </ctOtherAssist>
+                        <ctOtherAssist TZMC="特征名称" TZMS="特征描述" DW="单位" LX="特征类型" GCL="数量">
+                        </ctOtherAssist>
+                        <ctOtherAssist TZMC="特征名称" TZMS="特征描述" DW="单位" LX="特征类型" GCL="数量">
+                        </ctOtherAssist>
+                    </zbxmtz>
+                    <zbsbzc>
+                        <ctZhuCai BM="编码"  MC="设备主材名称"  DW="单位" SL="数量"  DJ="单价" FY="费用">
+                        </ctZhuCai>
+                        <ctSheBei BM="编码"  MC="设备主材名称"  DW="单位" SL="数量"  DJ="单价" FY="费用">
+                        </ctSheBei>
+                    </zbsbzc>
+                </ctSectionProjectIndex>
+                <ctSectionProjectIndex  OBJCOSTTYPE="指标类型（显示）"  ZBDXLX="指标对象类型FX/DW/DX（加载数据对象）" TZXS="调整系数(R C J)" ZYLB="专业类别（枚举类型，每个设计单位自主定义）" ID="ID" BM="指标编码 (位数)" MC="指标名称(位数)" DW="单位" ZHDJ="综合单价" GCL="工程量" CONSTRUCTIONFEE="建筑费" INSTALLFEE="安装费"   ZCDJ="主材单价" SBDJ="设备单价" ZCHJ="主材费" SBHJ="设备费"    DQJG="地区单价" DQRGDJ="地区人工单价" DQJXDJ="地区机械单价" DQCLDJ="地区材料单价" SCJG="市场单价"  SCRGDJ="市场人工单价" SCJXDJ="市场机械单价" SCCLDJ="市场材料单价"  DEDJ="定额单价" DERGDJ="定额人工单价"  DEJXDJ="定额机械单价" DECLDJ="定额材料单价" BASICUNITS="基本单位" ZHXS="转换系数" WORKCONTENT="工作内容" CALCRULE="计算规则"  USEDLABORNUMBER="使用的人工数" USEDMATERIALNUMBER="使用的材料数">
+                    <zbxmtz>
+                        <ctOtherAssist TZMC="特征名称" TZMS="特征描述" DW="单位" LX="特征类型" GCL="数量">
+                        </ctOtherAssist>
+                        <ctOtherAssist TZMC="特征名称" TZMS="特征描述" DW="单位" LX="特征类型" GCL="数量">
+                        </ctOtherAssist>
+                        <ctOtherAssist TZMC="特征名称" TZMS="特征描述" DW="单位" LX="特征类型" GCL="数量">
+                        </ctOtherAssist>
+                        <ctOtherAssist TZMC="特征名称" TZMS="特征描述" DW="单位" LX="特征类型" GCL="数量">
+                        </ctOtherAssist>
+                    </zbxmtz>
+                    <zbsbzc>
+                        <ctZhuCai BM="编码"  MC="设备主材名称"  DW="单位" SL="数量"  DJ="单价" FY="费用">
+                        </ctZhuCai>
+                        <ctSheBei BM="编码"  MC="设备主材名称"  DW="单位" SL="数量"  DJ="单价" FY="费用">
+                        </ctSheBei>
+                    </zbsbzc>
+                </ctSectionProjectIndex>
+                <ctSectionProjectIndex  OBJCOSTTYPE="指标类型（显示）"  ZBDXLX="指标对象类型FX/DW/DX（加载数据对象）" TZXS="调整系数(R C J)" ZYLB="专业类别（枚举类型，每个设计单位自主定义）" ID="ID" BM="指标编码 (位数)" MC="指标名称(位数)" DW="单位" ZHDJ="综合单价" GCL="工程量" CONSTRUCTIONFEE="建筑费" INSTALLFEE="安装费"   ZCDJ="主材单价" SBDJ="设备单价" ZCHJ="主材费" SBHJ="设备费"    DQJG="地区单价" DQRGDJ="地区人工单价" DQJXDJ="地区机械单价" DQCLDJ="地区材料单价" SCJG="市场单价"  SCRGDJ="市场人工单价" SCJXDJ="市场机械单价" SCCLDJ="市场材料单价"  DEDJ="定额单价" DERGDJ="定额人工单价"  DEJXDJ="定额机械单价" DECLDJ="定额材料单价" BASICUNITS="基本单位" ZHXS="转换系数" WORKCONTENT="工作内容" CALCRULE="计算规则"  USEDLABORNUMBER="使用的人工数" USEDMATERIALNUMBER="使用的材料数">
+                    <zbxmtz>
+                        <ctOtherAssist TZMC="特征名称" TZMS="特征描述" DW="单位" LX="特征类型" GCL="数量">
+                        </ctOtherAssist>
+                        <ctOtherAssist TZMC="特征名称" TZMS="特征描述" DW="单位" LX="特征类型" GCL="数量">
+                        </ctOtherAssist>
+                        <ctOtherAssist TZMC="特征名称" TZMS="特征描述" DW="单位" LX="特征类型" GCL="数量">
+                        </ctOtherAssist>
+                        <ctOtherAssist TZMC="特征名称" TZMS="特征描述" DW="单位" LX="特征类型" GCL="数量">
+                        </ctOtherAssist>
+                    </zbxmtz>
+                    <zbsbzc>
+                        <ctZhuCai BM="编码"  MC="设备主材名称"  DW="单位" SL="数量"  DJ="单价" FY="费用">
+                        </ctZhuCai>
+                        <ctSheBei BM="编码"  MC="设备主材名称"  DW="单位" SL="数量"  DJ="单价" FY="费用">
+                        </ctSheBei>
+                    </zbsbzc>
+                </ctSectionProjectIndex>
+
+            </ctUnitWBS>
+            <ctUnitWBS  ID="ID"  MC="指标名称" DW="单位"  GCL="工程量" DEDJ="定额单价" SCJG="市场单价" DQJG="地区单价" ZHDJ="综合单价" ZCDJ="主材单价" SBDJ="设备单价"  DQRGDJ="地区人工单价" DQJXDJ="地区机械单价" DQCLDJ="地区材料单价" SCRGDJ="市场人工单价" SCJXDJ="市场机械单价" SCCLDJ="市场材料单价" DERGDJ="定额人工单价" DEJXDJ="定额机械单价" DECLDJ="定额材料单价"   CONSTRUCTIONFEE="建筑费" INSTALLFEE="安装费" USEDLABORNUMBER="使用的人工数" USEDMATERIALNUMBER="使用的材料数">
+                <ctSectionProjectIndex  OBJCOSTTYPE="指标类型（显示）"  ZBDXLX="指标对象类型FX/DW/DX（加载数据对象）" TZXS="调整系数(R C J)" ZYLB="专业类别（枚举类型，每个设计单位自主定义）" ID="ID" BM="指标编码 (位数)" MC="指标名称(位数)" DW="单位" ZHDJ="综合单价" GCL="工程量" CONSTRUCTIONFEE="建筑费" INSTALLFEE="安装费"   ZCDJ="主材单价" SBDJ="设备单价" ZCHJ="主材费" SBHJ="设备费"    DQJG="地区单价" DQRGDJ="地区人工单价" DQJXDJ="地区机械单价" DQCLDJ="地区材料单价" SCJG="市场单价"  SCRGDJ="市场人工单价" SCJXDJ="市场机械单价" SCCLDJ="市场材料单价"  DEDJ="定额单价" DERGDJ="定额人工单价"  DEJXDJ="定额机械单价" DECLDJ="定额材料单价" BASICUNITS="基本单位" ZHXS="转换系数" WORKCONTENT="工作内容" CALCRULE="计算规则"  USEDLABORNUMBER="使用的人工数" USEDMATERIALNUMBER="使用的材料数">
+                    <zbxmtz>
+                        <ctOtherAssist TZMC="特征名称" TZMS="特征描述" DW="单位" LX="特征类型" GCL="数量">
+                        </ctOtherAssist>
+                        <ctOtherAssist TZMC="特征名称" TZMS="特征描述" DW="单位" LX="特征类型" GCL="数量">
+                        </ctOtherAssist>
+                        <ctOtherAssist TZMC="特征名称" TZMS="特征描述" DW="单位" LX="特征类型" GCL="数量">
+                        </ctOtherAssist>
+                        <ctOtherAssist TZMC="特征名称" TZMS="特征描述" DW="单位" LX="特征类型" GCL="数量">
+                        </ctOtherAssist>
+                    </zbxmtz>
+                    <zbsbzc>
+                        <ctZhuCai BM="编码"  MC="设备主材名称"  DW="单位" SL="数量"  DJ="单价" FY="费用">
+                        </ctZhuCai>
+                        <ctSheBei BM="编码"  MC="设备主材名称"  DW="单位" SL="数量"  DJ="单价" FY="费用">
+                        </ctSheBei>
+                    </zbsbzc>
+                </ctSectionProjectIndex>
+                <ctSectionProjectIndex  OBJCOSTTYPE="指标类型（显示）"  ZBDXLX="指标对象类型FX/DW/DX（加载数据对象）" TZXS="调整系数(R C J)" ZYLB="专业类别（枚举类型，每个设计单位自主定义）" ID="ID" BM="指标编码 (位数)" MC="指标名称(位数)" DW="单位" ZHDJ="综合单价" GCL="工程量" CONSTRUCTIONFEE="建筑费" INSTALLFEE="安装费"   ZCDJ="主材单价" SBDJ="设备单价" ZCHJ="主材费" SBHJ="设备费"    DQJG="地区单价" DQRGDJ="地区人工单价" DQJXDJ="地区机械单价" DQCLDJ="地区材料单价" SCJG="市场单价"  SCRGDJ="市场人工单价" SCJXDJ="市场机械单价" SCCLDJ="市场材料单价"  DEDJ="定额单价" DERGDJ="定额人工单价"  DEJXDJ="定额机械单价" DECLDJ="定额材料单价" BASICUNITS="基本单位" ZHXS="转换系数" WORKCONTENT="工作内容" CALCRULE="计算规则"  USEDLABORNUMBER="使用的人工数" USEDMATERIALNUMBER="使用的材料数">
+                    <zbxmtz>
+                        <ctOtherAssist TZMC="特征名称" TZMS="特征描述" DW="单位" LX="特征类型" GCL="数量">
+                        </ctOtherAssist>
+                        <ctOtherAssist TZMC="特征名称" TZMS="特征描述" DW="单位" LX="特征类型" GCL="数量">
+                        </ctOtherAssist>
+                        <ctOtherAssist TZMC="特征名称" TZMS="特征描述" DW="单位" LX="特征类型" GCL="数量">
+                        </ctOtherAssist>
+                        <ctOtherAssist TZMC="特征名称" TZMS="特征描述" DW="单位" LX="特征类型" GCL="数量">
+                        </ctOtherAssist>
+                    </zbxmtz>
+                    <zbsbzc>
+                        <ctZhuCai BM="编码"  MC="设备主材名称"  DW="单位" SL="数量"  DJ="单价" FY="费用">
+                        </ctZhuCai>
+                        <ctSheBei BM="编码"  MC="设备主材名称"  DW="单位" SL="数量"  DJ="单价" FY="费用">
+                        </ctSheBei>
+                    </zbsbzc>
+                </ctSectionProjectIndex>
+                <ctSectionProjectIndex  OBJCOSTTYPE="指标类型（显示）"  ZBDXLX="指标对象类型FX/DW/DX（加载数据对象）" TZXS="调整系数(R C J)" ZYLB="专业类别（枚举类型，每个设计单位自主定义）" ID="ID" BM="指标编码 (位数)" MC="指标名称(位数)" DW="单位" ZHDJ="综合单价" GCL="工程量" CONSTRUCTIONFEE="建筑费" INSTALLFEE="安装费"   ZCDJ="主材单价" SBDJ="设备单价" ZCHJ="主材费" SBHJ="设备费"    DQJG="地区单价" DQRGDJ="地区人工单价" DQJXDJ="地区机械单价" DQCLDJ="地区材料单价" SCJG="市场单价"  SCRGDJ="市场人工单价" SCJXDJ="市场机械单价" SCCLDJ="市场材料单价"  DEDJ="定额单价" DERGDJ="定额人工单价"  DEJXDJ="定额机械单价" DECLDJ="定额材料单价" BASICUNITS="基本单位" ZHXS="转换系数" WORKCONTENT="工作内容" CALCRULE="计算规则"  USEDLABORNUMBER="使用的人工数" USEDMATERIALNUMBER="使用的材料数">
+                    <zbxmtz>
+                        <ctOtherAssist TZMC="特征名称" TZMS="特征描述" DW="单位" LX="特征类型" GCL="数量">
+                        </ctOtherAssist>
+                        <ctOtherAssist TZMC="特征名称" TZMS="特征描述" DW="单位" LX="特征类型" GCL="数量">
+                        </ctOtherAssist>
+                        <ctOtherAssist TZMC="特征名称" TZMS="特征描述" DW="单位" LX="特征类型" GCL="数量">
+                        </ctOtherAssist>
+                        <ctOtherAssist TZMC="特征名称" TZMS="特征描述" DW="单位" LX="特征类型" GCL="数量">
+                        </ctOtherAssist>
+                    </zbxmtz>
+                    <zbsbzc>
+                        <ctZhuCai BM="编码"  MC="设备主材名称"  DW="单位" SL="数量"  DJ="单价" FY="费用">
+                        </ctZhuCai>
+                        <ctSheBei BM="编码"  MC="设备主材名称"  DW="单位" SL="数量"  DJ="单价" FY="费用">
+                        </ctSheBei>
+                    </zbsbzc>
+                </ctSectionProjectIndex>
+
+            </ctUnitWBS>
+        </WBS>
+        <zbxmtz>
+            <ctOtherAssist TZMC="特征名称" TZMS="特征描述" DW="单位" LX="特征类型" GCL="数量">
+            </ctOtherAssist>
+            <ctOtherAssist TZMC="特征名称" TZMS="特征描述" DW="单位" LX="特征类型" GCL="数量">
+            </ctOtherAssist>
+            <ctOtherAssist TZMC="特征名称" TZMS="特征描述" DW="单位" LX="特征类型" GCL="数量">
+            </ctOtherAssist>
+            <ctOtherAssist TZMC="特征名称" TZMS="特征描述" DW="单位" LX="特征类型" GCL="数量">
+            </ctOtherAssist>
+        </zbxmtz>
+        <zbsbzc>
+            <ctZhuCai BM="编码"  MC="设备主材名称"  DW="单位" SL="数量"  DJ="单价" FY="费用">
+            </ctZhuCai>
+            <ctSheBei BM="编码"  MC="设备主材名称"  DW="单位" SL="数量"  DJ="单价" FY="费用">
+            </ctSheBei>
+        </zbsbzc>
+    </ctUnitProjectIndex>
+</DocumentElement>
+
+

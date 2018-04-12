@@ -31,20 +31,19 @@ public class AdminController{
     AdminService adminService;
     @Autowired
     SysControlMapper sysControlMapper;
-    @RequestMapping("login")
 
+    @RequestMapping("login")
     public String login(String username, String password) {
         HashMap u=adminService.getUserOne(username);
         if(u==null)
             return "em/sysLogin";
         else{
-            if(u.get("MM").equals(password)){
+            if(u.get("PASSWORD").equals(password)){
                 return "em/index";
             }
         }
         return "em/sysLogin";
     }
-
 
     @RequestMapping("getRequestList")
     @ResponseBody
@@ -53,6 +52,7 @@ public class AdminController{
         String jdata= JsonMapper.getInstance().toJson(u);
         return jdata;
     }
+
     @RequestMapping("getHandleMsgList")
     @ResponseBody
     public String getHandleMsgList() {

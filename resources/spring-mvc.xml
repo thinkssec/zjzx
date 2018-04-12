@@ -9,8 +9,8 @@
 		http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop-2.0.xsd">
 
     <description>Spring MVC Configuration</description>
-
-    <!-- 加载配置属性文件 -->
+	<import resource="spring-context-jedis.xml"/>
+	<!-- 加载配置属性文件 -->
 	<context:property-placeholder ignore-unresolvable="true" location="classpath:think.properties" />
 
 	<!-- 使用Annotation自动注册Bean,只扫描@Controller -->

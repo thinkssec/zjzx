@@ -18,12 +18,12 @@
 	
 	<bean id="jedisPool" class="redis.clients.jedis.JedisPool">
 		<constructor-arg index="0" ref="jedisPoolConfig" />
-		<constructor-arg index="1" value="${redis.host}" />
+		<constructor-arg index="1" value="${redis.host}" type="java.lang.String"/><!-- 指定type，否则初始化是报错-->
 		<constructor-arg index="2" value="${redis.port}" type="int" />
 		<!-- <constructor-arg index="3" value="${redis.timeout}" type="int" />
 		<constructor-arg index="4" value="${redis.password}"/>
 		<constructor-arg index="5" value="${redis.database}" type="int" />
 		<constructor-arg index="6" value="${redis.clientName}"/> -->
 	</bean>
-	
+<!--	<bean id="cacheManage" class="com.common.utils.CacheManage" />-->
 </beans>

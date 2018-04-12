@@ -17,7 +17,7 @@
 
     </delete>
     <select id="getUserOne" resultType="java.util.HashMap">
-        select * from SYS_USER where yhm=#{username}
+        select * from SYS_USERS where LOGINID=#{username}
     </select>
     <select id="getUserList" resultType="java.util.HashMap">
         select * from sys_user
