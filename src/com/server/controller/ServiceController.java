@@ -34,8 +34,8 @@ public class ServiceController {
     public static Logger log = Logger.getLogger(ServiceController.class);
     @Autowired
     FileService fileService;
-    @Autowired
-    CacheManage cacheManage;
+    /*@Autowired
+    CacheManage cacheManage;*/
     /*
     接受参数
      */
@@ -49,7 +49,7 @@ public class ServiceController {
         //System.out.println("1111111111"+cacheManage.get("testCache")+"1111111111");
         User user= UserUtils.getUser();
         //user.setId("你好！@#￥%……&*（）");
-        cacheManage.set("testCache",user);
+        //cacheManage.set("testCache",user);
         //System.out.println("2222222222"+(User)cacheManage.get("testCache")+"2222222222");
         HashMap qx=user.getPermissionList();
         if(qx!=null){

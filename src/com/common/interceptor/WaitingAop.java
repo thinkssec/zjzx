@@ -78,7 +78,12 @@ public class WaitingAop {
 
             } else {
                 DataSourceContextHolder.setDbType(DataSourceType.Datasource1);
-                sysControlMapper.insertRequest(r);
+                //System.out.println("(((((((((((((((((82");
+                try{
+                    sysControlMapper.insertRequest(r);
+                }catch (Exception eeeee){
+                    eeeee.printStackTrace();
+                }
             }
         }
         //sysControlMapper.insertRequest(r);
@@ -102,7 +107,7 @@ public class WaitingAop {
             }
         }
         //}
-
+        //System.out.println("******************106"+e.length);
         synchronized (dl) {
             closeRequest3(r, id);
             if ("f".equals(r.getType())) {
@@ -113,6 +118,7 @@ public class WaitingAop {
                 //System.out.println("------114"+o);
                 closeHandMsg(r, id);
             } else {
+                //System.out.println("******************"+e.length);
                 try {
                     if (e != null && (e.length == 2 || e.length == 3)) {
                         o = pjp.proceed(e);

@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.server.mapper.JqsqMapper">
+    <select id="getJqsq" resultType="java.util.HashMap">
+        <include refid="com.base.baseMapper.pageStart"/>
+        select a.*,to_char(sqtime,'yyyymmdd hh24:mi:ss') sj from zjzx.SYS_JQRZ_LOG a where status is null
+        order by sqtime desc
+        <include refid="com.base.baseMapper.pageEnd"/>
+    </select>
+    <select id="getJqsqpz" resultType="java.util.HashMap">
+        <include refid="com.base.baseMapper.pageStart"/>
+        select a.*,to_char(sqtime,'yyyymmdd hh24:mi:ss') sj,
+        to_char(HPTIME,'yyyymmdd hh24:mi:ss') hpsj,decode(status,1,'停用',2,'注销','在用') zt from zjzx.SYS_JQRZ_HP a where status is null
+        order by hpsj desc
+        <include refid="com.base.baseMapper.pageEnd"/>
+    </select>
+    <select id="getJqsqwpz" resultType="java.util.HashMap">
+        <include refid="com.base.baseMapper.pageStart"/>
+        select a.*,to_char(sqtime,'yyyymmdd hh24:mi:ss') sj from zjzx.SYS_JQRZ_LOG a where status =0
+        order by sqtime desc
+        <include refid="com.base.baseMapper.pageEnd"/>
+    </select>
+    <select id="getDw" resultType="java.util.HashMap">
+        select code ,name  from SYS_OFFICE
+    </select>
+    <select id="getYq" resultType="java.util.HashMap">
+        select id,name from app_yq
+    </select>
+    <update id="saveJqsqty">
+        DECLARE
+        v_id varchar2(100):='';
+        BEGIN
+        <foreach collection="list" item="record" index="index">
+            update zjzx.SYS_JQRZ_LOG set status='1' where id=#{record.ID};
+            merge into zjzx.SYS_JQRZ_HP a using (select * from zjzx.SYS_JQRZ_LOG where id=#{record.ID}) b
+            on (a.cpuid= b.cpuid)
+            when matched then update set sqyqsj=sqyqsj||','||#{record.SQYQSJ}
+            when not matched then
+            insert (a.SQR,a.SQDW,a.SQYQSJ,a.SQSJ,a.SQYX,a.SQTIME,a.CPUID)
+            values(b.SQR,b.SQDW,b.SQYQSJ,b.SQSJ,b.SQYX,b.SQTIME,b.CPUID);
+        </foreach>
+        COMMIT;
+        END;
+    </update>
+    <update id="saveJqsqbty">
+        DECLARE
+        v_id varchar2(100):='';
+        BEGIN
+        <foreach collection="list" item="record" index="index">
+            update zjzx.SYS_JQRZ_LOG set status='0' where id=#{record.ID};
+        </foreach>
+        COMMIT;
+        END;
+    </update>
+    <update id="saveJqsqdel">
+        DECLARE
+        v_id varchar2(100):='';
+        BEGIN
+        <foreach collection="list" item="record" index="index">
+            update zjzx.SYS_JQRZ_LOG set status='3' where id=#{record.ID};
+        </foreach>
+        COMMIT;
+        END;
+
+    </update>
+    <update id="saveJqsqpz">
+        BEGIN
+        <foreach collection="list" item="record" index="index">
+            update zjzx.SYS_JQRZ_HP set hpdw=#{record.HPDW},hpdwmc=#{record.HPDWMC},hpyqsj=#{record.HPYQSJ},
+            hpyqsjmc=#{record.HPYQSJMC}
+            where cpuid=#{record.CPUID};
+        </foreach>
+        COMMIT;
+        END;
+    </update>
+</mapper>

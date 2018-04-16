@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.base.baseMapper">
+    <sql id="pageStart">SELECT * FROM (SELECT A.*, rownum r FROM (</sql>
+    <sql id="pageEnd">) A
+      WHERE 1=1
+        <if test="start != null">
+            and rownum <![CDATA[ <= ]]> ${start} * ${limit}
+        </if>
+        ) B WHERE 1=1
+        <if test="start != null">
+            and r <![CDATA[ > ]]> (${start}-1)*${limit}
+        </if>
+    </sql>
+</mapper>

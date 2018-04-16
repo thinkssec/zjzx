@@ -1,7 +1,8 @@
 package com.server.mapper;
 
-import com.thinkgem.jeesite.common.persistence.annotation.MyBatisDao;
-import com.thinkgem.jeesite.modules.app.bean.Condition;
+import com.common.annotation.MyBatisDao;
+import com.server.Entity.Condition;
+
 
 import java.util.HashMap;
 import java.util.List;
@@ -21,8 +22,6 @@ public interface JqsqMapper {
 
 	/**
 	 * 插入一个数据持久化对象
-	 *
-	 * @param params
 	 *            要插入的数据持久化对象
 	 * @return 返回影响行数
 	 */

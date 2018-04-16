@@ -8,6 +8,8 @@ import com.common.sys.entity.User;
 import com.common.utils.AppUtils;
 import com.common.utils.UserUtils;
 import com.fasterxml.jackson.databind.JavaType;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.server.Entity.Condition;
 import com.server.Entity.RequestBody;
 import com.server.Entity.ResponseBody;
 import com.server.mapper.*;
@@ -15,6 +17,7 @@ import com.sun.jna.Library;
 import com.sun.jna.Native;
 import com.sun.jna.Platform;
 import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.lang.StringEscapeUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
@@ -51,6 +54,8 @@ public class SysService{
     SyncMapper syncMapper;
     @Autowired
     PanService panService;
+    @Autowired
+    JqsqMapper jqsqMapper;
     //同步用户信息
     public ResponseBody authupduser(RequestBody rq, Map params, String id){
         ResponseBody rp=new ResponseBody(params,"1","用户信息更新成功",id,rq.getTaskid());
@@ -219,6 +224,229 @@ public class SysService{
         }catch(Exception e){
             rp.setIssuccess("0");
             rp.setMessage("获取数据升级包列表失败！"+e.getMessage());
+            e.printStackTrace();
+        }
+        return rp;
+    }
+
+    @Transactional
+    public ResponseBody getJqsq(RequestBody rq, Map params, String id){
+        ResponseBody rp=new ResponseBody(params,"1","获取数据列表",id,rq.getTaskid());
+        try{
+            ObjectMapper objectMapper = new ObjectMapper();
+            Condition condition=objectMapper.readValue(rq.getParams(), Condition.class);
+            try{
+                List<HashMap> bbls=jqsqMapper.getJqsq(condition);
+                condition.setStart(null);
+                HashMap datas=new HashMap();
+                datas.put("rows",bbls);
+                datas.put("total",jqsqMapper.getJqsq(condition).size());
+                rp.setDatas(com.common.annotation.mapper.JsonMapper.toJsonString(datas));
+            }catch (Exception e){
+                e.printStackTrace();
+                rp.setIssuccess("0");
+                rp.setMessage("获取数据列表失败！"+e.getMessage());
+            }
+        }catch(Exception e){
+            rp.setIssuccess("0");
+            rp.setMessage("获取数据列表失败！"+e.getMessage());
+            e.printStackTrace();
+        }
+        return rp;
+    }
+
+    @Transactional
+    public ResponseBody jqsqwpzList(RequestBody rq, Map params, String id){
+        ResponseBody rp=new ResponseBody(params,"1","获取数据列表",id,rq.getTaskid());
+        try{
+            ObjectMapper objectMapper = new ObjectMapper();
+            Condition condition=objectMapper.readValue(rq.getParams(), Condition.class);
+            try{
+                List<HashMap> bbls=jqsqMapper.getJqsqwpz(condition);
+                condition.setStart(null);
+                HashMap datas=new HashMap();
+                datas.put("rows",bbls);
+                datas.put("total",jqsqMapper.getJqsqwpz(condition).size());
+                rp.setDatas(com.common.annotation.mapper.JsonMapper.toJsonString(datas));
+            }catch (Exception e){
+                e.printStackTrace();
+                rp.setIssuccess("0");
+                rp.setMessage("获取数据列表失败！"+e.getMessage());
+            }
+        }catch(Exception e){
+            rp.setIssuccess("0");
+            rp.setMessage("获取数据列表失败！"+e.getMessage());
+            e.printStackTrace();
+        }
+        return rp;
+    }
+    @Transactional
+    public ResponseBody jqsqpzList(RequestBody rq, Map params, String id){
+        ResponseBody rp=new ResponseBody(params,"1","获取数据列表",id,rq.getTaskid());
+        try{
+            ObjectMapper objectMapper = new ObjectMapper();
+            Condition condition=objectMapper.readValue(rq.getParams(), Condition.class);
+            //System.out.println(rq.getParams());
+            try{
+                List<HashMap> bbls=jqsqMapper.getJqsqpz(condition);
+                condition.setStart(null);
+                HashMap datas=new HashMap();
+                datas.put("rows",bbls);
+                datas.put("total",jqsqMapper.getJqsqpz(condition).size());
+                rp.setDatas(com.common.annotation.mapper.JsonMapper.toJsonString(datas));
+            }catch (Exception e){
+                e.printStackTrace();
+                rp.setIssuccess("0");
+                rp.setMessage("获取数据列表失败！"+e.getMessage());
+            }
+        }catch(Exception e){
+            rp.setIssuccess("0");
+            rp.setMessage("获取数据列表失败！"+e.getMessage());
+            e.printStackTrace();
+        }
+        return rp;
+    }
+
+    @Transactional
+    public ResponseBody jqsqty(RequestBody rq, Map params, String id){
+        ResponseBody rp=new ResponseBody(params,"1","保存成功！",id,rq.getTaskid());
+        try{
+            ObjectMapper objectMapper = new ObjectMapper();
+            Condition condition=objectMapper.readValue(rq.getParams(), Condition.class);
+            try{
+                String updL = StringEscapeUtils.unescapeHtml(condition.getC2());
+                JavaType javaType = JsonMapper.getInstance().getTypeFactory().constructParametricType(List.class, HashMap.class);
+                List<HashMap> h = JsonMapper.getInstance().fromJson(updL, javaType);
+                HashMap m=new HashMap();
+                m.put("list",h);
+                jqsqMapper.saveJqsqty(m);
+            }catch (Exception e){
+                e.printStackTrace();
+                rp.setIssuccess("0");
+                rp.setMessage("操作失败！"+e.getMessage());
+            }
+        }catch(Exception e){
+            rp.setIssuccess("0");
+            rp.setMessage("操作失败！"+e.getMessage());
+            e.printStackTrace();
+        }
+        return rp;
+    }
+    @Transactional
+    public ResponseBody savejqsqpz(RequestBody rq, Map params, String id){
+        ResponseBody rp=new ResponseBody(params,"1","保存成功！",id,rq.getTaskid());
+        try{
+            ObjectMapper objectMapper = new ObjectMapper();
+            Condition condition=objectMapper.readValue(rq.getParams(), Condition.class);
+            try{
+                //String updL = StringEscapeUtils.unescapeHtml(condition.getC6());
+                String updL = condition.getC6();
+                System.out.println(updL);
+                JavaType javaType = JsonMapper.getInstance().getTypeFactory().constructParametricType(List.class, HashMap.class);
+                List<HashMap> h = JsonMapper.getInstance().fromJson(updL, javaType);
+                HashMap m=new HashMap();
+                m.put("list",h);
+                jqsqMapper.saveJqsqpz(m);
+            }catch (Exception e){
+                e.printStackTrace();
+                rp.setIssuccess("0");
+                rp.setMessage("操作失败！"+e.getMessage());
+            }
+        }catch(Exception e){
+            rp.setIssuccess("0");
+            rp.setMessage("操作失败！"+e.getMessage());
+            e.printStackTrace();
+        }
+        return rp;
+    }
+
+    public ResponseBody jqsqbty(RequestBody rq, Map params, String id){
+        ResponseBody rp=new ResponseBody(params,"1","保存成功！",id,rq.getTaskid());
+        try{
+            ObjectMapper objectMapper = new ObjectMapper();
+            Condition condition=objectMapper.readValue(rq.getParams(), Condition.class);
+            try{
+                String updL = StringEscapeUtils.unescapeHtml(condition.getC2());
+                JavaType javaType = JsonMapper.getInstance().getTypeFactory().constructParametricType(List.class, HashMap.class);
+                List<HashMap> h = JsonMapper.getInstance().fromJson(updL, javaType);
+                HashMap m=new HashMap();
+                m.put("list",h);
+                jqsqMapper.saveJqsqbty(m);
+            }catch (Exception e){
+                e.printStackTrace();
+                rp.setIssuccess("0");
+                rp.setMessage("操作失败！"+e.getMessage());
+            }
+        }catch(Exception e){
+            rp.setIssuccess("0");
+            rp.setMessage("操作失败！"+e.getMessage());
+            e.printStackTrace();
+        }
+        return rp;
+    }
+
+    public ResponseBody jqsqdel(RequestBody rq, Map params, String id){
+        ResponseBody rp=new ResponseBody(params,"1","保存成功！",id,rq.getTaskid());
+        try{
+            ObjectMapper objectMapper = new ObjectMapper();
+            Condition condition=objectMapper.readValue(rq.getParams(), Condition.class);
+            try{
+                String updL = StringEscapeUtils.unescapeHtml(condition.getC2());
+                JavaType javaType = JsonMapper.getInstance().getTypeFactory().constructParametricType(List.class, HashMap.class);
+                List<HashMap> h = JsonMapper.getInstance().fromJson(updL, javaType);
+                HashMap m=new HashMap();
+                m.put("list",h);
+                jqsqMapper.saveJqsqdel(m);
+            }catch (Exception e){
+                e.printStackTrace();
+                rp.setIssuccess("0");
+                rp.setMessage("操作失败！"+e.getMessage());
+            }
+        }catch(Exception e){
+            rp.setIssuccess("0");
+            rp.setMessage("操作失败！"+e.getMessage());
+            e.printStackTrace();
+        }
+        return rp;
+    }
+    public ResponseBody getDw(RequestBody rq, Map params, String id){
+        ResponseBody rp=new ResponseBody(params,"1","获取数据列表成功！",id,rq.getTaskid());
+        try{
+            ObjectMapper objectMapper = new ObjectMapper();
+            Condition condition=objectMapper.readValue(rq.getParams(), Condition.class);
+            try{
+                List<HashMap> lsHt = jqsqMapper.getDw(condition);
+                String jdata= JsonMapper.getInstance().toJson(lsHt);
+                rp.setDatas(jdata);
+            }catch (Exception e){
+                e.printStackTrace();
+                rp.setIssuccess("0");
+                rp.setMessage("获取数据列表失败！"+e.getMessage());
+            }
+        }catch(Exception e){
+            rp.setIssuccess("0");
+            rp.setMessage("获取数据列表失败！"+e.getMessage());
+            e.printStackTrace();
+        }
+        return rp;
+    }
+    public ResponseBody getYq(RequestBody rq, Map params, String id){
+        ResponseBody rp=new ResponseBody(params,"1","获取数据列表成功！",id,rq.getTaskid());
+        try{
+            ObjectMapper objectMapper = new ObjectMapper();
+            Condition condition=objectMapper.readValue(rq.getParams(), Condition.class);
+            try{
+                List<HashMap> lsHt = jqsqMapper.getYq(condition);
+                String jdata= JsonMapper.getInstance().toJson(lsHt);
+                rp.setDatas(jdata);
+            }catch (Exception e){
+                e.printStackTrace();
+                rp.setIssuccess("0");
+                rp.setMessage("获取数据列表失败！"+e.getMessage());
+            }
+        }catch(Exception e){
+            rp.setIssuccess("0");
+            rp.setMessage("获取数据列表失败！"+e.getMessage());
             e.printStackTrace();
         }
         return rp;
