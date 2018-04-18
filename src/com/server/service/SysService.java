@@ -17,6 +17,7 @@ import com.sun.jna.Library;
 import com.sun.jna.Native;
 import com.sun.jna.Platform;
 import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringEscapeUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -30,7 +31,11 @@ import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.lang.reflect.Method;
+import java.nio.charset.StandardCharsets;
+import java.sql.Blob;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
@@ -56,6 +61,9 @@ public class SysService{
     PanService panService;
     @Autowired
     JqsqMapper jqsqMapper;
+
+    @Autowired
+    FrameMapper frameMapper;
     //同步用户信息
     public ResponseBody authupduser(RequestBody rq, Map params, String id){
         ResponseBody rp=new ResponseBody(params,"1","用户信息更新成功",id,rq.getTaskid());
@@ -438,6 +446,36 @@ public class SysService{
             try{
                 List<HashMap> lsHt = jqsqMapper.getYq(condition);
                 String jdata= JsonMapper.getInstance().toJson(lsHt);
+                rp.setDatas(jdata);
+            }catch (Exception e){
+                e.printStackTrace();
+                rp.setIssuccess("0");
+                rp.setMessage("获取数据列表失败！"+e.getMessage());
+            }
+        }catch(Exception e){
+            rp.setIssuccess("0");
+            rp.setMessage("获取数据列表失败！"+e.getMessage());
+            e.printStackTrace();
+        }
+        return rp;
+    }
+
+    public ResponseBody getMenuList(RequestBody rq, Map params, String id){
+        ResponseBody rp=new ResponseBody(params,"1","获取数据列表成功！",id,rq.getTaskid());
+        try{
+            ObjectMapper objectMapper = new ObjectMapper();
+            //Condition condition=objectMapper.readValue(rq.getParams(), Condition.class);
+            try{
+                Map mmmm=frameMapper.getPermission("menuList");
+                Blob bbbb=(Blob)mmmm.get("VALUE");
+                InputStream inStream = bbbb.getBinaryStream();
+/*                byte[] data = new byte[1024];
+                inStream.read(data);
+                inStream.close();*/
+                //String jdata= new String(new String(data));;
+                String jdata = IOUtils.toString(inStream);
+                inStream.close();
+                System.out.println(jdata);
                 rp.setDatas(jdata);
             }catch (Exception e){
                 e.printStackTrace();
