@@ -1,9 +1,6 @@
 package com.server.service;
 
-import com.common.annotation.CompResponseBody;
-import com.common.annotation.SqliteDao;
 import com.common.annotation.mapper.JsonMapper;
-import com.common.config.DataSourceContextHolder;
 import com.common.sys.entity.User;
 import com.common.utils.AppUtils;
 import com.common.utils.UserUtils;
@@ -15,31 +12,18 @@ import com.server.Entity.ResponseBody;
 import com.server.mapper.*;
 import com.sun.jna.Library;
 import com.sun.jna.Native;
-import com.sun.jna.Platform;
-import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringEscapeUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.multipart.commons.CommonsMultipartFile;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpSession;
-import java.io.File;
-import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
-import java.lang.reflect.Method;
-import java.nio.charset.StandardCharsets;
 import java.sql.Blob;
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.SQLException;
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Created by Administrator on 2017/10/18.
@@ -157,7 +141,6 @@ public class SysService{
     public ResponseBody authgetuser(RequestBody rq, Map params, String id){
         ResponseBody rp=new ResponseBody(params,"1","获取用户列表成功",id,rq.getTaskid());
         try{
-
             List<HashMap> ul=userMapper.getUserList(params);
             rp.setDatas(JsonMapper.toJsonString(ul));
         }catch(Exception e){
@@ -475,7 +458,7 @@ public class SysService{
                 //String jdata= new String(new String(data));;
                 String jdata = IOUtils.toString(inStream);
                 inStream.close();
-                System.out.println(jdata);
+                //System.out.println(jdata);
                 rp.setDatas(jdata);
             }catch (Exception e){
                 e.printStackTrace();
