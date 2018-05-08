@@ -7,7 +7,10 @@ import com.common.utils.PropertiesLoader;
 import com.common.utils.StringUtils;
 import com.google.common.collect.Maps;
 import org.springframework.core.io.DefaultResourceLoader;
+import org.springframework.web.context.ContextLoader;
+import org.springframework.web.context.WebApplicationContext;
 
+import javax.servlet.ServletContext;
 import java.io.File;
 import java.io.IOException;
 import java.util.Map;
@@ -56,11 +59,13 @@ public class Global {
 	 * 上传文件基础虚拟路径
 	 */
 	public static final String USERFILES_BASE_URL = "/userfiles/";
+
+	public static final String USERFILES = "userfiles";
 	/**
 	 * 软件升级目录
 	 */
 	public static final String SOFTWAREFILES_BASE_URL = "/softwarefiles/";
-
+	public static final String SOFTWAREFILES = "software";
 	/**
 	 * 软件升级目录
 	 */
@@ -141,14 +146,19 @@ public class Global {
 	 * @return
 	 */
 	public static String getUserfilesBaseDir() {
-		String dir = getConfig("upLoadPath");
-		/*if (StringUtils.isBlank(dir)){
+		String dir = getConfig("userfiles.basedir");
+		if (StringUtils.isBlank(dir)){
 			try {
-				dir = ServletContextFactory.getServletContext().getRealPath("/");
+				WebApplicationContext webApplicationContext = ContextLoader
+						.getCurrentWebApplicationContext();
+				ServletContext servletContext = webApplicationContext
+						.getServletContext();
+				dir= servletContext.getRealPath(Global.USERFILES)+"/";
 			} catch (Exception e) {
+				e.printStackTrace();
 				return "";
 			}
-		}*/
+		}
 		if(!dir.endsWith("/")) {
 			dir += "/";
 		}

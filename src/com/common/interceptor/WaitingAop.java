@@ -129,11 +129,10 @@ public class WaitingAop {
                     ex.printStackTrace();
                 }
             }
-            pd = true;
+            //pd = true;
             pd = false;
             dl.remove(0);
         }
-
         return o;
     }
 
@@ -146,14 +145,11 @@ public class WaitingAop {
             e.printStackTrace();
         }
     }
-
     @Around("queuenf()")
     public Object aroundExecf(ProceedingJoinPoint pjp) throws Throwable {
         //System.out.println("48：" + new Date());
         Object o = null;
         Object[] d = pjp.getArgs();
-
-
         Object[] e = null;
         String id = "";
         RequestBody r = null;
@@ -191,7 +187,6 @@ public class WaitingAop {
                     sysControlMapper.insertRequest(r);
                 }*/
                 if (e != null && (e.length == 2 || e.length == 3)) {
-
                     o = pjp.proceed(e);
                 }
             } catch (InterruptedException ex) {
@@ -201,7 +196,6 @@ public class WaitingAop {
             dl.remove(0);
             //System.out.println("运行完毕:" + new Date());
         }
-
         return o;
     }
 

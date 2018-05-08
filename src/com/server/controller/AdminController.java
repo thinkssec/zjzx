@@ -7,6 +7,7 @@ import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang.ArrayUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
@@ -31,7 +32,7 @@ public class AdminController{
     AdminService adminService;
     @Autowired
     SysControlMapper sysControlMapper;
-
+    @CrossOrigin(origins = "*", maxAge = 3600)
     @RequestMapping("login")
     public String login(String username, String password) {
         HashMap u=adminService.getUserOne(username);
@@ -61,6 +62,16 @@ public class AdminController{
         return jdata;
     }
 
+    @CrossOrigin(origins = "*", maxAge = 3600)
+    @RequestMapping("xtbbgl")
+    public String xtbbgl(String username, String password) {
+        return "../../static/ckfinder/ckfinderCx";
+    }
+    @CrossOrigin(origins = "*", maxAge = 3600)
+    @RequestMapping("test")
+    public String test(String username, String password) {
+        return "../../static/ckfinder/frame";
+    }
 /*  @RequestMapping("upLoad")
     @ResponseBody
     public String upLoad(String requestBody,@RequestParam("file") CommonsMultipartFile file,

@@ -88,6 +88,28 @@
         <url-pattern>/upgrade/*</url-pattern>
         <url-pattern>/databb/*</url-pattern>
     </servlet-mapping>
+    <servlet>
+        <servlet-name>CKFinderConnectorServlet</servlet-name>
+        <servlet-class>com.common.servlet.CKFinderConnectorServlet</servlet-class>
+        <init-param>
+            <param-name>XMLConfig</param-name>
+            <param-value>/WEB-INF/ckfinder.xml</param-value>
+        </init-param>
+        <init-param>
+            <param-name>debug</param-name>
+            <param-value>false</param-value>
+        </init-param>
+        <init-param>
+            <param-name>configuration</param-name>
+            <param-value>com.common.config.CKFinderConfig</param-value>
+        </init-param>
+        <load-on-startup>1</load-on-startup>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>CKFinderConnectorServlet</servlet-name>
+        <url-pattern>/static/ckfinder/core/connector/java/connector.java</url-pattern>
+    </servlet-mapping>
+
     <mime-mapping>
          <extension>ndxml</extension>
         <mime-type>application/x-msdownload</mime-type>

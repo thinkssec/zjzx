@@ -10,7 +10,7 @@
     <select id="getJqsqpz" resultType="java.util.HashMap">
         <include refid="com.base.baseMapper.pageStart"/>
         select a.*,to_char(sqtime,'yyyymmdd hh24:mi:ss') sj,
-        to_char(HPTIME,'yyyymmdd hh24:mi:ss') hpsj,decode(status,1,'停用',2,'注销','在用') zt from zjzx.SYS_JQRZ_HP a where status is null
+        to_char(HPTIME,'yyyymmdd hh24:mi:ss') hpsj,decode(status,1,'停用',2,'注销','在用') zt from zjzx.SYS_JQRZ_HP a where (status =1 or status is null)
         order by hpsj desc
         <include refid="com.base.baseMapper.pageEnd"/>
     </select>
@@ -26,6 +26,12 @@
     <select id="getYq" resultType="java.util.HashMap">
         select id,name from app_yq
     </select>
+    <select id="isRegist" resultType="java.util.HashMap">
+        select * from SYS_JQRZ_HP where cpuid=#{CPUID} and (status is null or status=1)
+    </select>
+    <select id="isRegist2" resultType="java.util.HashMap">
+        select * from SYS_JQRZ_HP where cpuid=#{CPUID} and status is not null
+    </select>
     <update id="saveJqsqty">
         DECLARE
         v_id varchar2(100):='';
@@ -34,7 +40,7 @@
             update zjzx.SYS_JQRZ_LOG set status='1' where id=#{record.ID};
             merge into zjzx.SYS_JQRZ_HP a using (select * from zjzx.SYS_JQRZ_LOG where id=#{record.ID}) b
             on (a.cpuid= b.cpuid)
-            when matched then update set sqyqsj=sqyqsj||','||#{record.SQYQSJ}
+            when matched then update set sqyqsj=sqyqsj||','||#{record.SQYQSJ},status=null
             when not matched then
             insert (a.SQR,a.SQDW,a.SQYQSJ,a.SQSJ,a.SQYX,a.SQTIME,a.CPUID)
             values(b.SQR,b.SQDW,b.SQYQSJ,b.SQSJ,b.SQYX,b.SQTIME,b.CPUID);
@@ -69,6 +75,147 @@
             update zjzx.SYS_JQRZ_HP set hpdw=#{record.HPDW},hpdwmc=#{record.HPDWMC},hpyqsj=#{record.HPYQSJ},
             hpyqsjmc=#{record.HPYQSJMC}
             where cpuid=#{record.CPUID};
+        </foreach>
+        COMMIT;
+        END;
+    </update>
+    <update id="regist">
+        DECLARE
+        v_status varchar2(100):='-1';
+        v_sqr varchar2(30):='';
+        v_sqdw varchar2(100):='';
+        v_sqsj varchar2(30):='';
+        v_sqyqsj varchar2(100):='';
+        v_sqyx varchar2(100):='';
+        v_cpuid varchar2(100):='';
+        v_ip varchar2(100):='';
+        p_sqr varchar2(30):='';
+        p_sqsj varchar2(30):='';
+        p_sqyqsj varchar2(100):='';
+        p_sqyx varchar2(100):='';
+        p_sqdw varchar2(100):='';
+        t_count  number := 0;
+        BEGIN
+            select #{SQR},#{SQSJ},#{SQYQSJ},#{SQYX},#{CPUID},#{IP},#{SQDW}
+            into v_sqr,v_sqsj,v_sqyqsj,v_sqyx,v_cpuid,v_ip,v_sqdw from dual;
+            select count(1)
+              into t_count
+              from SYS_JQRZ_LOG
+             where cpuid = v_cpuid
+               and sqdw = v_sqdw
+               and sqyqsj = v_sqyqsj
+               and status = 1;
+            begin
+              select 0, sqr, sqsj, sqyqsj, sqyx, sqdw
+                into v_status, p_sqr, p_sqsj, p_sqyqsj, p_sqyx, p_sqdw
+                from SYS_JQRZ_HP
+               where cpuid = v_cpuid
+                 and status is null;
+            exception
+              when others then
+                null;
+            end;
+            if t_count = 0 then
+              begin
+                if v_status = 0 then
+                  begin
+                    if v_sqr = p_sqr and v_sqsj = p_sqsj and v_sqyqsj = p_sqyqsj and
+                       v_sqyx = p_sqyx and v_sqdw = p_sqdw then
+                      begin
+                        null;
+                      end;
+                      --关键数据一致
+                    elsif v_sqyqsj = p_sqyqsj and v_sqdw = p_sqdw then
+                      begin
+                        insert into SYS_JQRZ_LOG
+                          (SQR, SQDW, SQYQSJ, SQSJ, Sqyx, Ip, Cpuid, status)
+                        values
+                          (v_sqr,
+                           v_sqdw,
+                           v_sqyqsj,
+                           v_sqsj,
+                           v_sqyx,
+                           v_ip,
+                           v_cpuid,
+                           '4');
+                        update SYS_JQRZ_HP
+                           set sqr = v_sqr, sqsj = v_sqsj, sqyx = v_sqyx
+                         where cpuid = v_cpuid;
+                      end;
+                    else
+                      begin
+                        update SYS_JQRZ_LOG
+                           set status = 3
+                         where cpuid = v_cpuid
+                           and (status is null or status = 0);
+                        insert into SYS_JQRZ_LOG
+                          (SQR, SQDW, SQYQSJ, SQSJ, Sqyx, Ip, Cpuid)
+                        values
+                          (v_sqr, v_sqdw, v_sqyqsj, v_sqsj, v_sqyx, v_ip, v_cpuid);
+                      end;
+                    end if;
+                  end;
+                elsif v_status = '-1' then
+                  begin
+                    update SYS_JQRZ_LOG
+                       set status = 3
+                     where cpuid = v_cpuid
+                       and (status is null or status = 0);
+                    insert into SYS_JQRZ_LOG
+                      (SQR, SQDW, SQYQSJ, SQSJ, Sqyx, Ip, Cpuid)
+                    values
+                      (v_sqr, v_sqdw, v_sqyqsj, v_sqsj, v_sqyx, v_ip, v_cpuid);
+                  end;
+                end if;
+              end;
+            else
+              begin
+                if v_sqr = p_sqr and v_sqsj = p_sqsj and v_sqyx = p_sqyx then
+                  begin
+                    null;
+                  end;
+                else
+                  begin
+                    insert into SYS_JQRZ_LOG
+                      (SQR, SQDW, SQYQSJ, SQSJ, Sqyx, Ip, Cpuid, status)
+                    values
+                      (v_sqr, v_sqdw, v_sqyqsj, v_sqsj, v_sqyx, v_ip, v_cpuid, '4');
+                    update SYS_JQRZ_HP
+                       set sqr = v_sqr, sqsj = v_sqsj, sqyx = v_sqyx
+                     where cpuid = v_cpuid;
+                  end;
+                end if;
+              end;
+            end if;
+          END;
+    </update>
+    <update id="saveJqsqtingy">
+        DECLARE
+        v_id varchar2(100):='';
+        BEGIN
+        <foreach collection="list" item="record" index="index">
+            update zjzx.SYS_JQRZ_HP set status='1' where cpuid=#{record.CPUID};
+        </foreach>
+        COMMIT;
+        END;
+
+    </update>
+    <update id="saveJqsqzhux">
+        DECLARE
+        v_id varchar2(100):='';
+        BEGIN
+        <foreach collection="list" item="record" index="index">
+            update zjzx.SYS_JQRZ_HP set status='2',zxtime=sysdate where cpuid=#{record.CPUID};
+        </foreach>
+        COMMIT;
+        END;
+    </update>
+    <update id="saveJqsqqiy">
+        DECLARE
+        v_id varchar2(100):='';
+        BEGIN
+        <foreach collection="list" item="record" index="index">
+            update zjzx.SYS_JQRZ_HP set status=null where cpuid=#{record.CPUID};
         </foreach>
         COMMIT;
         END;

@@ -33,10 +33,12 @@ public class Condition extends BaseEntity<Condition> {
     private String c21;
     private String dwdm;
     private String userid;
+    private String loginName;
     private String sort;
     private String order;
     private String start;
     private String limit;
+    private String password;
     private List<HashMap> list;
 
     public List<HashMap> getList() {
@@ -273,6 +275,21 @@ public class Condition extends BaseEntity<Condition> {
         this.c1 = c1;
     }
 
+    public String getLoginName() {
+        return loginName;
+    }
+
+    public void setLoginName(String loginName) {
+        this.loginName = loginName;
+    }
+
+    public String getPassword() {
+        return password;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
+    }
 
     @Override
     public void preInsert() {

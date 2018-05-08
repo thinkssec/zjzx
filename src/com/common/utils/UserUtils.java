@@ -85,6 +85,7 @@ public class UserUtils {
 	public static StatelessRealm.Principal getPrincipal(){
 		try{
 			Subject subject = SecurityUtils.getSubject();
+
 			StatelessRealm.Principal principal = (StatelessRealm.Principal)subject.getPrincipal();
 			if (principal != null){
 				return principal;

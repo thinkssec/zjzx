@@ -6,6 +6,7 @@ import com.server.Entity.Condition;
 
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * <b>[appRgcbGlq]数据访问接口</b>
@@ -34,4 +35,13 @@ public interface JqsqMapper {
 	List<HashMap> getDw(Condition condition);
 	List<HashMap> getYq(Condition condition);
     void saveJqsqpz(HashMap map);
+    HashMap isRegist(Map map);
+	HashMap isRegist2(Map map);
+    void regist(Map params);
+
+	void saveJqsqtingy(HashMap m);
+
+	void saveJqsqzhux(HashMap m);
+
+	void saveJqsqqiy(HashMap m);
 }

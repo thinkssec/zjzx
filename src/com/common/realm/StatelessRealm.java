@@ -79,6 +79,7 @@ public class StatelessRealm extends AuthorizingRealm {
         private String loginName; // 登录名
         private String name; // 姓名
         private boolean mobileLogin; // 是否手机登录
+        private String relationId;
 
 //		private Map<String, Object> cacheMap;
 
@@ -87,7 +88,13 @@ public class StatelessRealm extends AuthorizingRealm {
             this.loginName = user.getLoginName();
             this.name = user.getName();
         }
+        public String getRelationId() {
+            return relationId;
+        }
 
+        public void setRelationId(String relationId) {
+            this.relationId = relationId;
+        }
         public String getId() {
             return id;
         }

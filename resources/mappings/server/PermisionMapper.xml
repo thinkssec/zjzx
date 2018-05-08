@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.server.mapper.PermisionMapper">
+
+    <select id="getDeptList" resultType="java.util.HashMap">
+        <include refid="com.base.baseMapper.pageStart"/>
+        select t.dwmc,t.dwdm,t.lxr,t.lxr_dh,t.bz,
+        sfqy,decode(sfqy,'1','启用','未启用') sfqymc,
+        to_char(createtime,'yyyymmdd hh24:mi:ss') createtime from app_dept t where isdel='0'
+        order by createtime desc
+        <include refid="com.base.baseMapper.pageEnd"/>
+    </select>
+
+    <select id="getUserList" resultType="java.util.HashMap">
+        <include refid="com.base.baseMapper.pageStart"/>
+        select r.userid,r.username,r.loginname,r.pwd,r.upwd,r.gddh,r.yddh,r.dw,r.sfqy,
+        decode(sfqy,'1','启用','未启用') sfqymc,r.fpz,r.email,r.bzxx,
+        to_char(createtime,'yyyymmdd hh24:mi:ss') createtime from app_user r
+        where isdel='0' order by createtime desc
+        <include refid="com.base.baseMapper.pageEnd"/>
+    </select>
+
+    <update id="saveDeptList">
+        DECLARE
+        v_id varchar2(100):='';
+        BEGIN
+        <foreach collection="list" item="record" index="index">
+            merge into app_DEPT a using (select #{record.DWDM} dwdm,#{record.DWMC} dwmc,
+            #{record.LXR} lxr,#{record.LXR_DH} lxr_dh,#{record.SFQY} sfqy,#{record.BZ} bz from dual) b
+            on (a.DWDM= b.DWDM)
+            when matched then update set A.DWMC=b.dwmc,A.LXR=lxr,A.LXR_DH=lxr_dh,A.SFQY=sfqy,A.BZ=bz
+            when not matched then
+            insert (a.DWDM,a.dwmc,a.lxr,a.lxr_dh,a.sfqy,a.bz)
+            values(SEQ_DWDM.NEXTVAL,b.dwmc,b.lxr,b.lxr_dh,b.sfqy,b.bz);
+        </foreach>
+        COMMIT;
+        END;
+    </update>
+
+    <update id="saveUserList">
+        DECLARE
+        v_id varchar2(100):='';
+        BEGIN
+        <foreach collection="list" item="record" index="index">
+            merge into APP_USER a using (select #{record.USERID} userid,#{record.LOGINNAME} loginname,#{record.USERNAME} username,#{record.DW} DW,#{record.GDDH} GDDH,
+            #{record.YDDH} YDDH,#{record.EMAIL} EMAIL,#{record.BZXX} BZXX , #{record.UPWD} UPWD,#{record.PWD} PWD,#{record.SFQY} SFQY,#{record.FPZ}  FPZ
+            from dual) b
+            on (a.userid= b.userid)
+            when matched then update set a.username=username,a.gddh=b.gddh,
+            a.yddh=b.yddh,a.email=b.email,a.bzxx=b.bzxx,a.upwd=b.upwd,a.pwd=b.pwd,a.sfqy=b.sfqy
+            when not matched then
+            insert (a.loginname,a.username,a.dw,a.gddh,a.yddh,a.email,a.bzxx,a.pwd,a.upwd,sfqy,a.fpz)
+            values(b.loginname,b.username,b.dw,b.gddh,b.yddh,b.email,b.bzxx,'e8a8a2b6a74869256b9d1018b08de1a3606ffe7c9b95d577bbf6b722','e8a8a2b6a74869256b9d1018b08de1a3606ffe7c9b95d577bbf6b722',b.sfqy,b.fpz);
+        </foreach>
+        COMMIT;
+        END;
+    </update>
+    <update id="deteleDept">
+        DECLARE
+        v_id varchar2(100):='';
+        BEGIN
+        <foreach collection="list" item="record" index="index">
+            update app_dept set isdel='1'  where dwdm=#{record.DWDM};
+        </foreach>
+        COMMIT;
+        END;
+    </update>
+
+    <update id="delUserlist">
+        DECLARE
+        v_id varchar2(100):='';
+        BEGIN
+        <foreach collection="list" item="record" index="index">
+            update app_user set isdel='1'  where userid=#{record.USERID};
+        </foreach>
+        COMMIT;
+        END;
+    </update>
+</mapper>

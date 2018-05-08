@@ -4,18 +4,20 @@ import com.common.config.Global;
 import com.common.mapper.JsonMapper;
 import com.common.utils.AppUtils;
 import com.common.utils.StringUtils;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.server.Entity.Condition;
 import com.server.Entity.RequestBody;
 import com.server.Entity.ResponseBody;
-import com.server.mapper.AnonMapper;
-import com.server.mapper.SyncMapper;
-import com.server.mapper.SysControlMapper;
-import com.server.mapper.UserMapper;
+import com.server.mapper.*;
+import org.apache.commons.io.IOUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.io.File;
+import java.io.InputStream;
+import java.sql.Blob;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -33,6 +35,10 @@ public class AnonService {
     SyncMapper syncMapper;
     @Autowired
     UserMapper userMapper;
+    @Autowired
+    JqsqMapper jqsqMapper;
+    @Autowired
+    FrameMapper frameMapper;
     private static String upgradeDec="upgrade";
     private static String databbDec="databb";
     private static String upgradeFilePath="C:\\\\upload\\\\softwarefiles\\\\";
@@ -41,28 +47,47 @@ public class AnonService {
         return r;
     }
 
-    public ResponseBody regist(RequestBody rq, Map params, String id){
-        ResponseBody r=new ResponseBody(params,"1","注册成功",id,rq.getTaskid());
+    public  ResponseBody isRegist(RequestBody rq, Map params, String id){
+        ResponseBody r=new ResponseBody(params,"0","该机器未曾注册！",id,rq.getTaskid());
         try {
-            HashMap m=anonMapper.selectRegistInf(params);
+            //HashMap m=anonMapper.selectRegistInf(params);
+            HashMap m=jqsqMapper.isRegist(params);
             if(m!=null) {
-                r.setIssuccess("0");
-                r.setMessage("该机器已经注册过！");
-                r.setDatas(JsonMapper.toJsonString(m));
-                return r;
-            }else{
-                params.put("username",rq.getUsername());
-                anonMapper.insertRegistInf(params);
-                m=anonMapper.selectRegistInf(params);
                 r.setIssuccess("1");
-                r.setMessage("注册成功！");
+                r.setMessage("该机器已被注册过！目前处于"+("1".equals((String)m.get("STAUTS"))?"停用状态":"启用状态"));
                 r.setDatas(JsonMapper.toJsonString(m));
                 return r;
+            }/*else{
+                m=jqsqMapper.isRegist2(params);
+                if(m!=null){
+                    r.setIssuccess("0");
+                    r.setMessage("该机器已被停用或者注销！");
+                    r.setDatas(JsonMapper.toJsonString(m));
+                    return r;
+                }
+            }*/
+        }catch(Exception e){
+            e.printStackTrace();
+            r.setIssuccess("0");
+            r.setMessage("注册验证失败！");
+        }
+        return r;
+    }
+
+    public ResponseBody regist(RequestBody rq, Map params, String id){
+        ResponseBody r=new ResponseBody(params,"1","注册申请提交成功！",id,rq.getTaskid());
+        try {
+            //HashMap m=anonMapper.selectRegistInf(params);
+            jqsqMapper.regist(params);
+            HashMap m=jqsqMapper.isRegist(params);
+            if(m!=null){
+                r.setMessage("该机器以前注册过！目前处于"+("1".equals((String)m.get("STAUTS"))?"停用状态":"启用状态"));
+                r.setDatas(JsonMapper.toJsonString(m));
             }
         }catch(Exception e){
             e.printStackTrace();
             r.setIssuccess("0");
-            r.setMessage("注册失败");
+            r.setMessage("注册申请提交失败！");
         }
         return r;
     }
@@ -123,6 +148,51 @@ public class AnonService {
         }catch(Exception e){
             rp.setIssuccess("0");
             rp.setMessage("获取用户列表失败！"+e.getMessage());
+            e.printStackTrace();
+        }
+        return rp;
+    }
+
+    public ResponseBody AuthRealm(RequestBody rq, Map params, String id){
+        ResponseBody rp=new ResponseBody(params,"1","获取用户成功",id,rq.getTaskid());
+        try{
+            System.out.println();
+            ObjectMapper objectMapper = new ObjectMapper();
+            Condition condition=objectMapper.readValue(rq.getParams(), Condition.class);
+            HashMap m=userMapper.getUserOne(condition.getLoginName());
+            rp.setDatas(com.common.annotation.mapper.JsonMapper.toJsonString(m));
+        }catch(Exception e){
+            rp.setIssuccess("0");
+            rp.setMessage("获取用户成功！"+e.getMessage());
+            e.printStackTrace();
+        }
+        return rp;
+    }
+    public ResponseBody getMenuList(RequestBody rq, Map params, String id){
+        ResponseBody rp=new ResponseBody(params,"1","获取数据列表成功！",id,rq.getTaskid());
+        try{
+            ObjectMapper objectMapper = new ObjectMapper();
+            //Condition condition=objectMapper.readValue(rq.getParams(), Condition.class);
+            try{
+                Map mmmm=frameMapper.getPermission("menuList");
+                Blob bbbb=(Blob)mmmm.get("VALUE");
+                InputStream inStream = bbbb.getBinaryStream();
+/*                byte[] data = new byte[1024];
+                inStream.read(data);
+                inStream.close();*/
+                //String jdata= new String(new String(data));;
+                String jdata = IOUtils.toString(inStream);
+                inStream.close();
+                //System.out.println(jdata);
+                rp.setDatas(jdata);
+            }catch (Exception e){
+                e.printStackTrace();
+                rp.setIssuccess("0");
+                rp.setMessage("获取数据列表失败！"+e.getMessage());
+            }
+        }catch(Exception e){
+            rp.setIssuccess("0");
+            rp.setMessage("获取数据列表失败！"+e.getMessage());
             e.printStackTrace();
         }
         return rp;

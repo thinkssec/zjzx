@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.server.mapper.BbglMapper">
+    <delete id="delBbxt">
+        BEGIN
+        <foreach collection="list" item="record" index="index">
+            delete from  APP_BB_XT where id=#{record.ID};
+        </foreach>
+        COMMIT;
+        END;
+    </delete>
+    <delete id="delBbsj">
+        BEGIN
+        <foreach collection="list" item="record" index="index">
+            delete from  APP_BB_SJ where id=#{record.ID};
+        </foreach>
+        COMMIT;
+        END;
+    </delete>
+    <select id="getBbxtlist" resultType="java.util.HashMap">
+        <include refid="com.base.baseMapper.pageStart"/>
+        select decode(status,'1','已下发','未下发') zt,to_char(rksj,'yyyymmdd hh24:mi:ss') sj,t.* from APP_BB_XT t where 1=1
+        <if test="c1 != null">
+            and mc like '%'||#{c1}||'%'
+        </if>
+        <include refid="com.base.baseMapper.pageEnd"/>
+        order by bbh desc
+        <if test="sort != null">
+            ${sort}
+        </if>
+    </select>
+    <select id="getBbsjlist" resultType="java.util.HashMap">
+        <include refid="com.base.baseMapper.pageStart"/>
+        select decode(status,'1','已下发','未下发') zt,to_char(rksj,'yyyymmdd hh24:mi:ss') sj,t.* from APP_BB_SJ t where 1=1
+        <if test="c1 != null">
+            and mc like '%'||#{c1}||'%'
+        </if>
+        <include refid="com.base.baseMapper.pageEnd"/>
+        order by bbh desc
+        <if test="sort != null">
+            ${sort}
+        </if>
+    </select>
+    <select id="getSjtypeList" resultType="java.util.HashMap">
+        select * from APP_BB_SJTYPE
+    </select>
+    <select id="getXtSjInfo" resultType="java.util.HashMap">
+       select * from  (select * from APP_BB_XT where status=1
+        and RKSJ>=to_date(#{SJC},'yyyymmdd hh24:mi:ss') order by rksj desc)
+       where rownum=1
+    </select>
+    <update id="saveBbxt">
+        BEGIN
+        <foreach collection="list" item="record" index="index">
+            merge into APP_BB_XT a using (select #{record.ID} ID from dual) b
+            on (a.ID=b.ID)
+            when matched then
+            update set mc=#{record.MC},
+            bz=#{record.BZ}
+            when not matched then
+            insert (a.bbh,a.mc,a.bz,a.submitter)
+            values(seq_xtbb.nextval,#{record.MC},#{record.BZ},#{submitter});
+        </foreach>
+        COMMIT;
+        END;
+
+    </update>
+    <update id="xfBbxt">
+        BEGIN
+        <foreach collection="list" item="record" index="index">
+            update APP_BB_XT  set status='1' where bbh=#{record.BBH};
+        </foreach>
+        COMMIT;
+        END;
+
+    </update>
+    <update id="saveBbsj">
+        BEGIN
+        <foreach collection="list" item="record" index="index">
+            merge into APP_BB_SJ a using (select #{record.ID} ID from dual) b
+            on (a.ID=b.ID)
+            when matched then
+            update set mc=#{record.MC},typeid=#{record.TYPEID},
+            bz=#{record.BZ}
+            when not matched then
+            insert (a.bbh,a.mc,a.bz,a.typeid)
+            values(#{record.BBH},#{record.MC},#{record.BZ},#{record.TYPEID});
+        </foreach>
+        COMMIT;
+        END;
+    </update>
+    <update id="xfBbsj">
+        BEGIN
+        <foreach collection="list" item="record" index="index">
+            update APP_BB_SJ  set status='1' where bbh=#{record.BBH};
+        </foreach>
+        COMMIT;
+        END;
+    </update>
+</mapper>
