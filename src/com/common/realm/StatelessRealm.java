@@ -3,6 +3,7 @@ package com.common.realm;
 
 import com.common.sys.entity.User;
 import com.common.utils.Des;
+import com.server.mapper.UserMapper;
 import org.apache.commons.lang.StringEscapeUtils;
 import org.apache.shiro.authc.AuthenticationException;
 import org.apache.shiro.authc.AuthenticationInfo;
@@ -12,10 +13,12 @@ import org.apache.shiro.authz.AuthorizationInfo;
 import org.apache.shiro.authz.SimpleAuthorizationInfo;
 import org.apache.shiro.realm.AuthorizingRealm;
 import org.apache.shiro.subject.PrincipalCollection;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import java.io.Serializable;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
+import java.util.HashMap;
 
 /**
  * <p>User: sky
@@ -23,6 +26,8 @@ import java.net.URLEncoder;
  * <p>Version: 1.0
  */
 public class StatelessRealm extends AuthorizingRealm {
+    @Autowired
+    UserMapper userMapper;
     @Override
     public boolean supports(AuthenticationToken token) {
         //仅支持StatelessToken类型的Token
@@ -40,7 +45,8 @@ public class StatelessRealm extends AuthorizingRealm {
     protected AuthenticationInfo doGetAuthenticationInfo(AuthenticationToken token) throws AuthenticationException {
         StatelessToken statelessToken = (StatelessToken) token;
         String username = statelessToken.getUsername();
-        String key = "11111111";//根据用户名获取密钥（和客户端的一样）
+        HashMap u=userMapper.getUserOne(username);
+        String key = (String)u.get("PWD");//根据用户名获取密钥（和客户端的一样）
         //在服务器端生成客户端参数消息摘要
         String serverDigest = null;
         try {
@@ -56,9 +62,12 @@ public class StatelessRealm extends AuthorizingRealm {
         //System.out.println(statelessToken.getClientDigest());
         //System.out.println(serverDigest);
         //然后进行客户端消息摘要和服务器端消息摘要的匹配
+        System.out.println(username);
+        System.out.println(key);
+        System.out.println(getName());
         return new SimpleAuthenticationInfo(
                 username,
-                serverDigest,
+                key,
                 getName());
         /*User user=null;
         return new SimpleAuthenticationInfo(

@@ -7,6 +7,7 @@ import org.apache.commons.codec.DecoderException;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.lang3.StringEscapeUtils;
+import sun.misc.BASE64Encoder;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
@@ -43,7 +44,17 @@ public class Encodes {
 			throw Exceptions.unchecked(e);
 		}
 	}
-
+    public static String encodeToBase64(String text){
+		BASE64Encoder encoder = new BASE64Encoder();
+		String encodedText="";
+		try {
+			byte[] textByte = text.getBytes("UTF-8");
+			encodedText = encoder.encode(textByte);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return encodedText;
+	}
 	/**
 	 * Base64编码.
 	 */

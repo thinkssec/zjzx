@@ -2,6 +2,7 @@ package com.common.interceptor;
 
 import com.common.annotation.mapper.JsonMapper;
 import com.common.config.DataSourceContextHolder;
+import com.common.utils.Encodes;
 import com.server.Entity.RequestBody;
 import com.server.Entity.ResponseBody;
 import com.server.mapper.SysControlMapper;
@@ -14,6 +15,8 @@ import org.aspectj.lang.annotation.Pointcut;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.commons.CommonsMultipartFile;
+import org.springframework.web.servlet.resource.EncodedResource;
+import sun.misc.BASE64Decoder;
 
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -64,6 +67,8 @@ public class WaitingAop {
         id = UUID.randomUUID().toString();
         if (d.length == 0) return o;
         else {
+            BASE64Decoder decoder = new BASE64Decoder();
+            d[0]= new String(decoder.decodeBuffer((String)d[0]), "UTF-8");
             String args = (String) d[0];
             if (d.length == 3) e = new Object[3];
             else e = new Object[2];
@@ -133,6 +138,8 @@ public class WaitingAop {
             pd = false;
             dl.remove(0);
         }
+        if(o instanceof String)
+            o= Encodes.encodeToBase64((String)o);
         return o;
     }
 
@@ -158,6 +165,8 @@ public class WaitingAop {
             id = UUID.randomUUID().toString();
             if (d.length == 0) return o;
             else {
+                BASE64Decoder decoder = new BASE64Decoder();
+                d[0]= new String(decoder.decodeBuffer((String)d[0]), "UTF-8");
                 String args = (String) d[0];
                 if (d.length == 3) e = new Object[3];
                 else e = new Object[2];
@@ -196,6 +205,8 @@ public class WaitingAop {
             dl.remove(0);
             //System.out.println("运行完毕:" + new Date());
         }
+        if(o instanceof String)
+            o= Encodes.encodeToBase64((String)o);
         return o;
     }
 

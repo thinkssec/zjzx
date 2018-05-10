@@ -3,10 +3,12 @@ package com.common.filter;
 import com.common.annotation.mapper.JsonMapper;
 import com.common.config.Constants;
 import com.common.realm.StatelessToken;
+import com.common.utils.Encodes;
 import com.fasterxml.jackson.databind.JavaType;
 import com.server.Entity.RequestBody;
 import org.apache.commons.lang.StringEscapeUtils;
 import org.apache.shiro.web.filter.AccessControlFilter;
+import sun.misc.BASE64Decoder;
 
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
@@ -36,17 +38,20 @@ public class StatelessAuthcFilter extends AccessControlFilter {
         //2、客户端传入的用户身份
         //String username = request.getParameter(Constants.PARAM_USERNAME);
         String requestBody=request.getParameter("requestBody");
+        BASE64Decoder decoder = new BASE64Decoder();
+        requestBody= new String(decoder.decodeBuffer(requestBody), "UTF-8");
+        System.out.println("(((((("+requestBody);
        /* JavaType javaType = JsonMapper.getInstance().getTypeFactory().constructParametricType(List.class, double[].class);
         exclude = JsonMapper.getInstance().fromJson(condition.getC8(), javaType);*/
         RequestBody ppp=(RequestBody)JsonMapper.fromJsonString(requestBody,RequestBody.class);
         //System.out.println("----------filter"+requestBody);
-        //System.out.println("----------filter"+ppp.getUsername());
-        //System.out.println("----------filter"+ppp.getPassword());
-        //System.out.println("----------filter"+ppp.getParams());
+        System.out.println("----------filter"+ppp.getUsername());
+        System.out.println("----------filter"+ppp.getPassword());
+        System.out.println("----------filter"+ppp.getParams());
         //System.out.println("----------filter"+ppp);
         //String clientDigest = (String)((ArrayList)ppp.get(Constants.PARAM_PASSWORD)).get(0);
         //String clientDigest = ppp.getPassword();略去密码验证
-        String clientDigest = "11111111";
+        String clientDigest = ppp.getPassword();
         //System.out.println("ccccc"+clientDigest);
         //String username = (String)((ArrayList)ppp.get(Constants.PARAM_USERNAME)).get(0);
         String username =ppp.getUsername();
@@ -55,6 +60,7 @@ public class StatelessAuthcFilter extends AccessControlFilter {
         params.remove(Constants.PARAM_PASSWORD);
 
         //System.out.println("----------filter"+request.getParameterMap());
+
         //4、生成无状态Token
         StatelessToken token = new StatelessToken(username, params, clientDigest);
 
