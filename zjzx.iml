@@ -428,5 +428,8 @@
     <orderEntry type="library" name="servlet-api-2.5" level="project" />
     <orderEntry type="library" name="jna4.5.0" level="project" />
     <orderEntry type="library" name="jedis-2.9.0" level="project" />
+    <orderEntry type="library" name="ckfinder-2.3" level="project" />
+    <orderEntry type="library" name="ckfinder-2.3 (2)" level="project" />
+    <orderEntry type="library" name="spring-aop-4.3.16.RELEASE" level="project" />
   </component>
 </module>

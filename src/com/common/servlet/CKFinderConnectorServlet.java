@@ -44,8 +44,13 @@ public class CKFinderConnectorServlet extends ConnectorServlet {
 		String command=request.getParameter("command");
 		String principal = "";
 		String relationId="";
+		String bbh="";
+		String yq="";
 		relationId=request.getParameter("ID");
 		principal=request.getParameter("USERID");
+		bbh=request.getParameter("BBH");
+		yq=request.getParameter("YQ");
+
 
 		// 初始化时，如果startupPath文件夹不存在，则自动创建startupPath文件夹
 		if ("Init".equals(command)){
@@ -67,17 +72,25 @@ public class CKFinderConnectorServlet extends ConnectorServlet {
 				path=Global.getUserfilesBaseDir()
 						+ principal +"/"+relationId+ "/software";
 				//System.out.println(path);
-				FileUtils.createDirectory(FileUtils.path(path+"/bin"));
-				FileUtils.createDirectory(FileUtils.path(path+"/lib"));
-				FileUtils.createDirectory(FileUtils.path(path+"/com"));
+				//FileUtils.createDirectory(FileUtils.path(path+"/BASICDATA"));
+				FileUtils.createDirectory(FileUtils.path(path+"/bqgl"));
+				FileUtils.createDirectory(FileUtils.path(path+"/configXml"));
+				FileUtils.createDirectory(FileUtils.path(path+"/de"));
+				FileUtils.createDirectory(FileUtils.path(path+"/es"));
+				FileUtils.createDirectory(FileUtils.path(path+"/image"));
+				FileUtils.createDirectory(FileUtils.path(path+"/ja"));
+				FileUtils.createDirectory(FileUtils.path(path+"/ru"));
+				FileUtils.createDirectory(FileUtils.path(path+"/workspace"));
+				FileUtils.createDirectory(FileUtils.path(path+"/xml"));
 			}else if("data".equals(type)){
 				path=Global.getUserfilesBaseDir()
 						+ principal +"/" +relationId+ "/data";
-				FileUtils.createDirectory(FileUtils.path(path+"/单项"));
-				FileUtils.createDirectory(FileUtils.path(path+"/单位"));
-				FileUtils.createDirectory(FileUtils.path(path+"/分项"));
-				FileUtils.createDirectory(FileUtils.path(path+"/设备"));
-				FileUtils.createDirectory(FileUtils.path(path+"/主材"));
+				FileUtils.createDirectory(FileUtils.path(path+"/ZX/ZB/")+bbh+"/"+yq+"/"+"DW");
+				FileUtils.createDirectory(FileUtils.path(path+"/ZX/ZB/")+bbh+"/"+yq+"/"+"DX");
+				FileUtils.createDirectory(FileUtils.path(path+"/ZX/ZB/")+bbh+"/"+yq+"/"+"FX");
+				FileUtils.createDirectory(FileUtils.path(path+"/ZX/JG/")+bbh+"/"+yq);
+				FileUtils.createDirectory(FileUtils.path(path+"/ZX/ELF/")+bbh+"/"+yq);
+				//FileUtils.createDirectory(FileUtils.path(path+"/DW"));
 			}
 		}
 		// 快捷上传，自动创建当前文件夹，并上传到该路径

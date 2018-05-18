@@ -80,11 +80,11 @@
             merge into APP_BB_SJ a using (select #{record.ID} ID from dual) b
             on (a.ID=b.ID)
             when matched then
-            update set mc=#{record.MC},typeid=#{record.TYPEID},
+            update set mc=#{record.MC},typeid=#{record.TYPEID},yq=#{record.YQ},yqmc=#{record.YQMC},
             bz=#{record.BZ}
             when not matched then
-            insert (a.bbh,a.mc,a.bz,a.typeid)
-            values(#{record.BBH},#{record.MC},#{record.BZ},#{record.TYPEID});
+            insert (a.bbh,a.mc,a.bz,a.typeid,a.yq,a.yqmc)
+            values(#{record.BBH},#{record.MC},#{record.BZ},#{record.TYPEID},#{record.YQ},#{record.YQMC});
         </foreach>
         COMMIT;
         END;

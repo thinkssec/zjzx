@@ -8,22 +8,20 @@
     <title>数据版本管理</title>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     <meta name="robots" content="noindex, nofollow" />
-    <script src="${ctxStatic}/jquery/jquery-1.8.3.min.js" type="text/javascript"></script>
-    <link rel="stylesheet" type="text/css" href="${ctxStatic}/easyui/themes/gray/easyui.css">
-    <link rel="stylesheet" type="text/css" href="${ctxStatic}/easyui/themes/icon.css">
-    <link rel="stylesheet" type="text/css" href="${ctxStatic}/easyui/themes/color.css">
-    <script type="text/javascript" src="${ctxStatic}/easyui/jquery.easyui.min.js"></script>
-    <script type="text/javascript" src="${ctxStatic}/easyui/locale/easyui-lang-zh_CN.js"></script>
-    <script type="text/javascript" src="ckfinder.js"></script>
+    <script src="<%=request.getContextPath()%>/static/jquery/jquery-1.8.3.min.js" type="text/javascript"></script>
+    <link rel="stylesheet" type="text/css" href="<%=request.getContextPath()%>/static/easyui/themes/gray/easyui.css">
+    <link rel="stylesheet" type="text/css" href="<%=request.getContextPath()%>/static/easyui/themes/icon.css">
+    <link rel="stylesheet" type="text/css" href="<%=request.getContextPath()%>/static/easyui/themes/color.css">
+    <script type="text/javascript" src="<%=request.getContextPath()%>/static/easyui/jquery.easyui.min.js"></script>
+    <script type="text/javascript" src="<%=request.getContextPath()%>/static/easyui/locale/easyui-lang-zh_CN.js"></script>
+    <script type="text/javascript" src="<%=request.getContextPath()%>/static/ckfinder/ckfinder.js"></script>
     <style type="text/css">body, html, iframe, #ckfinder {margin:0;padding:0;border:0;width:100%;height:100%;overflow:hidden;}</style>
 </head>
 <body class="CKFinderFrameWindow">
 <div style="padding-left: 9px;">
-    <a href="#" class="easyui-linkbutton" data-options="iconCls:'icon-back'" onclick="document.location='${ctx}/bbgl/sjlist'">返回</a>
-
     <%
-        StatelessRealm.Principal principal = (StatelessRealm.Principal) UserUtils.getPrincipal();
-        principal.setRelationId(request.getParameter("ID"));
+        //StatelessRealm.Principal principal = (StatelessRealm.Principal) UserUtils.getPrincipal();
+        //principal.setRelationId(request.getParameter("ID"));
     %>
 </div>
 <div id="ckfinder"></div>
@@ -131,7 +129,7 @@
                     break;
 
                 default:
-                    if ( parentWindow && parentWindow['FCK'] && parentWindow['SetUrl'] )
+                    /*if ( parentWindow && parentWindow['FCK'] && parentWindow['SetUrl'] )
                     {
                         action = 'fckeditor' ;
                         config.selectActionFunction = parentWindow['SetUrl'];
@@ -140,7 +138,7 @@
                             config.selectThumbnailActionFunction = parentWindow['SetUrl'];
                     }
                     else
-                        action = null ;
+                        action = null ;*/
             }
             config.action = action;
 
@@ -151,8 +149,10 @@
         }
 
         // Always use 100% width and height when nested using this middle page.
+        config.defaultViewType = 'list';
         config.width =  '100%';
         config.height = '95%';
+        config.connectorInfo = 'ID=<%=request.getParameter("ID")%>&USERID=<%=request.getParameter("USERID")%>&BBH=<%=request.getParameter("BBH")%>&YQ=<%=request.getParameter("YQ")%>';
         config.resourceType='data';
         var ckfinder = new CKFinder( config );
         ckfinder.replace( 'ckfinder', config );

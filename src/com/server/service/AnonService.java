@@ -102,7 +102,6 @@ public class AnonService {
 
     public ResponseBody login(RequestBody rq, Map params, String id){
         ResponseBody r=new ResponseBody(params,"1","登录成功",id,rq.getTaskid());
-
         try {
             HashMap m=userMapper.getUserOne(rq.getUsername());
             if(m==null) {
@@ -156,14 +155,15 @@ public class AnonService {
     public ResponseBody AuthRealm(RequestBody rq, Map params, String id){
         ResponseBody rp=new ResponseBody(params,"1","获取用户成功",id,rq.getTaskid());
         try{
-            System.out.println();
+            //System.out.println();
             ObjectMapper objectMapper = new ObjectMapper();
             Condition condition=objectMapper.readValue(rq.getParams(), Condition.class);
+            //System.out.println("------"+condition);
             HashMap m=userMapper.getUserOne(condition.getLoginName());
             rp.setDatas(com.common.annotation.mapper.JsonMapper.toJsonString(m));
         }catch(Exception e){
             rp.setIssuccess("0");
-            rp.setMessage("获取用户成功！"+e.getMessage());
+            rp.setMessage("获取用户失败！"+e.getMessage());
             e.printStackTrace();
         }
         return rp;
@@ -212,6 +212,33 @@ public class AnonService {
         return rp;
     }
 
+    public ResponseBody modifyPsw(RequestBody rq, Map params, String id){
+        ResponseBody rp=new ResponseBody(params,"1","修改密码成功",id,rq.getTaskid());
+        try{
+            ObjectMapper objectMapper = new ObjectMapper();
+            Condition condition=objectMapper.readValue(rq.getParams(), Condition.class);
+            userMapper.modifyPsw(condition);
+        }catch(Exception e){
+            rp.setIssuccess("0");
+            rp.setMessage("修改密码失败！"+e.getMessage());
+            e.printStackTrace();
+        }
+        return rp;
+    }
+
+    public ResponseBody modifyUser(RequestBody rq, Map params, String id){
+        ResponseBody rp=new ResponseBody(params,"1","修改成功",id,rq.getTaskid());
+        try{
+            ObjectMapper objectMapper = new ObjectMapper();
+            Condition condition=objectMapper.readValue(rq.getParams(), Condition.class);
+            userMapper.modifyUser(condition);
+        }catch(Exception e){
+            rp.setIssuccess("0");
+            rp.setMessage("修改失败！"+e.getMessage());
+            e.printStackTrace();
+        }
+        return rp;
+    }
 
     public void traverseFolder2(List<String> l,String path,String doc) {
 

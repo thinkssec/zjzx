@@ -13,6 +13,12 @@
         commit;
         END;
     </update>
+    <update id="modifyPsw">
+        update app_user set pwd=#{password},upwd=#{password} where userid=#{userid}
+    </update>
+    <update id="modifyUser">
+        update app_user set gddh=#{c3},yddh=#{c2},email=#{c1},bzxx=#{c4}  where userid=#{userid}
+    </update>
     <delete id="delUserList">
 
     </delete>

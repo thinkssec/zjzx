@@ -63,10 +63,17 @@ public class AdminController{
     }
 
     @CrossOrigin(origins = "*", maxAge = 3600)
+    @RequestMapping("sjbbgl")
+    public String sjbbgl(String username, String password) {
+        return "../../static/ckfinder/ckfinderSj";
+    }
+
+    @CrossOrigin(origins = "*", maxAge = 3600)
     @RequestMapping("xtbbgl")
     public String xtbbgl(String username, String password) {
         return "../../static/ckfinder/ckfinderCx";
     }
+
     @CrossOrigin(origins = "*", maxAge = 3600)
     @RequestMapping("test")
     public String test(String username, String password) {

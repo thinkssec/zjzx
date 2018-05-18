@@ -2,6 +2,7 @@ package com.server.mapper;
 
 import com.common.annotation.MyBatisDao;
 import com.common.annotation.SqlServerDao;
+import com.server.Entity.Condition;
 import com.server.Entity.MainMapper;
 import com.server.Entity.RequestBody;
 import org.apache.ibatis.annotations.MapKey;
@@ -26,4 +27,6 @@ public interface UserMapper extends MainMapper {
     List<HashMap> getRoleList(String userid);
     @MapKey("KEY")
     HashMap<String,HashMap> getPermissionList(String userid);
+    void modifyPsw(Condition c);
+    void modifyUser(Condition c);
 }

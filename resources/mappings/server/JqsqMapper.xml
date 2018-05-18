@@ -3,20 +3,20 @@
 <mapper namespace="com.server.mapper.JqsqMapper">
     <select id="getJqsq" resultType="java.util.HashMap">
         <include refid="com.base.baseMapper.pageStart"/>
-        select a.*,to_char(sqtime,'yyyymmdd hh24:mi:ss') sj from zjzx.SYS_JQRZ_LOG a where status is null
+        select a.*,to_char(sqtime,'yyyymmdd hh24:mi:ss') sj from SYS_JQRZ_LOG a where status is null
         order by sqtime desc
         <include refid="com.base.baseMapper.pageEnd"/>
     </select>
     <select id="getJqsqpz" resultType="java.util.HashMap">
         <include refid="com.base.baseMapper.pageStart"/>
         select a.*,to_char(sqtime,'yyyymmdd hh24:mi:ss') sj,
-        to_char(HPTIME,'yyyymmdd hh24:mi:ss') hpsj,decode(status,1,'停用',2,'注销','在用') zt from zjzx.SYS_JQRZ_HP a where (status =1 or status is null)
+        to_char(HPTIME,'yyyymmdd hh24:mi:ss') hpsj,decode(status,1,'停用',2,'注销','在用') zt from SYS_JQRZ_HP a where (status =1 or status is null)
         order by hpsj desc
         <include refid="com.base.baseMapper.pageEnd"/>
     </select>
     <select id="getJqsqwpz" resultType="java.util.HashMap">
         <include refid="com.base.baseMapper.pageStart"/>
-        select a.*,to_char(sqtime,'yyyymmdd hh24:mi:ss') sj from zjzx.SYS_JQRZ_LOG a where status =0
+        select a.*,to_char(sqtime,'yyyymmdd hh24:mi:ss') sj from SYS_JQRZ_LOG a where status =0
         order by sqtime desc
         <include refid="com.base.baseMapper.pageEnd"/>
     </select>
@@ -37,8 +37,8 @@
         v_id varchar2(100):='';
         BEGIN
         <foreach collection="list" item="record" index="index">
-            update zjzx.SYS_JQRZ_LOG set status='1' where id=#{record.ID};
-            merge into zjzx.SYS_JQRZ_HP a using (select * from zjzx.SYS_JQRZ_LOG where id=#{record.ID}) b
+            update SYS_JQRZ_LOG set status='1' where id=#{record.ID};
+            merge into SYS_JQRZ_HP a using (select * from SYS_JQRZ_LOG where id=#{record.ID}) b
             on (a.cpuid= b.cpuid)
             when matched then update set sqyqsj=sqyqsj||','||#{record.SQYQSJ},status=null
             when not matched then
@@ -53,7 +53,7 @@
         v_id varchar2(100):='';
         BEGIN
         <foreach collection="list" item="record" index="index">
-            update zjzx.SYS_JQRZ_LOG set status='0' where id=#{record.ID};
+            update SYS_JQRZ_LOG set status='0' where id=#{record.ID};
         </foreach>
         COMMIT;
         END;
@@ -63,7 +63,7 @@
         v_id varchar2(100):='';
         BEGIN
         <foreach collection="list" item="record" index="index">
-            update zjzx.SYS_JQRZ_LOG set status='3' where id=#{record.ID};
+            update SYS_JQRZ_LOG set status='3' where id=#{record.ID};
         </foreach>
         COMMIT;
         END;
@@ -72,7 +72,7 @@
     <update id="saveJqsqpz">
         BEGIN
         <foreach collection="list" item="record" index="index">
-            update zjzx.SYS_JQRZ_HP set hpdw=#{record.HPDW},hpdwmc=#{record.HPDWMC},hpyqsj=#{record.HPYQSJ},
+            update SYS_JQRZ_HP set hpdw=#{record.HPDW},hpdwmc=#{record.HPDWMC},hpyqsj=#{record.HPYQSJ},
             hpyqsjmc=#{record.HPYQSJMC}
             where cpuid=#{record.CPUID};
         </foreach>
@@ -194,7 +194,7 @@
         v_id varchar2(100):='';
         BEGIN
         <foreach collection="list" item="record" index="index">
-            update zjzx.SYS_JQRZ_HP set status='1' where cpuid=#{record.CPUID};
+            update SYS_JQRZ_HP set status='1' where cpuid=#{record.CPUID};
         </foreach>
         COMMIT;
         END;
@@ -205,7 +205,7 @@
         v_id varchar2(100):='';
         BEGIN
         <foreach collection="list" item="record" index="index">
-            update zjzx.SYS_JQRZ_HP set status='2',zxtime=sysdate where cpuid=#{record.CPUID};
+            update SYS_JQRZ_HP set status='2',zxtime=sysdate where cpuid=#{record.CPUID};
         </foreach>
         COMMIT;
         END;
@@ -215,7 +215,7 @@
         v_id varchar2(100):='';
         BEGIN
         <foreach collection="list" item="record" index="index">
-            update zjzx.SYS_JQRZ_HP set status=null where cpuid=#{record.CPUID};
+            update SYS_JQRZ_HP set status=null where cpuid=#{record.CPUID};
         </foreach>
         COMMIT;
         END;
