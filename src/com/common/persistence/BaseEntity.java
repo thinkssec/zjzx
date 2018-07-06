@@ -4,6 +4,7 @@
 package com.common.persistence;
 
 import com.common.config.Global;
+import com.common.sys.entity.Page;
 import com.common.sys.entity.User;
 import com.common.utils.StringUtils;
 import com.common.utils.UserUtils;
@@ -34,9 +35,21 @@ public abstract class BaseEntity<T> implements Serializable {
 	 * 当前用户
 	 */
 	protected User currentUser;
+	protected Page<T> page;
 
+	@JsonIgnore
+	@XmlTransient
+	public Page<T> getPage() {
+		if (page == null){
+			page = new Page<T>();
+		}
+		return page;
+	}
 
-	
+	public Page<T> setPage(Page<T> page) {
+		this.page = page;
+		return page;
+	}
 	/**
 	 * 自定义SQL（SQL标识，SQL内容）
 	 */

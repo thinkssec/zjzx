@@ -16,7 +16,10 @@ import java.util.Map;
 @SqlServerDao
 public interface EmailMapper extends MainMapper {
     void sendMail(Map param);
+    void replyMail(Map param);
     void sendAttach(Map param);
+    void delete(Map param);
+    void readed(Map param);
     List<HashMap> getMailList(Map param);
     List<HashMap> getMailAList(Map param);
 }

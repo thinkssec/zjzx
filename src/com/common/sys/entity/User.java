@@ -7,6 +7,7 @@ import com.common.config.Global;
 import com.common.utils.Collections3;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.google.common.collect.Lists;
 import java.util.Date;
 import java.util.HashMap;
@@ -16,6 +17,7 @@ import java.util.List;
  * 用户Entity
 
  */
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class User extends DataEntity<User> {
 
 	private static final long serialVersionUID = 1L;
@@ -26,16 +28,126 @@ public class User extends DataEntity<User> {
 	private String isDel;
 	private String no;		// 工号
 	private String name;	// 姓名
-	private String email;	// 邮箱
 	private String phone;	// 电话
 	private String mobile;	// 手机
 	private String userType;// 用户类型
 	private String loginFlag;	// 是否允许登陆
-	
+	private Role role;
+	private String deptMc;
 	private List<HashMap> roleList = Lists.newArrayList(); // 拥有角色列表
 	private HashMap permissionList = new HashMap();
+    private	String	userid	;
+    private	String	loginname	;
+    private	String	username	;
+    private	String	dw	;
+    private	String	gddh	;
+    private	String	yddh	;
+    private	String	email	;
+    private	String	bzxx	;
+    private	String	pwd	;
+    private	String	upwd	;
+    private	String	sfqy	;
+    private	String	fpz	;
+    private	String	createtime	;
+    private	String	isdel	;
 
-	public HashMap getPermissionList() {
+    public String getUserid() {
+        return userid;
+    }
+
+    public void setUserid(String userid) {
+        this.userid = userid;
+    }
+
+    public String getLoginname() {
+        return loginname;
+    }
+
+    public void setLoginname(String loginname) {
+        this.loginname = loginname;
+    }
+
+    public String getUsername() {
+        return username;
+    }
+
+    public void setUsername(String username) {
+        this.username = username;
+    }
+
+    public String getDw() {
+        return dw;
+    }
+
+    public void setDw(String dw) {
+        this.dw = dw;
+    }
+
+    public String getGddh() {
+        return gddh;
+    }
+
+    public void setGddh(String gddh) {
+        this.gddh = gddh;
+    }
+
+    public String getYddh() {
+        return yddh;
+    }
+
+    public void setYddh(String yddh) {
+        this.yddh = yddh;
+    }
+
+    public String getPwd() {
+        return pwd;
+    }
+
+    public void setPwd(String pwd) {
+        this.pwd = pwd;
+    }
+
+    public String getUpwd() {
+        return upwd;
+    }
+
+    public void setUpwd(String upwd) {
+        this.upwd = upwd;
+    }
+
+    public String getSfqy() {
+        return sfqy;
+    }
+
+    public void setSfqy(String sfqy) {
+        this.sfqy = sfqy;
+    }
+
+    public String getFpz() {
+        return fpz;
+    }
+
+    public void setFpz(String fpz) {
+        this.fpz = fpz;
+    }
+
+    public String getCreatetime() {
+        return createtime;
+    }
+
+    public void setCreatetime(String createtime) {
+        this.createtime = createtime;
+    }
+
+    public String getIsdel() {
+        return isdel;
+    }
+
+    public void setIsdel(String isdel) {
+        this.isdel = isdel;
+    }
+
+    public HashMap getPermissionList() {
 		return permissionList;
 	}
 
@@ -183,4 +295,27 @@ public class User extends DataEntity<User> {
 		this.roleList = roleList;
 	}
 
+	public Role getRole() {
+		return role;
+	}
+
+	public void setRole(Role role) {
+		this.role = role;
+	}
+
+	public String getBzxx() {
+		return bzxx;
+	}
+
+	public void setBzxx(String bzxx) {
+		this.bzxx = bzxx;
+	}
+
+	public String getDeptMc() {
+		return deptMc;
+	}
+
+	public void setDeptMc(String deptMc) {
+		this.deptMc = deptMc;
+	}
 }

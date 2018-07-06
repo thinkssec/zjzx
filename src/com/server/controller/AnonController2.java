@@ -20,14 +20,16 @@ import java.util.Map;
  * <p>Version: 1.0
  */
 @RestController
-@RequestMapping(value = "${anonPath}")
-public class AnonController {
+@RequestMapping(value = "/cn")
+public class AnonController2 {
     @Autowired
     AnonService anonService;
-    public static Logger log = Logger.getLogger(AnonController.class);
+    public static Logger log = Logger.getLogger(AnonController2.class);
+    @Queuen
     @RequestMapping("request")
     public String request(String requestBody, String id) throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
         ResponseBody res = new ResponseBody();
+        System.out.println("requestBody="+requestBody);
         RequestBody r = (RequestBody) JsonMapper.fromJsonString(requestBody, RequestBody.class);
         Map<String, String> params = (Map<String, String>) JsonMapper.fromJsonString(r.getParams(), Map.class);
         String call = r.getCall();

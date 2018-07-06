@@ -42,6 +42,7 @@ public class UserfilesDownloadServlet extends HttpServlet {
 			resp.setHeader("Content-Type", "application/octet-stream");
 			return;
 		} catch (FileNotFoundException e) {
+			e.printStackTrace();
 			req.setAttribute("exception", new FileNotFoundException("请求的文件不存在"));
 			req.getRequestDispatcher("/WEB-INF/views/error/404.jsp").forward(req, resp);
 		}

@@ -51,8 +51,11 @@
 		<property name="filterChainDefinitions">
 			<value>
 				/em/**=anon
+				/n/**=anon
+				/a/userfiles/**=anon
 				/index.jsp=anon
-				/**=statelessAuthc
+				/a/**=statelessAuthc
+				/a/userfiles/**=anon
 			</value>
 		</property>
 	</bean>

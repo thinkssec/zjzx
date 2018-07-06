@@ -40,7 +40,7 @@ public class StatelessAuthcFilter extends AccessControlFilter {
         String requestBody=request.getParameter("requestBody");
         BASE64Decoder decoder = new BASE64Decoder();
         requestBody= new String(decoder.decodeBuffer(requestBody), "UTF-8");
-        System.out.println("(((((("+requestBody);
+        //System.out.println("(((((("+requestBody);
        /* JavaType javaType = JsonMapper.getInstance().getTypeFactory().constructParametricType(List.class, double[].class);
         exclude = JsonMapper.getInstance().fromJson(condition.getC8(), javaType);*/
         RequestBody ppp=(RequestBody)JsonMapper.fromJsonString(requestBody,RequestBody.class);

@@ -59,7 +59,7 @@
                                     PRI
                                     ) values (#{id,jdbcType=VARCHAR},#{username,jdbcType=VARCHAR},
                                       #{call,jdbcType=VARCHAR},
-                                      #{params,jdbcType=VARCHAR},
+                                      #{params},
                                       '1',#{taskid,jdbcType=VARCHAR},
                                       #{subid,jdbcType=VARCHAR},
                                       #{pri,jdbcType=VARCHAR})

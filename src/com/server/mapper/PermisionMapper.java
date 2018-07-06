@@ -3,6 +3,7 @@ package com.server.mapper;
 
 
 import com.common.annotation.MyBatisDao;
+import com.common.sys.entity.Office;
 import com.server.Entity.Condition;
 
 import java.util.HashMap;
@@ -19,8 +20,10 @@ public interface PermisionMapper {
     void deteleDept(HashMap condition);
 
     List<HashMap> getUserList(Condition condition);
+    List<HashMap> getUserList2(Condition condition);
     void saveUserList(HashMap condition);
     void delUserlist(HashMap condition);
+    void assignUser(HashMap condition);
 
 
 }

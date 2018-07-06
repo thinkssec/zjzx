@@ -47,7 +47,7 @@
     <select id="getXtSjInfo" resultType="java.util.HashMap">
        select * from  (select * from APP_BB_XT where status=1
         and RKSJ>=to_date(#{SJC},'yyyymmdd hh24:mi:ss') order by rksj desc)
-       where rownum=1
+
     </select>
     <update id="saveBbxt">
         BEGIN

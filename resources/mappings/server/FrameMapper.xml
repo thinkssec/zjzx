@@ -1,7 +1,530 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
 <mapper namespace="com.server.mapper.FrameMapper">
+    <delete id="deleteMenu">
+        UPDATE sys_menu SET
+        del_flag = #{DEL_FLAG_DELETE}
+        WHERE id = #{id} OR parent_ids LIKE '%,'||#{id}||',%'
+    </delete>
+    <delete id="deleteRoleMenu">
+      DELETE FROM sys_role_menu WHERE role_id = #{id}
+    </delete>
+    <delete id="deleteRole">
+        UPDATE sys_role SET
+			del_flag = #{DEL_FLAG_DELETE}
+		WHERE id = #{id}
+    </delete>
+    <delete id="deleteOfficeMenu">
+        DELETE FROM sys_role_menu WHERE role_id = #{id}
+    </delete>
+    <delete id="deleteOffice">
+        BEGIN
+        update sys_office set DEL_FLAG='1' where id=#{id};
+        delete from SYS_ROLE_MENU where role_id=#{id};
+        commit;
+        end;
+
+    </delete>
+    <delete id="outrole">
+        delete from SYS_USERROLE where userid=#{id} and roleid=#{role.id}
+    </delete>
+    <delete id="panMDelete">
+         update SYS_MYPAN set DEL_FLAG='1' where id=#{ID}
+    </delete>
     <select id="getPermission" resultType="java.util.Map" statementType="PREPARED">
         select t.value from SYS_PERMISION_MAP t where t.name=#{key}
+    </select>
+    <select id="findByUserId" resultType="com.server.Entity.Menu">
+        SELECT DISTINCT
+                a.id,
+                a.parent_id,
+                a.parent_ids,
+                a.name,
+                a.href,
+                a.target,
+                a.icon,
+                a.sort,
+                a.is_show,
+                a.permission,
+                a.remarks,
+                a.create_by AS "createBy.id",
+                a.create_date,
+                a.update_by AS "updateBy.id",
+                a.update_date,
+                a.del_flag,
+                p.name AS "parent_name"
+        FROM sys_menu a
+        LEFT JOIN sys_menu p ON p.id = a.parent_id
+        JOIN sys_role_menu rm ON rm.menu_id = a.id
+        JOIN sys_role_r r ON r.id = rm.role_id AND r.useable='1'
+        JOIN sys_userrole ur ON ur.roleid = r.id
+        JOIN APP_USER u ON u.userid = ur.userid AND u.userid = #{userId}
+        WHERE a.del_flag = #{DEL_FLAG_NORMAL} AND r.del_flag = #{DEL_FLAG_NORMAL} AND u.del_flag = #{DEL_FLAG_NORMAL}
+        ORDER BY a.sort
+    </select>
+
+    <select id="findAllList" resultType="com.server.Entity.Menu">
+        select distinct a.* from (SELECT
+            a.id,
+            a.parent_id,
+            a.parent_ids,
+            a.name,
+            a.href,
+            a.target,
+            a.icon,
+            a.sort,
+            a.is_show,
+            a.permission,
+            a.remarks,
+            a.create_by AS "createBy.id",
+            a.create_date,
+            a.update_by AS "updateBy.id",
+            a.update_date,
+            a.del_flag,
+            p.name AS "parent_name"
+        FROM sys_menu a
+        LEFT JOIN sys_menu p ON p.id = a.parent_id
+        WHERE a.del_flag = #{DEL_FLAG_NORMAL}) a
+        <if test="userId!='' and userId != null">
+          ,SYS_ROLE_MENU b,SYS_USERROLE c
+          where a.id=b.menu_id and b.role_id=c.roleid
+            and c.userId=#{userId}
+        </if>
+        ORDER BY a.sort
+    </select>
+    <select id="findMenuById" resultType="com.server.Entity.Menu">
+        SELECT
+            a.id,
+            a.parent_id,
+            a.parent_ids,
+            a.name,
+            a.href,
+            a.target,
+            a.icon,
+            a.sort,
+            a.is_show,
+            a.permission,
+            a.remarks,
+            a.create_by AS "createBy.id",
+            a.create_date,
+            a.update_by AS "updateBy.id",
+            a.update_date,
+            a.del_flag,
+            p.name AS "parent_name"
+        FROM sys_menu a
+        LEFT JOIN sys_menu p ON p.id = a.parent_id
+        WHERE a.id=#{id}
+        ORDER BY a.sort
+    </select>
+
+    <insert id="insertMenu">
+        INSERT INTO sys_menu(
+        id,
+        parent_id,
+        parent_ids,
+        name,
+        href,
+        target,
+        icon,
+        sort,
+        is_show,
+        permission,
+        remarks,
+        del_flag
+        ) VALUES (
+        #{id},
+        #{parentId},
+        #{parentIds},
+        #{name},
+        #{href},
+        #{target},
+        #{icon},
+        #{sort},
+        #{isShow},
+        #{permission},
+        #{remarks},
+        #{delFlag}
+        )
+    </insert>
+    <insert id="insertRole">
+        INSERT INTO sys_role_r(
+			id,
+			name,
+			enname,
+			role_type,
+			data_scope,
+			remarks,
+			del_flag,
+			is_sys,
+			useable
+		) VALUES (
+			#{id},
+			#{name},
+			#{enname},
+			#{roleType},
+			#{dataScope},
+			#{remarks},
+			#{delFlag},
+			#{sysData},
+			#{useable}
+		)
+    </insert>
+    <insert id="insertRoleMenu">
+        INSERT INTO sys_role_menu(role_id, menu_id)
+        <foreach collection="menuList" item="menu" separator=" union all ">
+            SELECT #{id}, #{menu.id} from dual
+        </foreach>
+    </insert>
+    <insert id="insertOfficeMenu">
+        INSERT INTO sys_role_menu(role_id, menu_id)
+        <foreach collection="menuList" item="menu" separator=" union all ">
+            SELECT #{id}, #{menu.id} from dual
+        </foreach>
+    </insert>
+
+    <update id="updateMenu">
+        UPDATE sys_menu SET
+        parent_id = #{parentId},
+        parent_ids = #{parentIds},
+        name = #{name},
+        href = #{href},
+        target = #{target},
+        icon = #{icon},
+        sort = #{sort},
+        is_show = #{isShow},
+        permission = #{permission},
+        remarks = #{remarks}
+        WHERE id = #{id}
+    </update>
+
+    <select id="findByParentIdsLike" resultType="com.server.Entity.Menu">
+        SELECT
+        a.id,
+        a.parent_id,
+        a.parent_ids
+        FROM sys_menu a
+        WHERE a.del_flag = #{DEL_FLAG_NORMAL} AND a.parent_ids LIKE #{parentIds}
+        ORDER BY a.sort
+    </select>
+    <update id="updateParentIds">
+        UPDATE sys_menu SET
+        parent_id = #{parentId},
+        parent_ids = #{parentIds}
+        WHERE id = #{id}
+    </update>
+    <update id="updateMenuSort">
+        BEGIN
+        <foreach collection="list" item="record" index="index">
+            UPDATE sys_menu SET
+            sort = #{record.sort}
+            WHERE id = #{record.id};
+        </foreach>
+        COMMIT;
+        END;
+    </update>
+    <update id="updateRole">
+        UPDATE sys_role_r SET
+			name = #{name},
+			enname = #{enname},
+			role_type = #{roleType},
+			data_scope = #{dataScope},
+			remarks = #{remarks},
+			is_sys = #{sysData},
+			useable = #{useable}
+		WHERE id = #{id}
+    </update>
+    <update id="saveOffice">
+DECLARE
+v_code varchar2(100);
+BEGIN
+        select (max(code)+1) into v_code from sys_office where parent_id=#{parentId};
+        if v_code is null then select code||'03' into v_code from sys_office where id=#{parentId}; end if;
+        merge into sys_office a using (select #{id} id,
+			#{parentId} parent_id,#{code} code,#{name} name,#{useable} useable,#{remarks} remarks from dual) b
+		    on (a.id=b.id)
+			when matched then
+			update set a.name=b.name,a.useable=b.useable,a.remarks=b.remarks
+			when not matched then
+			insert (a.id,a.parent_id,a.name,a.useable,a.remarks,a.type,a.code) values (sys_guid(),b.parent_id,b.name,b.useable,b.remarks,'3',v_code);
+commit;
+END;
+</update>
+    <update id="saveOfficer">
+        DECLARE
+            v_code varchar2(100);
+            BEGIN
+                    select (max(code)+1) into v_code from sys_office where parent_id=#{parentId};
+                    if v_code is null then select code||'03' into v_code from sys_office where id=#{parentId}; end if;
+                    merge into sys_office a using (select #{id} id,
+                        #{parentId} parent_id,#{code} code,#{name} name,#{useable} useable,#{remarks} remarks from dual) b
+                        on (a.id=b.id)
+                        when matched then
+                        update set a.name=b.name,a.useable=b.useable,a.remarks=b.remarks
+                        when not matched then
+                        insert (a.id,a.parent_id,a.name,a.useable,a.remarks,a.type,a.code) values (sys_guid(),b.parent_id,b.name,b.useable,b.remarks,'4',v_code);
+                    commit;
+            END;
+    </update>
+    <update id="panMCreate">
+        DECLARE
+          v_userid varchar2(50);
+          v_username varchar2(50);
+        BEGIN
+          select userid into v_userid,username into v_username from app_user where loginname=#{USERNAME};
+          merge into SYS_MYPAN a using (select v_userid userid,0 parent_id,v_username username from dual) b
+            on (a.id=b.userid)
+            when not matched then
+            insert (a.id,a.parent_id,name) values (b.userid,b.parent_id,b.username);
+            <choose>
+                <when test="PARENTID !=null and PARENTID !=''">
+                    insert into SYS_MYPAN (id,parent_id,name) values (sys_guid(),#{PARENTID},#{NAME} );
+                </when>
+                <otherwise>
+                    insert into SYS_MYPAN (id,parent_id,name) values (sys_guid(),v_userid,#{NAME} );
+                </otherwise>
+            </choose>
+          commit;
+        end;
+    </update>
+    <update id="panMUpdate">
+        update SYS_MYPAN set name=#{NAME} where id=#{ID}
+    </update>
+
+
+    <select id="findAllRole" resultType="com.common.sys.entity.Role">
+        SELECT
+            a.id,
+            a.office_id AS "office.id",
+            a.name,
+            a.enname,
+            a.role_type AS roleType,
+            a.data_scope AS dataScope,
+            a.remarks,
+            a.create_by AS "createBy.id",
+            a.create_date,
+            a.update_by AS "updateBy.id",
+            a.update_date,
+            a.del_flag,
+            o.name AS "office.name",
+            o.code,
+            a.useable AS useable,
+            a.is_sys AS sysData
+        FROM SYS_ROLE_R a
+        LEFT JOIN sys_office o ON o.id = a.office_id
+        WHERE a.del_flag = #{DEL_FLAG_NORMAL}
+        ORDER BY o.code, a.name
+    </select>
+    <resultMap id="roleResult" type="com.common.sys.entity.Role">
+        <id property="id" column="id" />
+        <result property="name" column="name" />
+        <result property="enname" column="enname" />
+        <result property="roleType" column="roleType" />
+        <result property="dataScope" column="dataScope" />
+        <result property="remarks" column="remarks" />
+        <result property="useable" column="useable" />
+        <result property="sysData" column="sysData" />
+        <collection property="menuList" ofType="com.server.Entity.Menu">
+            <id property="id" column="menuList.id" />
+        </collection>
+    </resultMap>
+    <select id="findRoleById" resultMap="roleResult">
+        SELECT
+            a.id,
+            a.name,
+            a.enname,
+            a.role_type AS roleType,
+            a.data_scope AS dataScope,
+            a.remarks,
+            a.create_by AS "createBy.id",
+            a.create_date,
+            a.update_by AS "updateBy.id",
+            a.update_date,
+            a.del_flag,
+            a.useable AS useable,
+            a.is_sys AS sysData,
+            rm.menu_id AS "menuList.id"
+        FROM sys_role_r a
+        LEFT JOIN sys_role_menu rm ON rm.role_id = a.id
+        WHERE a.id = #{id}
+    </select>
+    <select id="getRoleByName" resultType="com.common.sys.entity.Role">
+        SELECT
+            a.id,
+            a.office_id AS "office.id",
+            a.name,
+            a.enname,
+            a.role_type AS roleType,
+            a.data_scope AS dataScope,
+            a.remarks,
+            a.create_by AS "createBy.id",
+            a.create_date,
+            a.update_by AS "updateBy.id",
+            a.update_date,
+            a.del_flag,
+            o.name AS "office.name",
+            o.code,
+            a.useable AS useable,
+            a.is_sys AS sysData
+        FROM sys_role_r a
+        JOIN sys_office o ON o.id = a.office_id
+        WHERE a.name = #{name} AND a.del_flag = #{DEL_FLAG_NORMAL}
+    </select>
+    <select id="findUserByRoleId" resultType="com.common.sys.entity.User">
+        SELECT
+            a.*
+        FROM app_user a
+        <if test="role != null and role.id != null and role.id != ''">
+            JOIN SYS_USERROLE ur ON ur.userid = a.userid AND ur.roleid = #{role.id}
+        </if>
+        WHERE a.isdel != 1
+            AND a.userid != '1'
+        <choose>
+            <when test="page !=null and page.orderBy != null and page.orderBy != ''">
+                ORDER BY ${page.orderBy}
+            </when>
+            <otherwise>
+                ORDER BY a.username
+            </otherwise>
+        </choose>
+    </select>
+    <select id="getAllOffice" resultType="com.common.sys.entity.Office">
+        select * from app_dept
+    </select>
+    <select id="getOfficeList" resultType="com.common.sys.entity.Office">
+        select a.id,
+		a.parent_id,
+		a.parent_ids,
+		a.code,
+		a.name,
+		a.sort,
+		a.type,
+		decode(a.type,1,1,'') as typpe,
+		decode(a.type,2,2,'') as typppe,
+		decode(a.type,3,3,'') as typpppe,
+		a.grade,
+		a.address,
+		a.zip_code,
+		a.master,
+		a.phone,
+		a.fax,
+		a.email,
+		a.remarks,
+		a.create_date,
+		a.update_date,
+		a.del_flag,
+		a.useable AS useable,
+		p.name AS parent_name
+		FROM sys_office a
+		 LEFT JOIN sys_office p ON p.id = a.parent_id
+		 where a.del_flag!=1 and a.type!=4
+    </select>
+    <select id="getOfficeById" resultType="com.common.sys.entity.Office">
+     select
+      a.id,
+		a.parent_id,
+		a.parent_ids,
+		a.code,
+		a.name,
+		a.sort,
+		a.type,
+		decode(a.type,1,1,'') as typpe,
+		decode(a.type,2,2,'') as typppe,
+		decode(a.type,3,3,'') as typpppe,
+		a.grade,
+		a.address,
+		a.zip_code,
+		a.master,
+		a.phone,
+		a.fax,
+		a.email,
+		a.remarks,
+		a.create_date,
+		a.update_date,
+		a.del_flag,
+		a.useable AS useable,
+		p.name AS parent_name
+		FROM sys_office a
+		 LEFT JOIN sys_office p ON p.id = a.parent_id
+		 WHERE a.id = #{id}
+    </select>
+    <select id="getOfficeMenuById" resultType="com.server.Entity.Menu">
+        select * from SYS_MENU where id in (select menu_id from  sys_role_menu where role_id=#{id})
+    </select>
+    <select id="findUserByOfficeId" resultType="com.common.sys.entity.User">
+        select * from app_user where
+         userid in (select userid from SYS_USERROLE where roleid=#{id})
+    </select>
+    <select id="getOfficeRList" resultType="com.common.sys.entity.Office">
+        select a.id,
+		a.parent_id,
+		a.parent_ids,
+		a.code,
+		decode(a.code,'9999','1','') as typpe,
+		decode(a.code,'9999','','1') as typppe,
+		a.name,
+		a.sort,
+		a.type,
+		a.grade,
+		a.address,
+		a.zip_code,
+		a.master,
+		a.phone,
+		a.fax,
+		a.email,
+		a.remarks,
+		a.create_date,
+		a.update_date,
+		a.del_flag,
+		a.useable AS useable,
+		p.name AS parent_name
+		FROM sys_office a
+		 LEFT JOIN sys_office p ON p.id = a.parent_id
+		 where a.del_flag!=1 and a.type=4
+
+    </select>
+    <select id="getOfficeMList" resultType="com.common.sys.entity.Office">
+        select * from (select a.*,
+               decode(a.type, 1, 1, '') as typpe,
+               decode(a.type, 2, 2, '') as typppe,
+               decode(a.type, 3, 3, '') as typpppe,
+               decode(a.type, 5, 5, '') as typppppe,
+               connect_by_isleaf isleaf
+          from v_office a
+        connect by prior id = parent_id
+         start with id = #{dwdm})
+          where del_flag!=1 and type!=4
+         order by type desc
+    </select>
+    <select id="getOfficeMList2" resultType="com.common.sys.entity.Office">
+        select * from (select a.*,
+               decode(a.type, 1, 1, '') as typpe,
+               decode(a.type, 2, 2, '') as typppe,
+               decode(a.type, 3, 3, '') as typpppe,
+               decode(a.type, 5, 5, '') as typppppe,
+               connect_by_isleaf isleaf
+          from v_office a
+        connect by prior id = parent_id
+         start with id = #{dwdm})
+          where del_flag!=1 and type!=4 and type!=2
+          order by type desc
+    </select>
+    <select id="saveOfficem">
+        DECLARE
+            v_code varchar2(100);
+            BEGIN
+                    select (max(code)+1) into v_code from sys_office where parent_id=#{parentId};
+                    if v_code is null then select code||'03' into v_code from sys_office where id=#{parentId}; end if;
+                    merge into sys_office a using (select #{id} id,
+                        #{parentId} parent_id,#{code} code,#{name} name,#{useable} useable,#{remarks} remarks from dual) b
+                        on (a.id=b.id)
+                        when matched then
+                        update set a.name=b.name,a.useable=b.useable,a.remarks=b.remarks
+                        when not matched then
+                        insert (a.id,a.parent_id,a.name,a.useable,a.remarks,a.type,a.code) values (sys_guid(),b.parent_id,b.name,b.useable,b.remarks,'5',v_code);
+                    commit;
+            END;
+    </select>
+    <select id="getPanMList" resultType="java.util.HashMap">
+        select * from SYS_MYPAN t connect by prior id=parent_id start with id=#{USERID}
     </select>
 </mapper>

@@ -23,17 +23,29 @@
 
     </delete>
     <select id="getUserOne" resultType="java.util.HashMap">
-        select * from APP_USER where LOGINNAME=#{username} or userid=#{username}
-
+        select a.*,
+               c.id          deptid,
+               c.code,
+               c.name        deptname,
+               c.parent_id   parentid,
+               c.parent_name parentname,
+               c.*
+          from APP_USER a
+          left join (select t.*, s.userid
+                       from v_office t, sys_userrole s
+                      where t.id = s.roleid
+                        and type between 1 and 3) c
+            on a.userid = c.userid
+         where LOGINNAME=#{username} or a.userid=#{username} and rownum=1
     </select>
     <select id="getUserList" resultType="java.util.HashMap">
-        select * from sys_user
+        select * from APP_USER
     </select>
     <select id="getDeptList" resultType="java.util.HashMap">
       select * from SYS_DEPARTMENT t
     </select>
-    <select id="validRegstUser" resultType="java.util.HashMap">
-        select a.* from sys_user a,APP_REGISTINFO b where a.yhdw=b.deptid and a.yhm=#{username}
+    <select id="validRegst" resultType="java.util.HashMap">
+        select a.* from SYS_JQRZ_HP a where  a.cpuid=#{cpu} and nvl(status,999) not in (1,2)
     </select>
     <select id="getUserOne2" resultType="java.util.HashMap">
       select a.*,t.deptid,t.oilid from SYS_USERS a,SYS_USER_DEPT t where a.id=t.userid and a.loginid=#{username}

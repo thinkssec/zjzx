@@ -44,7 +44,13 @@ public class ServiceController {
         ResponseBody res = new ResponseBody();
         System.out.println("requestBody "+requestBody);
         RequestBody r = (RequestBody) JsonMapper.fromJsonString(requestBody, RequestBody.class);
-        Map<String, String> params = (Map<String, String>) JsonMapper.fromJsonString(r.getParams(), Map.class);
+        Map<String, String> params = null;
+        try {
+            params = (Map<String, String>) JsonMapper.fromJsonString(r.getParams(), Map.class);
+        }catch(Exception e){
+            params=new HashMap<String,String>();
+            //e.printStackTrace();
+        }
         String call = r.getCall();
         //System.out.println("1111111111"+cacheManage.get("testCache")+"1111111111");
         User user= UserUtils.getUser();
@@ -74,7 +80,13 @@ public class ServiceController {
         System.out.println("requestBody="+requestBody);
         ResponseBody res = new ResponseBody();
         RequestBody r = (RequestBody) JsonMapper.fromJsonString(requestBody, RequestBody.class);
-        Map<String, String> params = (Map<String, String>) JsonMapper.fromJsonString(r.getParams(), Map.class);
+        Map<String, String> params = null;
+        try {
+            params = (Map<String, String>) JsonMapper.fromJsonString(r.getParams(), Map.class);
+        }catch(Exception e){
+            //e.printStackTrace();
+        }
+        if(params==null)params=new HashMap<String,String>();
         String filepath=fileService.upLoad(r,params, id, file);
         return filepath;
     }
@@ -85,7 +97,14 @@ public class ServiceController {
         ResponseBody res = new ResponseBody();
         System.out.println("requestBody="+requestBody);
         RequestBody r = (RequestBody) JsonMapper.fromJsonString(requestBody, RequestBody.class);
-        Map<String, String> params = (Map<String, String>) JsonMapper.fromJsonString(r.getParams(), Map.class);
+        Map<String, String> params = null;
+        try {
+            params = (Map<String, String>) JsonMapper.fromJsonString(r.getParams(), Map.class);
+        }catch(Exception e){
+
+            //e.printStackTrace();
+        }
+        if(params==null)params=new HashMap<String,String>();
         String call = r.getCall();
         Method m = SysService.class.getMethod(call, new Class[]{RequestBody.class,Map.class, String.class});
         res = (ResponseBody) m.invoke(sysService,r, params, id);

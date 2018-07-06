@@ -27,24 +27,22 @@ public class UserUtils {
 
 	/**
 	 * 根据ID获取用户
-	 * @param id
+	 * @param username
 	 * @return 取不到返回null
 	 */
-	public static User get(String id){
+	public static User get(String username){
 		User user = null;
 		if (user ==  null){
 			//user = userDao.get(id);
-			HashMap u=userMapper.getUserOne2(id);
+			HashMap u=userMapper.getUserOne(username);
 			if(u!=null){
 				user=new User();
-				user.setLoginName((String)u.get("LOGINID"));
-                user.setDeptId((String)u.get("DEPTID"));
-				user.setIsDel((String)u.get("ISDEL"));
-				user.setOilId((String)u.get("OILID"));
-				user.setName((String)u.get("NAME"));
-				user.setId((String)u.get("ID"));
-				user.setRoleList(userMapper.getRoleList(user.getId()));
-				user.setPermissionList(userMapper.getPermissionList(user.getId()));
+				user.setLoginName((String)u.get("LOGINNAME"));
+				user.setName((String)u.get("USERNAME"));
+				user.setId((String)u.get("USERID"));
+				user.setPassword((String)u.get("PWD"));
+				//user.setRoleList(userMapper.getRoleList(user.getId()));
+				//user.setPermissionList(userMapper.getPermissionList(user.getId()));
 			}
 			if (user == null){
 				return null;
@@ -101,9 +99,10 @@ public class UserUtils {
 	public static String getPrincipal2(){
 		try{
 			Subject subject = SecurityUtils.getSubject();
+			//StatelessRealm.Principal principal = getPrincipal();
 			String principal = (String)subject.getPrincipal();
 			if (principal != null){
-				return principal;
+				return principal.toString();
 			}
 //			subject.logout();
 		}catch (UnavailableSecurityManagerException e) {

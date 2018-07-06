@@ -8,10 +8,12 @@ import com.server.Entity.ResponseBody;
 import com.server.mapper.SysControlMapper;
 import com.server.service.DataSourceType;
 import com.server.service.SysService;
+import org.apache.commons.lang.StringEscapeUtils;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Pointcut;
+import org.aspectj.util.FileUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.commons.CommonsMultipartFile;
@@ -67,8 +69,15 @@ public class WaitingAop {
         id = UUID.randomUUID().toString();
         if (d.length == 0) return o;
         else {
+            //urldecode spring 会自动处理，不用人为urldecode
             BASE64Decoder decoder = new BASE64Decoder();
+            //System.out.println(d[0]);
+            //System.out.println(Encodes.urlDecode("%7b%22call%22%3a%22getXtSjInfo%22%2c%22params%22%3a%22%7b%5c%22SJC%5c%22%3a%5c%2220170101%c2%a021%3a00%3a00%5c%22%7d%22%7d"));
+            //d[0]= Encodes.urlDecode((String)d[0]);
+            //d[0]=StringEscapeUtils.unescapeHtml((String)d[0]);
             d[0]= new String(decoder.decodeBuffer((String)d[0]), "UTF-8");
+            d[0]=StringEscapeUtils.unescapeHtml((String)d[0]);
+            //System.out.println(d[0]);
             String args = (String) d[0];
             if (d.length == 3) e = new Object[3];
             else e = new Object[2];
@@ -76,6 +85,13 @@ public class WaitingAop {
             e[1] = id;
             if (d.length == 3) e[2] = d[2];
             r = (RequestBody) JsonMapper.fromJsonString(args, RequestBody.class);
+            if(r==null){
+                ResponseBody oo = new ResponseBody();
+                oo.setIssuccess("0");
+                oo.setMessage("请求字符串存在格式错误！");
+                String t=JsonMapper.toJsonString(oo);
+                return Encodes.encodeToBase64((String)t);
+            }
             r.setId(id);
         }
         synchronized (nm) {
@@ -120,6 +136,11 @@ public class WaitingAop {
                 String call = r.getCall();
                 Method m = SysService.class.getMethod(call, new Class[]{RequestBody.class,Map.class, String.class});
                 o = m.invoke(sysService, r,params, id);
+                if(o instanceof ResponseBody){
+                    String oo="";
+                    oo=JsonMapper.toJsonString(o);
+                    o=oo;
+                }
                 //System.out.println("------114"+o);
                 closeHandMsg(r, id);
             } else {
@@ -234,6 +255,7 @@ public class WaitingAop {
         DataSourceContextHolder.setDbType(DataSourceType.Datasource1);
         r.setId(id);
         try {
+            //r.setParams(r.getParams().getBytes());
             sysControlMapper.updateRequest3(r);
         } catch (Exception e) {
             e.printStackTrace();

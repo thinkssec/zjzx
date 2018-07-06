@@ -21,7 +21,7 @@
         <include refid="com.base.baseMapper.pageEnd"/>
     </select>
     <select id="getDw" resultType="java.util.HashMap">
-        select code ,name  from SYS_OFFICE
+        select dwdm code ,dwmc name  from APP_DEPT where isdel!=1
     </select>
     <select id="getYq" resultType="java.util.HashMap">
         select id,name from app_yq
@@ -31,6 +31,15 @@
     </select>
     <select id="isRegist2" resultType="java.util.HashMap">
         select * from SYS_JQRZ_HP where cpuid=#{CPUID} and status is not null
+    </select>
+    <select id="getDw2" resultType="java.util.HashMap">
+        select '' code,'空' name from dual
+         union all
+        select id code,parent_name name from v_OFFICE
+         where code like '%00' and length(code)=6
+    </select>
+    <select id="getDw3" resultType="java.util.HashMap">
+      select a.id code,a.name name from v_office a connect by prior id=parent_id start with id=#{dwdm}
     </select>
     <update id="saveJqsqty">
         DECLARE

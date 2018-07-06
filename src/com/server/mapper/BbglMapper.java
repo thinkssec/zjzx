@@ -37,5 +37,5 @@ public interface BbglMapper {
 	void xfBbsj(HashMap params);
 	void delBbxt(HashMap params);
 	void delBbsj(HashMap params);
-	HashMap getXtSjInfo(Map map);
+	List<HashMap> getXtSjInfo(Map map);
 }

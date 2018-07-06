@@ -2,27 +2,60 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
 <mapper namespace="com.server.mapper.EmailMapper">
     <insert id="sendMail">
+        DECLARE
+        v_id varchar2(50);
+        begin
+        select sys_guid() into v_id from dual;
         insert into APP_EMAIL (ID, HFID, FJRYHM,
           FJRXM, SJRYHM, SJRXM,
           SFYJS, XMBH, XMMC,
-          ZT, ZWNR, FSRQ, JSRQ,
-          DKRQ, BZ)
-        values (#{ID,jdbcType=VARCHAR}, #{HFID,jdbcType=VARCHAR}, #{FJRYHM,jdbcType=VARCHAR},
+          ZT, ZWNR, FSRQ, BZ,BCID)
+        values (v_id, #{HFID,jdbcType=VARCHAR}, #{FJRYHM,jdbcType=VARCHAR},
           #{FJRXM,jdbcType=VARCHAR}, #{SJRYHM,jdbcType=VARCHAR}, #{SJRXM,jdbcType=VARCHAR},
           #{SFYJS,jdbcType=VARCHAR}, #{XMBH,jdbcType=VARCHAR}, #{XMMC,jdbcType=VARCHAR},
-          #{ZT,jdbcType=VARCHAR}, #{ZWNR,jdbcType=VARCHAR}, #{FSRQ,jdbcType=DATE},
-          #{JSRQ,jdbcType=DATE},
-          #{DKRQ,jdbcType=DATE}, #{BZ,jdbcType=VARCHAR})
+          #{ZT,jdbcType=VARCHAR}, #{ZWNR,jdbcType=VARCHAR}, to_date(#{FSRQ,jdbcType=DATE},'yyyy-MM-dd hh24:mi:ss'),
+          #{BZ,jdbcType=VARCHAR},#{BCID,jdbcType=VARCHAR});
+          insert into APP_EMAIL_ATTACH ( EID, PATH)
+        values ( v_id, #{path,jdbcType=VARCHAR});
+        commit;
+          end;
     </insert>
 
     <insert id="sendAttach">
         insert into APP_EMAIL_ATTACH (ID, EID, PATH)
         values (#{id,jdbcType=VARCHAR}, #{eid,jdbcType=VARCHAR}, #{path,jdbcType=VARCHAR})
     </insert>
+    <update id="replyMail">
+        DECLARE
+        v_id varchar2(50);
+        begin
+        select sys_guid() into v_id from dual;
+        insert into APP_EMAIL (ID, HFID, FJRYHM,
+          FJRXM, SJRYHM, SJRXM,
+          SFYJS, XMBH, XMMC,
+          ZT, ZWNR, FSRQ, BZ,BCID)
+        values (v_id, #{HFID,jdbcType=VARCHAR}, #{FJRYHM,jdbcType=VARCHAR},
+          #{FJRXM,jdbcType=VARCHAR}, #{SJRYHM,jdbcType=VARCHAR}, #{SJRXM,jdbcType=VARCHAR},
+          #{SFYJS,jdbcType=VARCHAR}, #{XMBH,jdbcType=VARCHAR}, #{XMMC,jdbcType=VARCHAR},
+          #{ZT,jdbcType=VARCHAR}, #{ZWNR,jdbcType=VARCHAR}, to_date(#{FSRQ,jdbcType=DATE},'yyyy-MM-dd hh24:mi:ss'),
+          #{BZ,jdbcType=VARCHAR},#{BCID,jdbcType=VARCHAR});
+          insert into APP_EMAIL_ATTACH ( EID, PATH)
+        values ( v_id, #{path,jdbcType=VARCHAR});
+        commit;
+          end;
+    </update>
+    <update id="readed">
+        update APP_EMAIL set isread=1 where id=#{ID}
+    </update>
+    <delete id="delete">
+        update APP_EMAIL set isdel=1 where id=#{ID}
+    </delete>
+
+
     <select id="getMailList" resultType="java.util.HashMap">
-        select * from APP_EMAIL where FJRYHM=#{USERNAME}
+        select * from APP_EMAIL where FJRYHM=#{USERID} and isdel!=1
         <if test="ID!='' and ID!=null">
-            id=#{ID}
+          and  id=#{ID}
         </if>
     </select>
     <select id="getMailAList" resultType="java.util.HashMap">

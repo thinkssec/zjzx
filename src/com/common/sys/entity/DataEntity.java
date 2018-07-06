@@ -4,6 +4,9 @@
 package com.common.sys.entity;
 
 import com.common.persistence.BaseEntity;
+import com.common.utils.IdGen;
+import com.common.utils.StringUtils;
+import com.common.utils.UserUtils;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
@@ -40,11 +43,12 @@ public abstract class DataEntity<T> extends BaseEntity<T> {
 	 */
 	@Override
 	public void preInsert(){
-		/*// 不限制ID为UUID，调用setIsNewRecord()使用自定义ID
-		if (!this.isNewRecord){
+		// 不限制ID为UUID，调用setIsNewRecord()使用自定义ID
+		/*if (!this.isNewRecord){
 			setId(IdGen.uuid());
-		}
-		User user = UserUtils.getUser();
+		}*/
+		setId(IdGen.uuid());
+		/*User user = UserUtils.getUser();
 		if (StringUtils.isNotBlank(user.getId())){
 			this.updateBy = user;
 			this.createBy = user;

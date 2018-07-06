@@ -22,7 +22,7 @@ public interface UserMapper extends MainMapper {
     void delUserList(HashMap param);
     List<HashMap> getUserList(Map params);
     List<HashMap> getDeptList(Map params);
-    List<HashMap> validRegstUser(String username);
+    HashMap validRegst(String cpu);
     HashMap getUserOne2(String username);
     List<HashMap> getRoleList(String userid);
     @MapKey("KEY")
