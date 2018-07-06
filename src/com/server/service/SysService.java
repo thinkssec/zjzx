@@ -96,8 +96,8 @@ public class SysService{
     public ResponseBody milSend(RequestBody rq, Map params, String id){
         ResponseBody rp=new ResponseBody(params,"1","邮件发送成功",id,rq.getTaskid());
         try{
-            params.put("path",rq.getAttach());
-            doSend(params);
+            params.put("PATH",rq.getAttach());
+            emailMapper.sendMail(params);
         }catch(Exception e){
             e.printStackTrace();
             rp.setIssuccess("0");
@@ -105,11 +105,10 @@ public class SysService{
         }
         return rp;
     }
-
     public ResponseBody milReply(RequestBody rq, Map params, String id){
         ResponseBody rp=new ResponseBody(params,"1","邮件发送成功",id,rq.getTaskid());
         try{
-            params.put("path",rq.getAttach());
+            params.put("PATH",rq.getAttach());
             emailMapper.replyMail(params);
         }catch(Exception e){
             e.printStackTrace();
@@ -198,7 +197,6 @@ public class SysService{
         }
         return rp;
     }
-
     public ResponseBody panMDel(RequestBody rq, Map params, String id){
         ResponseBody rp=new ResponseBody(params,"1","操作成功！",id,rq.getTaskid());
         try{
@@ -209,8 +207,6 @@ public class SysService{
         }
         return rp;
     }
-
-
     public ResponseBody panMList(RequestBody rq, Map params, String id){
         ResponseBody rp=new ResponseBody(params,"1","获取列表成功",id,rq.getTaskid());
         HashMap u=userMapper.getUserOne(rq.getUsername());
@@ -224,22 +220,37 @@ public class SysService{
         }
         return rp;
     }
-
     public ResponseBody panMUpload(RequestBody rq, Map params, String id){
         ResponseBody rp=new ResponseBody(params,"1","操作成功！",id,rq.getTaskid());
         try{
-            params.put("path",rq.getAttach());
-            frameMapper.panMDelete(params);
+            params.put("PATH",rq.getAttach());
+            frameMapper.panMUpload(params);
         }catch(Exception e){
             rp.setIssuccess("0");
             rp.setMessage("操作失败");
         }
         return rp;
     }
-    @Transactional
-    public void doSend(Map params){
-        emailMapper.sendMail(params);
-        //emailMapper.sendAttach(params);
+    public ResponseBody panMXmList(RequestBody rq, Map params, String id){
+        ResponseBody rp=new ResponseBody(params,"1","获取列表成功",id,rq.getTaskid());
+        try{
+            List<HashMap> el=frameMapper.getPanMXmList(params);
+            rp.setDatas(JsonMapper.toJsonString(el));
+        }catch(Exception e){
+            rp.setIssuccess("0");
+            rp.setMessage("获取列表失败");
+        }
+        return rp;
+    }
+    public ResponseBody panMXmDel(RequestBody rq, Map params, String id){
+        ResponseBody rp=new ResponseBody(params,"1","操作成功！",id,rq.getTaskid());
+        try{
+            frameMapper.panMXmDelete(params);
+        }catch(Exception e){
+            rp.setIssuccess("0");
+            rp.setMessage("操作失败");
+        }
+        return rp;
     }
     public ResponseBody authgetuser(RequestBody rq, Map params, String id){
         ResponseBody rp=new ResponseBody(params,"1","获取用户列表成功",id,rq.getTaskid());
@@ -253,45 +264,15 @@ public class SysService{
         }
         return rp;
     }
-
     public ResponseBody sycndata(RequestBody rq, Map params, String id){
         return syncService.sycndata(rq,params,id);
     }
-
     public ResponseBody pancreateDic(RequestBody rq, Map params, String id){
         return panService.createDirectory(rq,params,id);
     }
-
     public ResponseBody pancreateFile(RequestBody rq, Map params, String id){
         return panService.createFile(rq,params,id);
     }
-    public interface CLibrary extends Library {
-
-        //String filePath = CLibrary.class.getResource("").getPath().replaceFirst("/","").replaceAll("%20"," ")+"dll/x86/SQLite.Interop";
-        //CLibrary sdtapi = (CLibrary) Native.loadLibrary(filePath, CLibrary.class);
-        CLibrary sdtapi = (CLibrary) Native.loadLibrary("dll/System.Data.SQLite", CLibrary.class);
-        //动态链接库中的方法
-        int InitComm(int port);
-        //动态链接库中的方法
-        void fn_StartBegin();
-    }
-    public ResponseBody testNormal(RequestBody rq, Map params, String id){
-        ResponseBody r = new ResponseBody();
-
-
-        return r;
-    }
-    public static void main(String[] args) {
-        try {
-            //System.out.println(System.getProperty("java.library.path"));
-            //调用方法
-            CLibrary.sdtapi.fn_StartBegin();
-
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-    @Transactional
     public ResponseBody getDatabbList(RequestBody rq, Map params, String id){
         ResponseBody rp=new ResponseBody(params,"1","获取数据升级包列表",id,rq.getTaskid());
         try{
@@ -322,8 +303,6 @@ public class SysService{
         }
         return rp;
     }
-
-    @Transactional
     public ResponseBody getJqsq(RequestBody rq, Map params, String id){
         ResponseBody rp=new ResponseBody(params,"1","获取数据列表",id,rq.getTaskid());
         try{
@@ -348,8 +327,6 @@ public class SysService{
         }
         return rp;
     }
-
-    @Transactional
     public ResponseBody jqsqwpzList(RequestBody rq, Map params, String id){
         ResponseBody rp=new ResponseBody(params,"1","获取数据列表",id,rq.getTaskid());
         try{
@@ -374,7 +351,6 @@ public class SysService{
         }
         return rp;
     }
-    @Transactional
     public ResponseBody jqsqpzList(RequestBody rq, Map params, String id){
         ResponseBody rp=new ResponseBody(params,"1","获取数据列表",id,rq.getTaskid());
         try{
@@ -400,8 +376,6 @@ public class SysService{
         }
         return rp;
     }
-
-    @Transactional
     public ResponseBody jqsqty(RequestBody rq, Map params, String id){
         ResponseBody rp=new ResponseBody(params,"1","保存成功！",id,rq.getTaskid());
         try{
@@ -426,7 +400,6 @@ public class SysService{
         }
         return rp;
     }
-    @Transactional
     public ResponseBody savejqsqpz(RequestBody rq, Map params, String id){
         ResponseBody rp=new ResponseBody(params,"1","保存成功！",id,rq.getTaskid());
         try{
@@ -452,7 +425,6 @@ public class SysService{
         }
         return rp;
     }
-
     public ResponseBody jqsqbty(RequestBody rq, Map params, String id){
         ResponseBody rp=new ResponseBody(params,"1","保存成功！",id,rq.getTaskid());
         try{
@@ -477,7 +449,6 @@ public class SysService{
         }
         return rp;
     }
-
     public ResponseBody jqsqdel(RequestBody rq, Map params, String id){
         ResponseBody rp=new ResponseBody(params,"1","保存成功！",id,rq.getTaskid());
         try{
@@ -610,7 +581,6 @@ public class SysService{
         }
         return rp;
     }
-
     public ResponseBody deptLists(RequestBody rq, Map params, String id){
         ResponseBody rp=new ResponseBody(params,"1","获取数据列表",id,rq.getTaskid());
         try{
@@ -1353,7 +1323,6 @@ public class SysService{
         }
         return rp;
     }
-
     public ResponseBody findAllRole(RequestBody rq, Map params, String id){
         ResponseBody rp=new ResponseBody(params,"1","获取数据列表成功！",id,rq.getTaskid());
         try{
@@ -1683,6 +1652,40 @@ public class SysService{
         return rp;
     }
 
+
+
+
+
+
+
+
+
+    public interface CLibrary extends Library {
+
+        //String filePath = CLibrary.class.getResource("").getPath().replaceFirst("/","").replaceAll("%20"," ")+"dll/x86/SQLite.Interop";
+        //CLibrary sdtapi = (CLibrary) Native.loadLibrary(filePath, CLibrary.class);
+        CLibrary sdtapi = (CLibrary) Native.loadLibrary("dll/System.Data.SQLite", CLibrary.class);
+        //动态链接库中的方法
+        int InitComm(int port);
+        //动态链接库中的方法
+        void fn_StartBegin();
+    }
+    public ResponseBody testNormal(RequestBody rq, Map params, String id){
+        ResponseBody r = new ResponseBody();
+
+
+        return r;
+    }
+    public static void main(String[] args) {
+        try {
+            //System.out.println(System.getProperty("java.library.path"));
+            //调用方法
+            CLibrary.sdtapi.fn_StartBegin();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
     public void traverseFolder2(List<String> l,String path,String doc) {
         File file = new File(path);
         if (file.exists()) {
