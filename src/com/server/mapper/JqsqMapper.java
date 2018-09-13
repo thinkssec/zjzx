@@ -27,11 +27,16 @@ public interface JqsqMapper {
 	 * @return 返回影响行数
 	 */
 	List<HashMap> getJqsq(Condition condition);
+	List<HashMap> getRysq(Condition condition);
 	List<HashMap> getJqsqpz(Condition condition);
 	List<HashMap> getJqsqwpz(Condition condition);
+	List<HashMap> getRysqwpz(Condition condition);
 	void saveJqsqty(HashMap condition);
+	void saveRysqty(HashMap condition);
 	void saveJqsqbty(HashMap condition);
+	void saveRysqbty(HashMap condition);
 	void saveJqsqdel(HashMap condition);
+	void saveRysqdel(HashMap condition);
 	List<HashMap> getDw(Condition condition);
 	List<HashMap> getDw2(Condition condition);
 	List<HashMap> getDw3(Condition condition);
@@ -39,7 +44,9 @@ public interface JqsqMapper {
     void saveJqsqpz(HashMap map);
     HashMap isRegist(Map map);
 	HashMap isRegist2(Map map);
+	HashMap isRegistUser(Map map);
     void regist(Map params);
+	void registUser(Map params);
 
 	void saveJqsqtingy(HashMap m);
 

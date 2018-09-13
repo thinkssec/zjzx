@@ -47,7 +47,7 @@
             text:'数据源监控',
             iconCls:'icon-ok',
             handler:function(){
-                window.open('http://localhost:8090/zjzx/druid/index.html');
+                window.open('http://localhost:8080/druid/index.html');
             }
         }
     ];
@@ -80,15 +80,15 @@
         columns: [[
             {field: 'ID',hidden: true},
             {field: 'USERNAME', title: '请求用户', width: 180},
-            {field: 'IP', title: 'IP地址', width: 180},
-            {field: 'PARAMS', title: '请求参数', width: 180},
+            /*{field: 'IP', title: 'IP地址', width: 180},*/
+            {field: 'CALL', title: '请求指令', width: 180},
             {field: 'I', title: '接收时间', width: 180},
             {field: 'O', title: '接收完成时间', width: 180},
-            {field: 'SESSIONID', title: '业务编号', width: 180},
+            /*{field: 'SESSIONID', title: '业务编号', width: 180},*/
             {field: 'S', title: '状态', width: 180}
         ]],
         onLoadSuccess:function(data){
-            console.log(data);
+            //console.log(data);
         }
     };
     var i1,i2;
@@ -109,14 +109,14 @@
         columns: [[
             {field: 'ID',hidden: true},
             {field: 'USERNAME', title: '请求用户', width: 180},
-            {field: 'PARAMS', title: '请求参数', width: 180},
+            {field: 'CALL', title: '请求命令', width: 180},
             {field: 'I', title: '开始时间', width: 180},
             {field: 'O', title: '完成时间', width: 180},
-            {field: 'SESSIONID', title: '业务编号', width: 180},
+            /*{field: 'SESSIONID', title: '业务编号', width: 180},*/
             {field: 'S', title: '状态', width: 180}
         ]],
         onLoadSuccess:function(data){
-            console.log(data);
+            //console.log(data);
         }
     };
     $(document).ready(function(){

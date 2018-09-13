@@ -33,23 +33,24 @@ public class AdminController{
     @Autowired
     SysControlMapper sysControlMapper;
     @CrossOrigin(origins = "*", maxAge = 3600)
-    @RequestMapping("login")
+    @RequestMapping("index")
     public String login(String username, String password) {
-        HashMap u=adminService.getUserOne(username);
+        /*HashMap u=adminService.getUserOne(username);
         if(u==null)
             return "em/sysLogin";
         else{
             if(u.get("PASSWORD").equals(password)){
                 return "em/index";
             }
-        }
-        return "em/sysLogin";
+        }*/
+        return "em/index";
     }
 
     @RequestMapping("getRequestList")
     @ResponseBody
     public String getRequestList() {
         List<HashMap> u=sysControlMapper.getRequestList();
+
         String jdata= JsonMapper.getInstance().toJson(u);
         return jdata;
     }

@@ -1,7 +1,9 @@
 package com.server.service;
 
+import com.common.annotation.RequestPermission;
 import com.common.annotation.mapper.JsonMapper;
 import com.common.config.Global;
+import com.common.realm.StatelessRealm;
 import com.common.sys.entity.Office;
 import com.common.sys.entity.Role;
 import com.common.sys.entity.User;
@@ -19,6 +21,7 @@ import com.sun.jna.Library;
 import com.sun.jna.Native;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringEscapeUtils;
+import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
@@ -90,6 +93,20 @@ public class SysService{
             rp.setMessage("用户删除失败");
         }
 
+        return rp;
+    }
+    public ResponseBody modifyUser(RequestBody rq, Map params, String id){
+        ResponseBody rp=new ResponseBody(params,"1","修改成功",id,rq.getTaskid());
+        try{
+            ObjectMapper objectMapper = new ObjectMapper();
+            Condition condition=objectMapper.readValue(rq.getParams(), Condition.class);
+            condition.setC21(rq.getAttach());
+            userMapper.modifyUser(condition);
+        }catch(Exception e){
+            rp.setIssuccess("0");
+            rp.setMessage("修改失败！"+e.getMessage());
+            e.printStackTrace();
+        }
         return rp;
     }
     //发送文件
@@ -181,7 +198,12 @@ public class SysService{
             //UserUtils.getPrincipal2();
             params.put("USERNAME",rq.getUsername());
             frameMapper.panMCreate(params);
+            HashMap u=userMapper.getUserOne(rq.getUsername());
+            params.put("USERID",u.get("USERID"));
+            List<HashMap> el=frameMapper.getPanMList(params);
+            rp.setDatas(JsonMapper.toJsonString(el));
         }catch(Exception e){
+            e.printStackTrace();
             rp.setIssuccess("0");
             rp.setMessage("操作失败");
         }
@@ -192,6 +214,7 @@ public class SysService{
         try{
             frameMapper.panMUpdate(params);
         }catch(Exception e){
+            e.printStackTrace();
             rp.setIssuccess("0");
             rp.setMessage("操作失败");
         }
@@ -202,6 +225,7 @@ public class SysService{
         try{
             frameMapper.panMDelete(params);
         }catch(Exception e){
+            e.printStackTrace();
             rp.setIssuccess("0");
             rp.setMessage("操作失败");
         }
@@ -215,6 +239,7 @@ public class SysService{
             List<HashMap> el=frameMapper.getPanMList(params);
             rp.setDatas(JsonMapper.toJsonString(el));
         }catch(Exception e){
+            e.printStackTrace();
             rp.setIssuccess("0");
             rp.setMessage("获取列表失败");
         }
@@ -226,6 +251,7 @@ public class SysService{
             params.put("PATH",rq.getAttach());
             frameMapper.panMUpload(params);
         }catch(Exception e){
+            e.printStackTrace();
             rp.setIssuccess("0");
             rp.setMessage("操作失败");
         }
@@ -234,9 +260,12 @@ public class SysService{
     public ResponseBody panMXmList(RequestBody rq, Map params, String id){
         ResponseBody rp=new ResponseBody(params,"1","获取列表成功",id,rq.getTaskid());
         try{
+            HashMap u=userMapper.getUserOne(rq.getUsername());
+            params.put("USERID",u.get("USERID"));
             List<HashMap> el=frameMapper.getPanMXmList(params);
             rp.setDatas(JsonMapper.toJsonString(el));
         }catch(Exception e){
+            e.printStackTrace();
             rp.setIssuccess("0");
             rp.setMessage("获取列表失败");
         }
@@ -247,6 +276,113 @@ public class SysService{
         try{
             frameMapper.panMXmDelete(params);
         }catch(Exception e){
+            e.printStackTrace();
+            rp.setIssuccess("0");
+            rp.setMessage("操作失败");
+        }
+        return rp;
+    }
+    public ResponseBody panDHasEditP(RequestBody rq, Map params, String id){
+        ResponseBody rp=new ResponseBody(params,"1","操作成功！",id,rq.getTaskid());
+        try{
+            //UserUtils.getPrincipal2();
+            User u=UserUtils.getUser();
+            if(!u.hasPermission("dw:dept:edit")){
+                rp.setIssuccess("0");
+                rp.setMessage("权限不足");
+            }
+        }catch(Exception e){
+            e.printStackTrace();
+            rp.setIssuccess("0");
+            rp.setMessage("操作失败");
+        }
+        return rp;
+    }
+    public ResponseBody panDCreate(RequestBody rq, Map params, String id){
+        ResponseBody rp=new ResponseBody(params,"1","操作成功！",id,rq.getTaskid());
+        try{
+            //UserUtils.getPrincipal2();
+            User u=UserUtils.getUser();
+            frameMapper.panDCreate(params);
+            params.put("RT",u.getTopDeptid());
+            List<HashMap> el=frameMapper.getPanDList(params);
+            rp.setDatas(JsonMapper.toJsonString(el));
+        }catch(Exception e){
+            e.printStackTrace();
+            rp.setIssuccess("0");
+            rp.setMessage("操作失败");
+        }
+        return rp;
+    }
+    public ResponseBody panDUpdate(RequestBody rq, Map params, String id){
+        ResponseBody rp=new ResponseBody(params,"1","操作成功！",id,rq.getTaskid());
+        try{
+            frameMapper.panDCreate(params);
+        }catch(Exception e){
+            e.printStackTrace();
+            rp.setIssuccess("0");
+            rp.setMessage("操作失败");
+        }
+        return rp;
+    }
+    public ResponseBody panDDel(RequestBody rq, Map params, String id){
+        ResponseBody rp=new ResponseBody(params,"1","操作成功！",id,rq.getTaskid());
+        try{
+            frameMapper.panDDelete(params);
+        }catch(Exception e){
+            e.printStackTrace();
+            rp.setIssuccess("0");
+            rp.setMessage("操作失败");
+        }
+        return rp;
+    }
+    public ResponseBody panDList(RequestBody rq, Map params, String id){
+        ResponseBody rp=new ResponseBody(params,"1","获取列表成功",id,rq.getTaskid());
+        try{
+            User u=UserUtils.getUser();
+            params.put("RT",u.getTopDeptid());
+            List<HashMap> el=frameMapper.getPanDList(params);
+            rp.setDatas(JsonMapper.toJsonString(el));
+        }catch(Exception e){
+            e.printStackTrace();
+            rp.setIssuccess("0");
+            rp.setMessage("获取列表失败");
+        }
+        return rp;
+    }
+    public ResponseBody panDUpload(RequestBody rq, Map params, String id){
+        ResponseBody rp=new ResponseBody(params,"1","操作成功！",id,rq.getTaskid());
+        try{
+            params.put("PATH",rq.getAttach());
+            frameMapper.panDUpload(params);
+        }catch(Exception e){
+            e.printStackTrace();
+            rp.setIssuccess("0");
+            rp.setMessage("操作失败");
+        }
+        return rp;
+    }
+    public ResponseBody panDXmList(RequestBody rq, Map params, String id){
+        ResponseBody rp=new ResponseBody(params,"1","获取列表成功",id,rq.getTaskid());
+        try{
+            User u=UserUtils.getUser();
+            params.put("DEPTID",u.getDeptId());
+            params.put("RT",u.getTopDeptid());
+            List<HashMap> el=frameMapper.getPanDXmList(params);
+            rp.setDatas(JsonMapper.toJsonString(el));
+        }catch(Exception e){
+            e.printStackTrace();
+            rp.setIssuccess("0");
+            rp.setMessage("获取列表失败");
+        }
+        return rp;
+    }
+    public ResponseBody panDXmDel(RequestBody rq, Map params, String id){
+        ResponseBody rp=new ResponseBody(params,"1","操作成功！",id,rq.getTaskid());
+        try{
+            frameMapper.panMXmDelete(params);
+        }catch(Exception e){
+            e.printStackTrace();
             rp.setIssuccess("0");
             rp.setMessage("操作失败");
         }
@@ -264,6 +400,7 @@ public class SysService{
         }
         return rp;
     }
+    //过时
     public ResponseBody sycndata(RequestBody rq, Map params, String id){
         return syncService.sycndata(rq,params,id);
     }
@@ -272,36 +409,6 @@ public class SysService{
     }
     public ResponseBody pancreateFile(RequestBody rq, Map params, String id){
         return panService.createFile(rq,params,id);
-    }
-    public ResponseBody getDatabbList(RequestBody rq, Map params, String id){
-        ResponseBody rp=new ResponseBody(params,"1","获取数据升级包列表",id,rq.getTaskid());
-        try{
-            /*File file = new File(Global.getUserfilesBaseDir() + Global.SOFTWAREFILES_BASE_URL+databbDec);
-            List<String> ul=new ArrayList<String>();
-            traverseFolder2(ul,Global.getUserfilesBaseDir() + Global.SOFTWAREFILES_BASE_URL+databbDec,databbDec);
-            rp.setDatas(com.common.annotation.mapper.JsonMapper.toJsonString(ul));*/
-            User user=UserUtils.getUser();
-            //System.out.println("--------"+user);
-            params.put("OILID",user.getOilId());
-            params.put("DEPTS", AppUtils.getParentDept(user.getDeptId()));
-            try{
-                //syncMapper.updsycnt(null);
-                //String sycnTime=syncMapper.getCurrentTime();
-                List<HashMap> bbls=syncMapper.getDataBb(params);
-                HashMap datas=new HashMap();
-                datas.put("BBXX",bbls);
-                rp.setDatas(com.common.annotation.mapper.JsonMapper.toJsonString(datas));
-            }catch (Exception e){
-                e.printStackTrace();
-                rp.setIssuccess("0");
-                rp.setMessage("获取数据升级包列表失败！"+e.getMessage());
-            }
-        }catch(Exception e){
-            rp.setIssuccess("0");
-            rp.setMessage("获取数据升级包列表失败！"+e.getMessage());
-            e.printStackTrace();
-        }
-        return rp;
     }
     public ResponseBody getJqsq(RequestBody rq, Map params, String id){
         ResponseBody rp=new ResponseBody(params,"1","获取数据列表",id,rq.getTaskid());
@@ -327,6 +434,31 @@ public class SysService{
         }
         return rp;
     }
+
+    public ResponseBody getRysq(RequestBody rq, Map params, String id){
+        ResponseBody rp=new ResponseBody(params,"1","获取数据列表",id,rq.getTaskid());
+        try{
+            ObjectMapper objectMapper = new ObjectMapper();
+            Condition condition=objectMapper.readValue(rq.getParams(), Condition.class);
+            try{
+                List<HashMap> bbls=jqsqMapper.getRysq(condition);
+                condition.setStart(null);
+                HashMap datas=new HashMap();
+                datas.put("rows",bbls);
+                datas.put("total",jqsqMapper.getRysq(condition).size());
+                rp.setDatas(com.common.annotation.mapper.JsonMapper.toJsonString(datas));
+            }catch (Exception e){
+                e.printStackTrace();
+                rp.setIssuccess("0");
+                rp.setMessage("获取数据列表失败！"+e.getMessage());
+            }
+        }catch(Exception e){
+            rp.setIssuccess("0");
+            rp.setMessage("获取数据列表失败！"+e.getMessage());
+            e.printStackTrace();
+        }
+        return rp;
+    }
     public ResponseBody jqsqwpzList(RequestBody rq, Map params, String id){
         ResponseBody rp=new ResponseBody(params,"1","获取数据列表",id,rq.getTaskid());
         try{
@@ -338,6 +470,30 @@ public class SysService{
                 HashMap datas=new HashMap();
                 datas.put("rows",bbls);
                 datas.put("total",jqsqMapper.getJqsqwpz(condition).size());
+                rp.setDatas(com.common.annotation.mapper.JsonMapper.toJsonString(datas));
+            }catch (Exception e){
+                e.printStackTrace();
+                rp.setIssuccess("0");
+                rp.setMessage("获取数据列表失败！"+e.getMessage());
+            }
+        }catch(Exception e){
+            rp.setIssuccess("0");
+            rp.setMessage("获取数据列表失败！"+e.getMessage());
+            e.printStackTrace();
+        }
+        return rp;
+    }
+    public ResponseBody rysqwpzList(RequestBody rq, Map params, String id){
+        ResponseBody rp=new ResponseBody(params,"1","获取数据列表",id,rq.getTaskid());
+        try{
+            ObjectMapper objectMapper = new ObjectMapper();
+            Condition condition=objectMapper.readValue(rq.getParams(), Condition.class);
+            try{
+                List<HashMap> bbls=jqsqMapper.getRysqwpz(condition);
+                condition.setStart(null);
+                HashMap datas=new HashMap();
+                datas.put("rows",bbls);
+                datas.put("total",jqsqMapper.getRysqwpz(condition).size());
                 rp.setDatas(com.common.annotation.mapper.JsonMapper.toJsonString(datas));
             }catch (Exception e){
                 e.printStackTrace();
@@ -400,6 +556,30 @@ public class SysService{
         }
         return rp;
     }
+    public ResponseBody rysqty(RequestBody rq, Map params, String id){
+        ResponseBody rp=new ResponseBody(params,"1","保存成功！",id,rq.getTaskid());
+        try{
+            ObjectMapper objectMapper = new ObjectMapper();
+            Condition condition=objectMapper.readValue(rq.getParams(), Condition.class);
+            try{
+                String updL = StringEscapeUtils.unescapeHtml(condition.getC2());
+                JavaType javaType = JsonMapper.getInstance().getTypeFactory().constructParametricType(List.class, HashMap.class);
+                List<HashMap> h = JsonMapper.getInstance().fromJson(updL, javaType);
+                HashMap m=new HashMap();
+                m.put("list",h);
+                jqsqMapper.saveRysqty(m);
+            }catch (Exception e){
+                e.printStackTrace();
+                rp.setIssuccess("0");
+                rp.setMessage("操作失败！"+e.getMessage());
+            }
+        }catch(Exception e){
+            rp.setIssuccess("0");
+            rp.setMessage("操作失败！"+e.getMessage());
+            e.printStackTrace();
+        }
+        return rp;
+    }
     public ResponseBody savejqsqpz(RequestBody rq, Map params, String id){
         ResponseBody rp=new ResponseBody(params,"1","保存成功！",id,rq.getTaskid());
         try{
@@ -449,6 +629,30 @@ public class SysService{
         }
         return rp;
     }
+    public ResponseBody rysqbty(RequestBody rq, Map params, String id){
+        ResponseBody rp=new ResponseBody(params,"1","保存成功！",id,rq.getTaskid());
+        try{
+            ObjectMapper objectMapper = new ObjectMapper();
+            Condition condition=objectMapper.readValue(rq.getParams(), Condition.class);
+            try{
+                String updL = StringEscapeUtils.unescapeHtml(condition.getC2());
+                JavaType javaType = JsonMapper.getInstance().getTypeFactory().constructParametricType(List.class, HashMap.class);
+                List<HashMap> h = JsonMapper.getInstance().fromJson(updL, javaType);
+                HashMap m=new HashMap();
+                m.put("list",h);
+                jqsqMapper.saveRysqbty(m);
+            }catch (Exception e){
+                e.printStackTrace();
+                rp.setIssuccess("0");
+                rp.setMessage("操作失败！"+e.getMessage());
+            }
+        }catch(Exception e){
+            rp.setIssuccess("0");
+            rp.setMessage("操作失败！"+e.getMessage());
+            e.printStackTrace();
+        }
+        return rp;
+    }
     public ResponseBody jqsqdel(RequestBody rq, Map params, String id){
         ResponseBody rp=new ResponseBody(params,"1","保存成功！",id,rq.getTaskid());
         try{
@@ -461,6 +665,30 @@ public class SysService{
                 HashMap m=new HashMap();
                 m.put("list",h);
                 jqsqMapper.saveJqsqdel(m);
+            }catch (Exception e){
+                e.printStackTrace();
+                rp.setIssuccess("0");
+                rp.setMessage("操作失败！"+e.getMessage());
+            }
+        }catch(Exception e){
+            rp.setIssuccess("0");
+            rp.setMessage("操作失败！"+e.getMessage());
+            e.printStackTrace();
+        }
+        return rp;
+    }
+    public ResponseBody rysqdel(RequestBody rq, Map params, String id){
+        ResponseBody rp=new ResponseBody(params,"1","保存成功！",id,rq.getTaskid());
+        try{
+            ObjectMapper objectMapper = new ObjectMapper();
+            Condition condition=objectMapper.readValue(rq.getParams(), Condition.class);
+            try{
+                String updL = StringEscapeUtils.unescapeHtml(condition.getC2());
+                JavaType javaType = JsonMapper.getInstance().getTypeFactory().constructParametricType(List.class, HashMap.class);
+                List<HashMap> h = JsonMapper.getInstance().fromJson(updL, javaType);
+                HashMap m=new HashMap();
+                m.put("list",h);
+                jqsqMapper.saveRysqdel(m);
             }catch (Exception e){
                 e.printStackTrace();
                 rp.setIssuccess("0");
@@ -546,6 +774,27 @@ public class SysService{
                 Office lsHt = frameMapper.getOfficeById(office);
                 List<Menu> ls=frameMapper.getOfficeMenuById(office);
                 lsHt.setMenuList(ls);
+                String jdata= JsonMapper.getInstance().toJson(lsHt);
+                rp.setDatas(jdata);
+            }catch (Exception e){
+                e.printStackTrace();
+                rp.setIssuccess("0");
+                rp.setMessage("获取数据列表失败！"+e.getMessage());
+            }
+        }catch(Exception e){
+            rp.setIssuccess("0");
+            rp.setMessage("获取数据列表失败！"+e.getMessage());
+            e.printStackTrace();
+        }
+        return rp;
+    }
+    public ResponseBody getMypanById(RequestBody rq, Map params, String id){
+        ResponseBody rp=new ResponseBody(params,"1","获取数据列表成功！",id,rq.getTaskid());
+        try{
+            ObjectMapper objectMapper = new ObjectMapper();
+            Office office=objectMapper.readValue(rq.getParams(), Office.class);
+            try{
+                Office lsHt = frameMapper.getMypanById(office);
                 String jdata= JsonMapper.getInstance().toJson(lsHt);
                 rp.setDatas(jdata);
             }catch (Exception e){
@@ -647,6 +896,29 @@ public class SysService{
         }
         return rp;
     }
+    //获得单位组列表
+@RequestPermission(value={"dw:dept:edit"})
+    public ResponseBody officeDLists(RequestBody rq, Map params, String id){
+        ResponseBody rp=new ResponseBody(params,"1","获取数据列表",id,rq.getTaskid());
+        try{
+            ObjectMapper objectMapper = new ObjectMapper();
+            Office office=objectMapper.readValue(rq.getParams(), Office.class);
+            try{
+                //System.out.println("dwdm------------------------"+office.getDwdm());
+                List<Office> lsHt = frameMapper.getOfficeDList(office);
+                rp.setDatas(com.common.annotation.mapper.JsonMapper.toJsonString(lsHt));
+            }catch (Exception e){
+                e.printStackTrace();
+                rp.setIssuccess("0");
+                rp.setMessage("获取数据列表失败！"+e.getMessage());
+            }
+        }catch(Exception e){
+            rp.setIssuccess("0");
+            rp.setMessage("获取数据列表失败！"+e.getMessage());
+            e.printStackTrace();
+        }
+        return rp;
+    }
     //获得单位目录
     public ResponseBody officeMLists(RequestBody rq, Map params, String id){
         ResponseBody rp=new ResponseBody(params,"1","获取数据列表",id,rq.getTaskid());
@@ -655,6 +927,74 @@ public class SysService{
             Office office=objectMapper.readValue(rq.getParams(), Office.class);
             try{
                 List<Office> lsHt = frameMapper.getOfficeMList(office);
+                rp.setDatas(com.common.annotation.mapper.JsonMapper.toJsonString(lsHt));
+            }catch (Exception e){
+                e.printStackTrace();
+                rp.setIssuccess("0");
+                rp.setMessage("获取数据列表失败！"+e.getMessage());
+            }
+        }catch(Exception e){
+            rp.setIssuccess("0");
+            rp.setMessage("获取数据列表失败！"+e.getMessage());
+            e.printStackTrace();
+        }
+        return rp;
+    }
+    //获得个人目录
+    public ResponseBody officeMyLists(RequestBody rq, Map params, String id){
+        ResponseBody rp=new ResponseBody(params,"1","获取数据列表",id,rq.getTaskid());
+        try{
+            ObjectMapper objectMapper = new ObjectMapper();
+            Office office=objectMapper.readValue(rq.getParams(), Office.class);
+            office.setId(UserUtils.getUser().getId());
+            try{
+                List<Office> lsHt = frameMapper.getOfficeMyList(office);
+                rp.setDatas(com.common.annotation.mapper.JsonMapper.toJsonString(lsHt));
+            }catch (Exception e){
+                e.printStackTrace();
+                rp.setIssuccess("0");
+                rp.setMessage("获取数据列表失败！"+e.getMessage());
+            }
+        }catch(Exception e){
+            rp.setIssuccess("0");
+            rp.setMessage("获取数据列表失败！"+e.getMessage());
+            e.printStackTrace();
+        }
+        return rp;
+    }
+    //个人空间项目管理
+    public ResponseBody xmglLists(RequestBody rq, Map params, String id){
+        ResponseBody rp=new ResponseBody(params,"1","获取数据列表",id,rq.getTaskid());
+        try{
+            ObjectMapper objectMapper = new ObjectMapper();
+            Office office=objectMapper.readValue(rq.getParams(), Office.class);
+            office.setId(UserUtils.getUser().getId());
+            try{
+                List<Office> lsHt = frameMapper.xmglLists(office);
+                rp.setDatas(com.common.annotation.mapper.JsonMapper.toJsonString(lsHt));
+            }catch (Exception e){
+                e.printStackTrace();
+                rp.setIssuccess("0");
+                rp.setMessage("获取数据列表失败！"+e.getMessage());
+            }
+        }catch(Exception e){
+            rp.setIssuccess("0");
+            rp.setMessage("获取数据列表失败！"+e.getMessage());
+            e.printStackTrace();
+        }
+        return rp;
+    }
+    //单位空间项目管理
+    public ResponseBody xmglListsD(RequestBody rq, Map params, String id){
+        ResponseBody rp=new ResponseBody(params,"1","获取数据列表",id,rq.getTaskid());
+        try{
+            User user=UserUtils.getUser();
+            ObjectMapper objectMapper = new ObjectMapper();
+            Office office=objectMapper.readValue(rq.getParams(), Office.class);
+            office.setId(user.getTopDeptid());
+            office.setDwdm(user.getDeptId());
+            try{
+                List<Office> lsHt = frameMapper.xmglListsD(office);
                 rp.setDatas(com.common.annotation.mapper.JsonMapper.toJsonString(lsHt));
             }catch (Exception e){
                 e.printStackTrace();
@@ -689,6 +1029,26 @@ public class SysService{
         }
         return rp;
     }
+    public ResponseBody officeMmyLists2(RequestBody rq, Map params, String id){
+        ResponseBody rp=new ResponseBody(params,"1","获取数据列表",id,rq.getTaskid());
+        try{
+            ObjectMapper objectMapper = new ObjectMapper();
+            Office office=objectMapper.readValue(rq.getParams(), Office.class);
+            try{
+                List<Office> lsHt = frameMapper.getOfficeMmyList2(office);
+                rp.setDatas(com.common.annotation.mapper.JsonMapper.toJsonString(lsHt));
+            }catch (Exception e){
+                e.printStackTrace();
+                rp.setIssuccess("0");
+                rp.setMessage("获取数据列表失败！"+e.getMessage());
+            }
+        }catch(Exception e){
+            rp.setIssuccess("0");
+            rp.setMessage("获取数据列表失败！"+e.getMessage());
+            e.printStackTrace();
+        }
+        return rp;
+    }
     public ResponseBody userLists(RequestBody rq, Map params, String id){
         ResponseBody rp=new ResponseBody(params,"1","获取数据列表",id,rq.getTaskid());
         try{
@@ -699,6 +1059,32 @@ public class SysService{
                 HashMap r=new HashMap();
                 condition.setStart(null);
                 r.put("total",permisionMapper.getUserList(condition).size());
+                r.put("rows",lsHt);
+                rp.setDatas(com.common.annotation.mapper.JsonMapper.toJsonString(r));
+            }catch (Exception e){
+                e.printStackTrace();
+                rp.setIssuccess("0");
+                rp.setMessage("获取数据列表失败！"+e.getMessage());
+            }
+        }catch(Exception e){
+            rp.setIssuccess("0");
+            rp.setMessage("获取数据列表失败！"+e.getMessage());
+            e.printStackTrace();
+        }
+        return rp;
+    }
+    //获取单位管理员的用户列表
+    public ResponseBody userListsD(RequestBody rq, Map params, String id){
+        ResponseBody rp=new ResponseBody(params,"1","获取数据列表",id,rq.getTaskid());
+        try{
+            ObjectMapper objectMapper = new ObjectMapper();
+            Condition condition=objectMapper.readValue(rq.getParams(), Condition.class);
+            try{
+                System.out.println(condition.getUserid()+"----------dwdm---"+condition.getDwdm());
+                List<HashMap> lsHt = permisionMapper.getUserListD(condition);
+                HashMap r=new HashMap();
+                condition.setStart(null);
+                r.put("total",permisionMapper.getUserListD(condition).size());
                 r.put("rows",lsHt);
                 rp.setDatas(com.common.annotation.mapper.JsonMapper.toJsonString(r));
             }catch (Exception e){
@@ -797,9 +1183,36 @@ public class SysService{
                 String updL = condition.getC6();
                 JavaType javaType = JsonMapper.getInstance().getTypeFactory().constructParametricType(List.class, HashMap.class);
                 List<HashMap> h = JsonMapper.getInstance().fromJson(updL, javaType);
+                System.out.println("updL-------------"+updL);
                 HashMap m=new HashMap();
                 m.put("list",h);
                 permisionMapper.saveUserList(m);
+            }catch (Exception e){
+                e.printStackTrace();
+                rp.setIssuccess("0");
+                rp.setMessage("操作失败！"+e.getMessage());
+            }
+        }catch(Exception e){
+            rp.setIssuccess("0");
+            rp.setMessage("操作失败！"+e.getMessage());
+            e.printStackTrace();
+        }
+        return rp;
+    }
+    public ResponseBody saveUserListD(RequestBody rq, Map params, String id){
+        ResponseBody rp=new ResponseBody(params,"1","保存成功！",id,rq.getTaskid());
+        try{
+            ObjectMapper objectMapper = new ObjectMapper();
+            Condition condition=objectMapper.readValue(rq.getParams(), Condition.class);
+            try{
+                //String updL = StringEscapeUtils.unescapeHtml(condition.getC6());
+                String updL = condition.getC6();
+                JavaType javaType = JsonMapper.getInstance().getTypeFactory().constructParametricType(List.class, HashMap.class);
+                List<HashMap> h = JsonMapper.getInstance().fromJson(updL, javaType);
+                System.out.println("updL-------------"+updL);
+                HashMap m=new HashMap();
+                m.put("list",h);
+                permisionMapper.saveUserListD(m);
             }catch (Exception e){
                 e.printStackTrace();
                 rp.setIssuccess("0");
@@ -836,6 +1249,54 @@ public class SysService{
         }
         return rp;
     }
+    public ResponseBody qyUserList(RequestBody rq, Map params, String id){
+        ResponseBody rp=new ResponseBody(params,"1","操作成功！",id,rq.getTaskid());
+        try{
+            ObjectMapper objectMapper = new ObjectMapper();
+            Condition condition=objectMapper.readValue(rq.getParams(), Condition.class);
+            try{
+                String updL = StringEscapeUtils.unescapeHtml(condition.getC2());
+                JavaType javaType = JsonMapper.getInstance().getTypeFactory().constructParametricType(List.class, HashMap.class);
+                List<HashMap> h = JsonMapper.getInstance().fromJson(updL, javaType);
+                HashMap m=new HashMap();
+                m.put("list",h);
+                permisionMapper.qyUserlist(m);
+            }catch (Exception e){
+                e.printStackTrace();
+                rp.setIssuccess("0");
+                rp.setMessage("操作失败！"+e.getMessage());
+            }
+        }catch(Exception e){
+            rp.setIssuccess("0");
+            rp.setMessage("操作失败！"+e.getMessage());
+            e.printStackTrace();
+        }
+        return rp;
+    }
+    public ResponseBody tyUserList(RequestBody rq, Map params, String id){
+        ResponseBody rp=new ResponseBody(params,"1","操作成功！",id,rq.getTaskid());
+        try{
+            ObjectMapper objectMapper = new ObjectMapper();
+            Condition condition=objectMapper.readValue(rq.getParams(), Condition.class);
+            try{
+                String updL = StringEscapeUtils.unescapeHtml(condition.getC2());
+                JavaType javaType = JsonMapper.getInstance().getTypeFactory().constructParametricType(List.class, HashMap.class);
+                List<HashMap> h = JsonMapper.getInstance().fromJson(updL, javaType);
+                HashMap m=new HashMap();
+                m.put("list",h);
+                permisionMapper.tyUserlist(m);
+            }catch (Exception e){
+                e.printStackTrace();
+                rp.setIssuccess("0");
+                rp.setMessage("操作失败！"+e.getMessage());
+            }
+        }catch(Exception e){
+            rp.setIssuccess("0");
+            rp.setMessage("操作失败！"+e.getMessage());
+            e.printStackTrace();
+        }
+        return rp;
+    }
     public ResponseBody assignUser(RequestBody rq, Map params, String id){
         ResponseBody rp=new ResponseBody(params,"1","操作成功！",id,rq.getTaskid());
         try{
@@ -849,6 +1310,31 @@ public class SysService{
                 m.put("list",h);
                 m.put("id",condition.getId());
                 permisionMapper.assignUser(m);
+            }catch (Exception e){
+                e.printStackTrace();
+                rp.setIssuccess("0");
+                rp.setMessage("操作失败！"+e.getMessage());
+            }
+        }catch(Exception e){
+            rp.setIssuccess("0");
+            rp.setMessage("操作失败！"+e.getMessage());
+            e.printStackTrace();
+        }
+        return rp;
+    }
+    public ResponseBody assignUserGly(RequestBody rq, Map params, String id){
+        ResponseBody rp=new ResponseBody(params,"1","操作成功！",id,rq.getTaskid());
+        try{
+            ObjectMapper objectMapper = new ObjectMapper();
+            Condition condition=objectMapper.readValue(rq.getParams(), Condition.class);
+            try{
+                String updL = StringEscapeUtils.unescapeHtml(condition.getC2());
+                JavaType javaType = JsonMapper.getInstance().getTypeFactory().constructParametricType(List.class, HashMap.class);
+                List<HashMap> h = JsonMapper.getInstance().fromJson(updL, javaType);
+                HashMap m=new HashMap();
+                m.put("list",h);
+                m.put("id",condition.getId());
+                permisionMapper.assignUserGly(m);
             }catch (Exception e){
                 e.printStackTrace();
                 rp.setIssuccess("0");
@@ -1523,6 +2009,28 @@ public class SysService{
         }
         return rp;
     }
+    public ResponseBody saveMypan(RequestBody rq, Map params, String id){
+        ResponseBody rp=new ResponseBody(params,"1","保存成功！",id,rq.getTaskid());
+        try{
+            ObjectMapper objectMapper = new ObjectMapper();
+            //System.out.println("(((((((((((((((((((((((((((((("+rq.getParams());
+            Office office=objectMapper.readValue(rq.getParams(), Office.class);
+            frameMapper.saveMypan(office);
+            //System.out.println("--------------------------menu="+menu);
+            try{
+
+            }catch (Exception e){
+                e.printStackTrace();
+                rp.setIssuccess("0");
+                rp.setMessage("保存失败！"+e.getMessage());
+            }
+        }catch(Exception e){
+            rp.setIssuccess("0");
+            rp.setMessage("保存失败！"+e.getMessage());
+            e.printStackTrace();
+        }
+        return rp;
+    }
     public ResponseBody deleteRole(RequestBody rq, Map params, String id){
         //System.out.println("--------------------------saveMenu");
         ResponseBody rp=new ResponseBody(params,"1","操作成功！",id,rq.getTaskid());
@@ -1630,6 +2138,48 @@ public class SysService{
         }
         return rp;
     }
+    public ResponseBody deleteMypan(RequestBody rq, Map params, String id){
+        //System.out.println("--------------------------saveMenu");
+        ResponseBody rp=new ResponseBody(params,"1","操作成功！",id,rq.getTaskid());
+        try{
+            ObjectMapper objectMapper = new ObjectMapper();
+            Office role=objectMapper.readValue(rq.getParams(), Office.class);
+            //System.out.println("--------------------------menu="+menu);
+            try{
+                frameMapper.deleteMypan(role);
+            }catch (Exception e){
+                e.printStackTrace();
+                rp.setIssuccess("0");
+                rp.setMessage("操作失败！"+e.getMessage());
+            }
+        }catch(Exception e){
+            rp.setIssuccess("0");
+            rp.setMessage("操作失败！"+e.getMessage());
+            e.printStackTrace();
+        }
+        return rp;
+    }
+    public ResponseBody deleteXm(RequestBody rq, Map params, String id){
+        //System.out.println("--------------------------saveMenu");
+        ResponseBody rp=new ResponseBody(params,"1","操作成功！",id,rq.getTaskid());
+        try{
+            ObjectMapper objectMapper = new ObjectMapper();
+            Office role=objectMapper.readValue(rq.getParams(), Office.class);
+            //System.out.println("--------------------------menu="+menu);
+            try{
+                frameMapper.deleteXm(role);
+            }catch (Exception e){
+                e.printStackTrace();
+                rp.setIssuccess("0");
+                rp.setMessage("操作失败！"+e.getMessage());
+            }
+        }catch(Exception e){
+            rp.setIssuccess("0");
+            rp.setMessage("操作失败！"+e.getMessage());
+            e.printStackTrace();
+        }
+        return rp;
+    }
     public ResponseBody outrole(RequestBody rq, Map params, String id){
         //System.out.println("--------------------------saveMenu");
         ResponseBody rp=new ResponseBody(params,"1","操作成功！",id,rq.getTaskid());
@@ -1639,6 +2189,27 @@ public class SysService{
             System.out.println("--------------------------userid="+user.getId()+" role="+user.getRole().getId());
             try{
                 frameMapper.outrole(user);
+            }catch (Exception e){
+                e.printStackTrace();
+                rp.setIssuccess("0");
+                rp.setMessage("操作失败！"+e.getMessage());
+            }
+        }catch(Exception e){
+            rp.setIssuccess("0");
+            rp.setMessage("操作失败！"+e.getMessage());
+            e.printStackTrace();
+        }
+        return rp;
+    }
+    public ResponseBody outroleGly(RequestBody rq, Map params, String id){
+        //System.out.println("--------------------------saveMenu");
+        ResponseBody rp=new ResponseBody(params,"1","操作成功！",id,rq.getTaskid());
+        try{
+            ObjectMapper objectMapper = new ObjectMapper();
+            User user=objectMapper.readValue(rq.getParams(), User.class);
+            //System.out.println("--------------------------userid="+user.getId()+" role="+user.getRole().getId());
+            try{
+                frameMapper.outroleGly(user);
             }catch (Exception e){
                 e.printStackTrace();
                 rp.setIssuccess("0");

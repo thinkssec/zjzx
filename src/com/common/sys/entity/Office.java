@@ -78,17 +78,75 @@ public class Office extends TreeEntity<Office> {
 	private String lxrDh;
 	private String bz;
 	private String sfqy;
-	private String isdel;
 	private String parentId;
     private String parentName;
 	private String isleaf;
+	//项目信息
+	private String scr;
+	private String scsj;
+	private String mlid;
+	private String xmh;
+	private String xmlb;
+	private String remarks;
+	private String xmid;
+	private String xmmc;
+	private String path;
+	private String fsize;
+	private String isdel;
+	private String mlidm;
+	//万能字段
+	private String anyone1;
+	private String anyone2;
+	private String anyone3;
+	private String anyone4;
+
 	private List<Menu> menuList = Lists.newArrayList();
 	public String getParentName() {
 		return parentName;
 	}
 
+	public String getAnyone1() {
+		return anyone1;
+	}
+
+	public void setAnyone1(String anyone1) {
+		this.anyone1 = anyone1;
+	}
+
+	public String getAnyone2() {
+		return anyone2;
+	}
+
+	public void setAnyone2(String anyone2) {
+		this.anyone2 = anyone2;
+	}
+
+	public String getAnyone3() {
+		return anyone3;
+	}
+
+	public void setAnyone3(String anyone3) {
+		this.anyone3 = anyone3;
+	}
+
+	public String getAnyone4() {
+		return anyone4;
+	}
+
+	public void setAnyone4(String anyone4) {
+		this.anyone4 = anyone4;
+	}
+
 	public List<Menu> getMenuList() {
 		return menuList;
+	}
+
+	public String getPath() {
+		return path;
+	}
+
+	public void setPath(String path) {
+		this.path = path;
 	}
 
 	public void setMenuList(List<Menu> menuList) {
@@ -121,6 +179,88 @@ public class Office extends TreeEntity<Office> {
 
 	public void setParentName(String parentName) {
 		this.parentName = parentName;
+	}
+
+	public String getScr() {
+		return scr;
+	}
+
+	public void setScr(String scr) {
+		this.scr = scr;
+	}
+
+	public String getScsj() {
+		return scsj;
+	}
+
+	public void setScsj(String scsj) {
+		this.scsj = scsj;
+	}
+
+	public String getMlid() {
+		return mlid;
+	}
+
+	public void setMlid(String mlid) {
+		this.mlid = mlid;
+	}
+
+	public String getXmh() {
+		return xmh;
+	}
+
+	public void setXmh(String xmh) {
+		this.xmh = xmh;
+	}
+
+	public String getXmlb() {
+		return xmlb;
+	}
+
+	public void setXmlb(String xmlb) {
+		this.xmlb = xmlb;
+	}
+
+	@Override
+	public String getRemarks() {
+		return remarks;
+	}
+
+	@Override
+	public void setRemarks(String remarks) {
+		this.remarks = remarks;
+	}
+
+	public String getXmid() {
+		return xmid;
+	}
+
+	public void setXmid(String xmid) {
+		this.xmid = xmid;
+	}
+
+	public String getXmmc() {
+		return xmmc;
+	}
+
+	public void setXmmc(String xmmc) {
+		this.xmmc = xmmc;
+	}
+
+	public String getFsize() {
+		return fsize;
+	}
+
+	public void setFsize(String fsize) {
+		this.fsize = fsize;
+	}
+
+	public String getMlidm() {
+		return mlidm;
+	}
+
+	public void setMlidm(String mlidm) {
+		this.mlidm = mlidm;
 	}
 
 	@Override

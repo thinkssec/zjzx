@@ -32,6 +32,12 @@ public class User extends DataEntity<User> {
 	private String mobile;	// 手机
 	private String userType;// 用户类型
 	private String loginFlag;	// 是否允许登陆
+
+	private String deptCode;
+	private String topDeptid;
+	private String topDeptname;
+	private String parentId;
+	private String parentName;
 	private Role role;
 	private String deptMc;
 	private List<HashMap> roleList = Lists.newArrayList(); // 拥有角色列表
@@ -50,12 +56,66 @@ public class User extends DataEntity<User> {
     private	String	fpz	;
     private	String	createtime	;
     private	String	isdel	;
-
+	private String filepath;
+    public boolean hasPermission(String p){
+		boolean f=false;
+		if(this.permissionList==null) f=false;
+		else if(this.permissionList.get(p)!=null) f=true;
+		return f;
+	}
     public String getUserid() {
         return userid;
     }
 
-    public void setUserid(String userid) {
+	public String getDeptCode() {
+		return deptCode;
+	}
+
+	public void setDeptCode(String deptCode) {
+		this.deptCode = deptCode;
+	}
+
+	public String getFilepath() {
+		return filepath;
+	}
+
+	public void setFilepath(String filepath) {
+		this.filepath = filepath;
+	}
+
+	public String getTopDeptid() {
+		return topDeptid;
+	}
+
+	public void setTopDeptid(String topDeptid) {
+		this.topDeptid = topDeptid;
+	}
+
+	public String getTopDeptname() {
+		return topDeptname;
+	}
+
+	public void setTopDeptname(String topDeptname) {
+		this.topDeptname = topDeptname;
+	}
+
+	public String getParentId() {
+		return parentId;
+	}
+
+	public void setParentId(String parentId) {
+		this.parentId = parentId;
+	}
+
+	public String getParentName() {
+		return parentName;
+	}
+
+	public void setParentName(String parentName) {
+		this.parentName = parentName;
+	}
+
+	public void setUserid(String userid) {
         this.userid = userid;
     }
 
@@ -67,7 +127,8 @@ public class User extends DataEntity<User> {
         this.loginname = loginname;
     }
 
-    public String getUsername() {
+
+	public String getUsername() {
         return username;
     }
 

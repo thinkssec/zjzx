@@ -34,15 +34,36 @@ public class UserUtils {
 		User user = null;
 		if (user ==  null){
 			//user = userDao.get(id);
-			HashMap u=userMapper.getUserOne(username);
-			if(u!=null){
+			HashMap us=userMapper.getUserOne(username);
+			if(us!=null){
 				user=new User();
-				user.setLoginName((String)u.get("LOGINNAME"));
+				/*user.setLoginName((String)u.get("LOGINNAME"));
 				user.setName((String)u.get("USERNAME"));
 				user.setId((String)u.get("USERID"));
-				user.setPassword((String)u.get("PWD"));
+				user.setPassword((String)u.get("PWD"));*/
+				user.setId((String)us.get("USERID"));
+				user.setLoginName((String)us.get("LOGINNAME"));
+				user.setName((String)us.get("USERNAME"));
+				user.setPassword((String)us.get("PWD"));
+				user.setLoginFlag("1");
+				user.setMobile((String)us.get("YDDH"));
+				user.setPhone((String)us.get("GDDH"));
+				user.setDeptMc((String)us.get("DW"));
+				user.setDeptId((String)us.get("DEPTID"));
+				user.setDeptMc((String)us.get("DEPTNAME"));
+				user.setDeptCode((String)us.get("CODE"));
+				user.setParentId((String)us.get("PARENTID"));
+				user.setParentName((String)us.get("PARENTNAME"));
+				user.setBzxx((String)us.get("BZXX"));
+				user.setEmail((String)us.get("EMAIL"));
+				user.setTopDeptid((String)us.get("RT"));
+				user.setTopDeptname((String)us.get("RTNAME"));
 				//user.setRoleList(userMapper.getRoleList(user.getId()));
-				//user.setPermissionList(userMapper.getPermissionList(user.getId()));
+				if(!"1".equals(user.getId()))
+					user.setPermissionList(userMapper.getPermissionList(user.getId()));
+				else{
+					user.setPermissionList(userMapper.getPermissionListAll(user.getId()));
+				}
 			}
 			if (user == null){
 				return null;

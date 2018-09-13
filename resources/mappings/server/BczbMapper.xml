@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.server.mapper.BczbMapper">
+    <update id="mergeProject">
+        DECLARE
+        v_deptid number(4):=-1;
+        BEGIN
+        ${sql}
+        commit;
+        end;
+    </update>
+    <select id="getBczbProperty" fetchSize="50000"  resultType="java.util.LinkedHashMap">
+        with b as (select id
+                 from APP_OBJECT_BCZBTREE
+               connect by prior id = pid
+                start with id = #{bczbid})
+            select oid,
+                   decode(okey, 'text', '#', '@') || okey okey,
+                   nvl(ovalue, '') ovalue
+              from APP_OPROPERTY a,b where a.oid=b.id
+    </select>
+    <select id="getBczbTreeById"  resultType="java.util.LinkedHashMap">
+        select * from (select a.*,b.ovalue oder from APP_OBJECT_BCZBTREE a left join  (select * from APP_OPROPERTY where okey='ID') b on a.id=b.oid ) connect by prior id=pid start with id=#{bczbid}
+        order siblings by oder
+    </select>
+    <select id="getOtherTest" resultType="java.util.LinkedHashMap">
+        select * from APP_OBJTEST
+    </select>
+    <select id="getOtherTest2" fetchSize="50000" resultType="java.util.LinkedHashMap">
+        select * from APP_OPROPERTY
+    </select>
+    <select id="getYsBczb" fetchSize="50000" resultType="java.util.HashMap">
+        <![CDATA[
+        with p as
+             (select t.*
+                from APP_OBJECT_BCZBTREE t
+               where level = 2
+                 and nvl(zt, 0) <> 1 ]]>
+              connect by prior id = pid
+               start with pid = '-1' <if test=""> and deptid=#{deptid}</if> ),
+            d as
+             (select * from APP_OBJECTDIC)
+            select a.*
+              from app_oproperty a, p, d
+             where a.oid = p.id
+               and p.otype = d.otype
+               and d.okey = a.okey
+               and display1 = '1'
+
+    </select>
+</mapper>

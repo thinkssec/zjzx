@@ -28,7 +28,7 @@
 			<url>%BASE_URL%files/</url>
 			<directory>%BASE_DIR%files</directory>
 			<maxSize>5M</maxSize>
-			<allowedExtensions>7z,aiff,asf,avi,bmp,csv,doc,docx,fla,flv,gif,gz,gzip,jpeg,jpg,mid,mov,mp3,mp4,mpc,mpeg,mpg,ods,odt,pdf,png,ppt,pptx,pxd,qt,ram,rar,rm,rmi,rmvb,rtf,sdc,sitd,swf,sxc,sxw,tar,tgz,tif,tiff,txt,vsd,wav,wma,wmv,xls,xlsx,zip</allowedExtensions>
+			<allowedExtensions>7z,aiff,asf,avi,bmp,csv,doc,docx,fla,flv,gif,gz,gzip,jpeg,jpg,mid,mov,mp3,mp4,mpc,mpeg,mpg,ods,odt,pdf,png,ppt,pptx,pxd,qt,ram,rar,rm,rmi,rmvb,rtf,sdc,sitd,swf,sxc,sxw,tar,tgz,tif,tiff,txt,vsd,wav,wma,wmv,xls,xlsx,zip,</allowedExtensions>
 			<deniedExtensions></deniedExtensions>
 		</type>
 		<type name="images">
@@ -49,7 +49,7 @@
 			<url>%BASE_URL%software/</url>
 			<directory>%BASE_DIR%software</directory>
 			<maxSize>500M</maxSize>
-			<allowedExtensions>dll,7z,aiff,asf,avi,bmp,csv,doc,docx,fla,flv,gif,gz,gzip,jpeg,jpg,mid,mov,mp3,mp4,mpc,mpeg,mpg,ods,odt,pdf,png,ppt,pptx,pxd,qt,ram,rar,rm,rmi,rmvb,rtf,sdc,sitd,swf,sxc,sxw,tar,tgz,tif,tiff,txt,vsd,wav,wma,wmv,xls,xlsx,zip</allowedExtensions>
+			<allowedExtensions>dddddd,eeeeee,delete,manifest,ico,db,exe,ndxml,config,dll,ndpro,pdb,xml,7z,aiff,asf,avi,bmp,csv,doc,docx,fla,flv,gif,gz,gzip,jpeg,jpg,mid,mov,mp3,mp4,mpc,mpeg,mpg,ods,odt,pdf,png,ppt,pptx,pxd,qt,ram,rar,rm,rmi,rmvb,rtf,sdc,sitd,swf,sxc,sxw,tar,tgz,tif,tiff,txt,vsd,wav,wma,wmv,xls,xlsx,zip</allowedExtensions>
 			<deniedExtensions></deniedExtensions>
 		</type>
 		<type name="data">

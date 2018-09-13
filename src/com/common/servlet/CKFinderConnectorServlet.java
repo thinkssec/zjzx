@@ -55,7 +55,6 @@ public class CKFinderConnectorServlet extends ConnectorServlet {
 		// 初始化时，如果startupPath文件夹不存在，则自动创建startupPath文件夹
 		if ("Init".equals(command)){
 			request.setAttribute("path",type);
-
 			String startupPath = request.getParameter("startupPath");// 当前文件夹可指定为模块名
 			String path="";
 			if (startupPath!=null){
@@ -72,16 +71,16 @@ public class CKFinderConnectorServlet extends ConnectorServlet {
 				path=Global.getUserfilesBaseDir()
 						+ principal +"/"+relationId+ "/software";
 				//System.out.println(path);
-				//FileUtils.createDirectory(FileUtils.path(path+"/BASICDATA"));
-				FileUtils.createDirectory(FileUtils.path(path+"/bqgl"));
-				FileUtils.createDirectory(FileUtils.path(path+"/configXml"));
+				FileUtils.createDirectory(FileUtils.path(path+"/BASICDATE"));
 				FileUtils.createDirectory(FileUtils.path(path+"/de"));
 				FileUtils.createDirectory(FileUtils.path(path+"/es"));
 				FileUtils.createDirectory(FileUtils.path(path+"/image"));
 				FileUtils.createDirectory(FileUtils.path(path+"/ja"));
+				FileUtils.createDirectory(FileUtils.path(path+"/myprogram"));
 				FileUtils.createDirectory(FileUtils.path(path+"/ru"));
-				FileUtils.createDirectory(FileUtils.path(path+"/workspace"));
-				FileUtils.createDirectory(FileUtils.path(path+"/xml"));
+				FileUtils.createDirectory(FileUtils.path(path+"/SysConfig"));
+				FileUtils.createDirectory(FileUtils.path(path+"/x86"));
+				FileUtils.createDirectory(FileUtils.path(path+"/x64"));
 			}else if("data".equals(type)){
 				path=Global.getUserfilesBaseDir()
 						+ principal +"/" +relationId+ "/data";

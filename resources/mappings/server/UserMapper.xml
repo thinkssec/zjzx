@@ -17,7 +17,12 @@
         update app_user set pwd=#{password},upwd=#{password} where userid=#{userid}
     </update>
     <update id="modifyUser">
-        update app_user set gddh=#{c3},yddh=#{c2},email=#{c1},bzxx=#{c4}  where userid=#{userid}
+        update app_user set gddh=#{c3},yddh=#{c2},email=#{c1},bzxx=#{c4}
+        <if test="c21!=null and c21!=''">
+            ,FILEPATH=#{c21}
+        </if>
+
+        where userid=#{userid}
     </update>
     <delete id="delUserList">
 
@@ -55,9 +60,14 @@
           userid=#{userid} and a.roleid=t.roleid
     </select>
     <select id="getPermissionList" resultType="java.util.HashMap">
-        select nvl(d.url,d.id) KEY,d.* from sys_resources d,
-            SYS_ROLEPERMISSION a,sys_userrole c
-            where c.userid=#{userid}
-            and c.roleid=a.roleid and a.mcode=d.id
+        select c.permission KEY,c.*
+          from sys_userrole a, sys_office b, sys_menu c, sys_role_menu d
+         where a.roleid = b.id
+           and c.id=d.menu_id
+           and d.role_id=b.id
+           and a.userid=#{userid}
+    </select>
+    <select id="getPermissionListAll" resultType="java.util.HashMap">
+        select c.permission KEY,c.* from sys_menu c
     </select>
 </mapper>

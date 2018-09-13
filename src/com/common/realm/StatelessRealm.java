@@ -37,6 +37,7 @@ public class StatelessRealm extends AuthorizingRealm {
     protected AuthorizationInfo doGetAuthorizationInfo(PrincipalCollection principals) {
         //根据用户名查找角色，请根据需求实现
         String username = (String) principals.getPrimaryPrincipal();
+        System.out.println("usernameusernameusernameusername++"+username);
         SimpleAuthorizationInfo authorizationInfo =  new SimpleAuthorizationInfo();
         authorizationInfo.addRole("admin");
         return authorizationInfo;

@@ -16,7 +16,7 @@
           #{ZT,jdbcType=VARCHAR}, #{ZWNR,jdbcType=VARCHAR}, to_date(#{FSRQ,jdbcType=DATE},'yyyy-MM-dd hh24:mi:ss'),
           #{BZ,jdbcType=VARCHAR},#{BCID,jdbcType=VARCHAR});
           insert into APP_EMAIL_ATTACH ( EID, PATH)
-        values ( v_id, #{path,jdbcType=VARCHAR});
+        values ( v_id, #{PATH,jdbcType=VARCHAR});
         commit;
           end;
     </insert>
@@ -40,7 +40,7 @@
           #{ZT,jdbcType=VARCHAR}, #{ZWNR,jdbcType=VARCHAR}, to_date(#{FSRQ,jdbcType=DATE},'yyyy-MM-dd hh24:mi:ss'),
           #{BZ,jdbcType=VARCHAR},#{BCID,jdbcType=VARCHAR});
           insert into APP_EMAIL_ATTACH ( EID, PATH)
-        values ( v_id, #{path,jdbcType=VARCHAR});
+        values ( v_id, #{PATH,jdbcType=VARCHAR});
         commit;
           end;
     </update>
@@ -53,7 +53,7 @@
 
 
     <select id="getMailList" resultType="java.util.HashMap">
-        select * from APP_EMAIL where FJRYHM=#{USERID} and isdel!=1
+        select * from APP_EMAIL where FJRYHM=#{USERNAME} and isdel!=1
         <if test="ID!='' and ID!=null">
           and  id=#{ID}
         </if>

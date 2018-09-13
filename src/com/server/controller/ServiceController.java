@@ -11,6 +11,7 @@ import com.server.service.FileService;
 import com.server.service.SysService;
 import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -53,11 +54,11 @@ public class ServiceController {
         }
         String call = r.getCall();
         //System.out.println("1111111111"+cacheManage.get("testCache")+"1111111111");
-        User user= UserUtils.getUser();
+        //User user= UserUtils.getUser();
         //user.setId("你好！@#￥%……&*（）");
         //cacheManage.set("testCache",user);
         //System.out.println("2222222222"+(User)cacheManage.get("testCache")+"2222222222");
-        HashMap qx=user.getPermissionList();
+        /*HashMap qx=user.getPermissionList();
         if(qx!=null){
             if(qx.get(call)==null){
                 res.setIssuccess("0");
@@ -68,7 +69,7 @@ public class ServiceController {
             res.setIssuccess("0");
             res.setMessage("权限不足，请联系管理员！");
             return JsonMapper.toJsonString(res);
-        }
+        }*/
         Method m = SysService.class.getMethod(call, new Class[]{RequestBody.class,Map.class, String.class});
         res = (ResponseBody) m.invoke(sysService,r, params, id);
         return JsonMapper.toJsonString(res);
@@ -77,14 +78,14 @@ public class ServiceController {
     @Queuen
     @RequestMapping("requestf")
     public String requestf(String requestBody, String id, @RequestParam("file") CommonsMultipartFile file) {
-        System.out.println("requestBody="+requestBody);
+        System.out.println("requestf==requestBody="+requestBody);
         ResponseBody res = new ResponseBody();
         RequestBody r = (RequestBody) JsonMapper.fromJsonString(requestBody, RequestBody.class);
         Map<String, String> params = null;
         try {
             params = (Map<String, String>) JsonMapper.fromJsonString(r.getParams(), Map.class);
         }catch(Exception e){
-            //e.printStackTrace();
+            e.printStackTrace();
         }
         if(params==null)params=new HashMap<String,String>();
         String filepath=fileService.upLoad(r,params, id, file);

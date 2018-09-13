@@ -21,7 +21,7 @@
         <include refid="com.base.baseMapper.pageEnd"/>
     </select>
     <select id="getDw" resultType="java.util.HashMap">
-        select dwdm code ,dwmc name  from APP_DEPT where isdel!=1
+        select id code ,name  from sys_office where nvl(del_flag, '0') != '1' and type='1'
     </select>
     <select id="getYq" resultType="java.util.HashMap">
         select id,name from app_yq
@@ -39,7 +39,22 @@
          where code like '%00' and length(code)=6
     </select>
     <select id="getDw3" resultType="java.util.HashMap">
-      select a.id code,a.name name from v_office a connect by prior id=parent_id start with id=#{dwdm}
+      select a.id code,a.name name from v_office a where rt=#{dwdm} and type!=5 and nvl(del_flag, '0') != '1'
+    </select>
+    <select id="getRysq" resultType="java.util.HashMap">
+        <include refid="com.base.baseMapper.pageStart"/>
+        select a.*,to_char(sqtime,'yyyymmdd hh24:mi:ss') sj from SYS_RYRZ_LOG a where status is null
+        order by sqtime desc
+        <include refid="com.base.baseMapper.pageEnd"/>
+    </select>
+    <select id="getRysqwpz" resultType="java.util.HashMap">
+        <include refid="com.base.baseMapper.pageStart"/>
+        select a.*,to_char(sqtime,'yyyymmdd hh24:mi:ss') sj from SYS_RYRZ_LOG a where status =0
+        order by sqtime desc
+        <include refid="com.base.baseMapper.pageEnd"/>
+    </select>
+    <select id="isRegistUser" resultType="java.util.HashMap">
+         select * from APP_USER where LOGINNAME=#{LOGINNAME}
     </select>
     <update id="saveJqsqty">
         DECLARE
@@ -51,8 +66,8 @@
             on (a.cpuid= b.cpuid)
             when matched then update set sqyqsj=sqyqsj||','||#{record.SQYQSJ},status=null
             when not matched then
-            insert (a.SQR,a.SQDW,a.SQYQSJ,a.SQSJ,a.SQYX,a.SQTIME,a.CPUID)
-            values(b.SQR,b.SQDW,b.SQYQSJ,b.SQSJ,b.SQYX,b.SQTIME,b.CPUID);
+            insert (a.SQR,a.SQDW,a.SQYQSJ,a.SQSJ,a.SQYX,a.SQTIME,a.CPUID,a.BZ)
+            values(b.SQR,b.SQDW,b.SQYQSJ,b.SQSJ,b.SQYX,b.SQTIME,b.CPUID,b.BZ);
         </foreach>
         COMMIT;
         END;
@@ -98,6 +113,7 @@
         v_sqyx varchar2(100):='';
         v_cpuid varchar2(100):='';
         v_ip varchar2(100):='';
+        v_bz varchar2(150):='';
         p_sqr varchar2(30):='';
         p_sqsj varchar2(30):='';
         p_sqyqsj varchar2(100):='';
@@ -105,8 +121,8 @@
         p_sqdw varchar2(100):='';
         t_count  number := 0;
         BEGIN
-            select #{SQR},#{SQSJ},#{SQYQSJ},#{SQYX},#{CPUID},#{IP},#{SQDW}
-            into v_sqr,v_sqsj,v_sqyqsj,v_sqyx,v_cpuid,v_ip,v_sqdw from dual;
+            select #{SQR},#{SQSJ},#{SQYQSJ},#{SQYX},#{CPUID},#{IP},#{SQDW},#{BZ}
+            into v_sqr,v_sqsj,v_sqyqsj,v_sqyx,v_cpuid,v_ip,v_sqdw,v_bz from dual;
             select count(1)
               into t_count
               from SYS_JQRZ_LOG
@@ -137,7 +153,7 @@
                     elsif v_sqyqsj = p_sqyqsj and v_sqdw = p_sqdw then
                       begin
                         insert into SYS_JQRZ_LOG
-                          (SQR, SQDW, SQYQSJ, SQSJ, Sqyx, Ip, Cpuid, status)
+                          (SQR, SQDW, SQYQSJ, SQSJ, Sqyx, Ip,BZ, Cpuid, status)
                         values
                           (v_sqr,
                            v_sqdw,
@@ -145,10 +161,11 @@
                            v_sqsj,
                            v_sqyx,
                            v_ip,
+                           v_bz,
                            v_cpuid,
                            '4');
                         update SYS_JQRZ_HP
-                           set sqr = v_sqr, sqsj = v_sqsj, sqyx = v_sqyx
+                           set sqr = v_sqr, sqsj = v_sqsj, sqyx = v_sqyx,bz=v_bz
                          where cpuid = v_cpuid;
                       end;
                     else
@@ -158,9 +175,9 @@
                          where cpuid = v_cpuid
                            and (status is null or status = 0);
                         insert into SYS_JQRZ_LOG
-                          (SQR, SQDW, SQYQSJ, SQSJ, Sqyx, Ip, Cpuid)
+                          (SQR, SQDW, SQYQSJ, SQSJ, Sqyx, Ip, Cpuid,bz)
                         values
-                          (v_sqr, v_sqdw, v_sqyqsj, v_sqsj, v_sqyx, v_ip, v_cpuid);
+                          (v_sqr, v_sqdw, v_sqyqsj, v_sqsj, v_sqyx, v_ip, v_cpuid,v_bz);
                       end;
                     end if;
                   end;
@@ -171,9 +188,9 @@
                      where cpuid = v_cpuid
                        and (status is null or status = 0);
                     insert into SYS_JQRZ_LOG
-                      (SQR, SQDW, SQYQSJ, SQSJ, Sqyx, Ip, Cpuid)
+                      (SQR, SQDW, SQYQSJ, SQSJ, Sqyx, Ip, Cpuid,bz)
                     values
-                      (v_sqr, v_sqdw, v_sqyqsj, v_sqsj, v_sqyx, v_ip, v_cpuid);
+                      (v_sqr, v_sqdw, v_sqyqsj, v_sqsj, v_sqyx, v_ip, v_cpuid,v_bz);
                   end;
                 end if;
               end;
@@ -186,11 +203,11 @@
                 else
                   begin
                     insert into SYS_JQRZ_LOG
-                      (SQR, SQDW, SQYQSJ, SQSJ, Sqyx, Ip, Cpuid, status)
+                      (SQR, SQDW, SQYQSJ, SQSJ, Sqyx, Ip, Cpuid, status,bz)
                     values
-                      (v_sqr, v_sqdw, v_sqyqsj, v_sqsj, v_sqyx, v_ip, v_cpuid, '4');
+                      (v_sqr, v_sqdw, v_sqyqsj, v_sqsj, v_sqyx, v_ip, v_cpuid, '4',v_bz);
                     update SYS_JQRZ_HP
-                       set sqr = v_sqr, sqsj = v_sqsj, sqyx = v_sqyx
+                       set sqr = v_sqr, sqsj = v_sqsj, sqyx = v_sqyx,bz=v_bz
                      where cpuid = v_cpuid;
                   end;
                 end if;
@@ -228,5 +245,89 @@
         </foreach>
         COMMIT;
         END;
+    </update>
+    <update id="saveRysqty">
+        DECLARE
+        v_id varchar2(100):='';
+        v_ct number(2):=0;
+        v_tt varchar2(50):='';
+        BEGIN
+        <foreach collection="list" item="record" index="index">
+            update SYS_RYRZ_LOG set status='1' where id=#{record.ID};
+            select sys_guid() into v_id from dual;
+            merge into app_user a using (select * from SYS_RYRZ_LOG where id=#{record.ID}) b
+            on (a.loginname= b.loginname)
+            when not matched then
+            insert (a.userid,a.USERNAME,a.DW,a.YDDH,a.EMAIL,a.CREATETIME,a.LOGINNAME,a.GDDH,a.PWD,a.UPWD,a.bzxx)
+            values (v_id,b.SQR,b.SQDW,b.SQSJ,b.SQYX,b.SQTIME,b.LOGINNAME,b.SQRGDDH,'7c4a8d09ca3762af61e59520943dc26494f8941b','7c4a8d09ca3762af61e59520943dc26494f8941b',b.BZ);
+            <if test="record.USERID==null or record.USERID==''">
+                insert into SYS_MYPAN(id,parent_id,name) values (v_id,0,'个人空间');
+            </if>
+            select id into v_tt from SYS_OFFICE where code='999911';
+            merge into SYS_USERROLE a using (select v_id userid,v_tt roleid from dual ) b
+            on (a.userid=b.userid and b.roleid=b.roleid)
+            when not matched then
+            insert (a.userid,a.roleid) values (b.userid,b.roleid);
+        </foreach>
+        COMMIT;
+        END;
+    </update>
+    <update id="saveRysqbty">
+        DECLARE
+        v_id varchar2(100):='';
+        BEGIN
+        <foreach collection="list" item="record" index="index">
+            update SYS_RYRZ_LOG set status='0' where id=#{record.ID};
+        </foreach>
+        COMMIT;
+        END;
+    </update>
+    <update id="saveRysqdel">
+        DECLARE
+        v_id varchar2(100):='';
+        BEGIN
+        <foreach collection="list" item="record" index="index">
+            delete from  SYS_RYRZ_LOG  where id=#{record.ID};
+        </foreach>
+        COMMIT;
+        END;
+    </update>
+    <update id="registUser">
+          merge into SYS_RYRZ_LOG a using(select #{SQR} SQR,
+            #{SQDW} SQDW,
+            #{SQSJ} SQSJ,
+            #{SQYX} SQYX,
+            #{LOGINNAME} LOGINNAME,
+            #{BZ} BZ,
+            #{SQRGDDH} SQRGDDH,
+            #{SQJS} SQJS,
+            #{ZYLB} ZYLB from dual)  b on (a.loginname=b.loginname)
+            when matched then
+            update set a.SQR=b.SQR,
+                    a.SQDW=b.SQDW,
+                    a.SQSJ=b.SQSJ,
+                    a.SQYX=b.SQYX,
+                    a.BZ=b.BZ,
+                    a.SQRGDDH=b.SQRGDDH,
+                    a.SQJS=b.SQJS,
+                    a.ZYLB=b.ZYLB
+            when not matched then
+            insert (a.SQR,
+                a.SQDW,
+                a.SQSJ,
+                a.SQYX,
+                a.LOGINNAME,
+                a.BZ,
+                a.SQRGDDH,
+                a.SQJS,
+                a.ZYLB) values(b.SQR,
+                b.SQDW,
+                b.SQSJ,
+                b.SQYX,
+                b.LOGINNAME,
+                b.BZ,
+                b.SQRGDDH,
+                b.SQJS,
+                b.ZYLB)
     </update>
 </mapper>

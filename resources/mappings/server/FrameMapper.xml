@@ -31,6 +31,18 @@
     <delete id="panMDelete">
          update SYS_MYPAN set DEL_FLAG='1' where id=#{ID}
     </delete>
+    <delete id="panMXmDelete">
+        update APP_PAN_FILE set ISDEL='1' where id=#{ID}
+    </delete>
+    <delete id="deleteMypan">
+    BEGIN
+        update sys_mypan set DEL_FLAG='1' where id=#{id};
+        commit;
+        end;
+    </delete>
+    <delete id="deleteXm">
+        update APP_PAN_FILE set isdel='1' where id=#{id}
+    </delete>
     <select id="getPermission" resultType="java.util.Map" statementType="PREPARED">
         select t.value from SYS_PERMISION_MAP t where t.name=#{key}
     </select>
@@ -270,7 +282,7 @@ END;
           v_userid varchar2(50);
           v_username varchar2(50);
         BEGIN
-          select userid into v_userid,username into v_username from app_user where loginname=#{USERNAME};
+          select userid,username into v_userid,v_username from app_user where loginname=#{USERNAME};
           merge into SYS_MYPAN a using (select v_userid userid,0 parent_id,v_username username from dual) b
             on (a.id=b.userid)
             when not matched then
@@ -288,6 +300,97 @@ END;
     </update>
     <update id="panMUpdate">
         update SYS_MYPAN set name=#{NAME} where id=#{ID}
+    </update>
+    <update id="panMUpload">
+        insert into APP_PAN_FILE (NAME,
+                                    SCR,
+                                    PATH,
+                                    XMH,
+                                    XMLB,
+                                    REMARKS,
+                                    XMID,
+                                    XMMC,
+                                    FSIZE,
+                                    ISDEL,
+                                    TYPE,
+                                    MLIDM)
+                                    values(#{NAME,jdbcType=VARCHAR},
+                                            #{SCR,jdbcType=VARCHAR},
+                                            #{PATH,jdbcType=VARCHAR},
+                                            #{XMH,jdbcType=VARCHAR},
+                                            #{XMLB,jdbcType=VARCHAR},
+                                            #{REMARKS,jdbcType=VARCHAR},
+                                            #{XMID,jdbcType=VARCHAR},
+                                            #{XMMC,jdbcType=VARCHAR},
+                                            #{FSIZE,jdbcType=VARCHAR},
+                                            '0',
+                                            '4',
+                                            #{MLIDM,jdbcType=VARCHAR})
+    </update>
+    <update id="saveMypan">
+        DECLARE
+            v_code varchar2(100);
+            BEGIN
+                    merge into sys_mypan a using (select #{id} id,
+                        #{parentId} parent_id,#{code} code,#{name} name,#{useable} useable,#{remarks} remarks from dual) b
+                        on (a.id=b.id)
+                        when matched then
+                        update set a.name=b.name,a.useable=b.useable,a.remarks=b.remarks
+                        when not matched then
+                        insert (a.id,a.parent_id,a.name,a.useable,a.remarks) values (sys_guid(),b.parent_id,b.name,b.useable,b.remarks);
+                    commit;
+            END;
+    </update>
+    <update id="outroleGly">
+        DECLARE
+        v_dwrole varchar2(50):='';
+        BEGIN
+          select id into v_dwrole from sys_office where code='999912';
+          delete from SYS_USERROLE where userid=#{id} and roleid=#{role.id};
+          delete from sys_userrole where userid=#{id} and roleid=v_dwrole;
+        commit;
+        end;
+    </update>
+    <update id="panDCreate">
+        merge into sys_office a using (#{ID} id,#{PARENT_ID} PARENT_ID,#{NAME} NAME,#{REMARKS} REMARKS,'5' TYPE) b
+        on (a.id=b.id and a.type=b.type)
+        when not matched then
+        insert (id,parent_id,name,remarks,useable,del_flag,type) values (sys_guid(),b.parent_id,b.name,b.remarks,'1','0','5')
+        when matched then
+        update set a.parent_id=b.parent_id,a.name=b.name,a.remarks=b.remarks
+
+    </update>
+    <update id="panDDelete">
+        update sys_office set del_flag='1' where id=#{ID} and type='5'
+    </update>
+    <update id="panDUpload">
+        insert into APP_PAN_FILE (NAME,
+                                    SCR,
+                                    MLID,
+                                    PATH,
+                                    XMH,
+                                    XMLB,
+                                    REMARKS,
+                                    XMID,
+                                    XMMC,
+                                    FSIZE,
+                                    ISDEL,
+                                    TYPE)
+                                    values(#{NAME,jdbcType=VARCHAR},
+                                            #{SCR,jdbcType=VARCHAR},
+                                            #{MLID,jdbcType=VARCHAR},
+                                            #{PATH,jdbcType=VARCHAR},
+                                            #{XMH,jdbcType=VARCHAR},
+                                            #{XMLB,jdbcType=VARCHAR},
+                                            #{REMARKS,jdbcType=VARCHAR},
+                                            #{XMID,jdbcType=VARCHAR},
+                                            #{XMMC,jdbcType=VARCHAR},
+                                            #{FSIZE,jdbcType=VARCHAR},
+                                            '0',
+                                            '5')
+    </update>
+    <update id="panDXmDelete">
+        update APP_PAN_FILE set ISDEL='1' where id=#{ID}
     </update>
 
 
@@ -479,7 +582,7 @@ END;
 		p.name AS parent_name
 		FROM sys_office a
 		 LEFT JOIN sys_office p ON p.id = a.parent_id
-		 where a.del_flag!=1 and a.type=4
+		 where nvl(a.del_flag,'0') != '1' and a.type=4
 
     </select>
     <select id="getOfficeMList" resultType="com.common.sys.entity.Office">
@@ -492,7 +595,7 @@ END;
           from v_office a
         connect by prior id = parent_id
          start with id = #{dwdm})
-          where del_flag!=1 and type!=4
+          where nvl(del_flag,'0') != '1' and type!=4
          order by type desc
     </select>
     <select id="getOfficeMList2" resultType="com.common.sys.entity.Office">
@@ -505,10 +608,10 @@ END;
           from v_office a
         connect by prior id = parent_id
          start with id = #{dwdm})
-          where del_flag!=1 and type!=4 and type!=2
+          where nvl(del_flag,'0') != '1' and type!=4 and type!=2
           order by type desc
     </select>
-    <select id="saveOfficem">
+    <!--<select id="saveOfficem">
         DECLARE
             v_code varchar2(100);
             BEGIN
@@ -523,8 +626,143 @@ END;
                         insert (a.id,a.parent_id,a.name,a.useable,a.remarks,a.type,a.code) values (sys_guid(),b.parent_id,b.name,b.useable,b.remarks,'5',v_code);
                     commit;
             END;
+    </select>-->
+    <select id="saveOfficem">
+        DECLARE
+        v_code varchar2(100);
+        BEGIN
+        merge into sys_office a using (select #{id} id,
+        #{parentId} parent_id,#{name} name,#{useable} useable,#{remarks} remarks from dual) b
+        on (a.id=b.id)
+        when matched then
+        update set a.name=b.name,a.useable=b.useable,a.remarks=b.remarks
+        when not matched then
+        insert (a.id,a.parent_id,a.name,a.useable,a.remarks,a.type) values (sys_guid(),b.parent_id,b.name,b.useable,b.remarks,'5');
+        commit;
+        END;
     </select>
     <select id="getPanMList" resultType="java.util.HashMap">
         select * from SYS_MYPAN t connect by prior id=parent_id start with id=#{USERID}
+    </select>
+    <select id="getPanMXmList" resultType="java.util.HashMap">
+        select * from APP_PAN_FILE where MLIDM in (select id from SYS_MYPAN t connect by prior id=parent_id start with id=#{USERID})
+    </select>
+    <select id="getOfficeMyList" resultType="com.common.sys.entity.Office">
+        select a.*,(select count(1)
+          from app_pan_file
+         where mlidm in (select id
+                          from sys_mypan
+                        connect by prior id = parent_id
+                         start with id = a.id)) anyone1
+              from (select connect_by_root id rt,
+                           connect_by_root name rtname,
+                           a.id,
+                           a.parent_id,
+                           a.name,
+                           a.del_flag,
+                           decode(a.parent_id, '0', 1, '') as typpe,
+                           decode(a.parent_id, '0', '', 1) as typppe
+                      from SYS_MYPAN a
+                    connect by prior id = parent_id
+                     start with id = #{id}) a
+             where nvl(del_flag,'0') != '1'
+    </select>
+    <select id="getMypanById" resultType="com.common.sys.entity.Office">
+        select
+      a.id,
+		a.parent_id,
+		a.parent_ids,
+		a.code,
+		a.name,
+		a.sort,
+		a.type,
+		a.grade,
+		a.address,
+		a.zip_code,
+		a.master,
+		a.phone,
+		a.fax,
+		a.email,
+		a.remarks,
+		a.create_date,
+		a.update_date,
+		a.del_flag,
+		a.useable AS useable,
+		p.name AS parent_name
+		FROM SYS_MYPAN a
+		 LEFT JOIN SYS_MYPAN p ON p.id = a.parent_id
+		 WHERE a.id = #{id}
+
+    </select>
+    <select id="getOfficeMmyList2" resultType="com.common.sys.entity.Office">
+         select * from (select a.*,
+               connect_by_isleaf isleaf
+          from v_mypan a
+        connect by prior id = parent_id
+         start with id = #{id})
+          where nvl(del_flag,'0') != '1'
+          order by id desc
+    </select>
+    <select id="xmglLists" resultType="com.common.sys.entity.Office">
+        <![CDATA[
+        select a.*,(select count(1)
+          from app_pan_file
+         where mlidm in (select id
+                          from sys_mypan
+                        connect by prior id = parent_id
+                         start with id = a.id)) anyone1
+              from (select a.*
+                      from (select id, parent_id, name,'' xmmc, del_flag, '1' typpe, '' typppe,'' path,'-' scsj,'-' xmid,remarks,'-' xmh,'-' xmlb,'' anyone2
+                              from SYS_MYPAN
+                            union all
+                            select id, mlidm,'' name, xmmc, isdel, '' typpe, '1' typppe,path,to_char(scsj,'yyyy-mm-dd') scsj,xmid,remarks,xmh,xmlb,case when trunc(sysdate)-trunc(scsj) <4 then '1' else '' end anyone2
+                              from APP_PAN_FILE) a
+                    connect by prior id = parent_id
+                     start with id = #{id}) a
+             where nvl(del_flag,'0') != '1'
+             order by typpe,scsj desc
+             ]]>
+    </select>
+    <select id="getOfficeDList" resultType="com.common.sys.entity.Office">
+        select a.*,
+       decode(a.type, 1, 1, '') as typpe,
+       decode(a.type, 2, 2, '') as typppe,
+       decode(a.type, 3, 3, '') as typpppe
+  FROM v_office a
+ where nvl(a.del_flag, '0') != '1'
+   and a.type != 4
+   and a.type != 5 and rt=#{dwdm}
+    </select>
+    <select id="getPanDList" resultType="java.util.HashMap">
+       select * from v_office a where type!=4 and rt=#{RT} and nvl(a.del_flag, '0') != '1'
+    </select>
+    <select id="getPanDXmList" resultType="java.util.HashMap">
+        select * from APP_PAN_FILE where type='5' and mbid in (select id from v_office where rt=#{RT} and type in ('1','5'))
+        union ALL
+        select * from APP_PAN_FILE where type='5' and mbid in (select id from v_office where id =#{DEPTID})
+    </select>
+    <select id="xmglListsD" resultType="com.common.sys.entity.Office">
+        <![CDATA[
+        select a.*,(select count(1)
+          from app_pan_file
+         where mlid in (select id
+                          from v_office
+                        connect by prior id = parent_id
+                         start with id = a.id)) anyone1
+              from (select a.*
+                      from (select id, parent_id, name,'' xmmc, del_flag,type, '1' typpe, '' typppe,'' path,'-' scsj,'-' xmid,remarks,'-' xmh,'-' xmlb,'' anyone2
+                              from V_OFFICE where rt=#{id}
+                            union all
+                            select id, mlid,'' name, xmmc, isdel,'5' type, '' typpe, '1' typppe,path,to_char(scsj,'yyyy-mm-dd') scsj,xmid,remarks,xmh,xmlb,case when trunc(sysdate)-trunc(scsj) <4 then '1' else '' end anyone2
+                              from APP_PAN_FILE where mlid in (select id from v_office connect by prior id=parent_id start with id=#{dwdm})
+                            union all
+                            select id, mlid,'' name, xmmc, isdel,'5' type, '' typpe, '1' typppe,path,to_char(scsj,'yyyy-mm-dd') scsj,xmid,remarks,xmh,xmlb,case when trunc(sysdate)-trunc(scsj) <4 then '1' else '' end anyone2
+                              from APP_PAN_FILE where mlid in (select id from v_office where type=5 and rt=#{id})
+                              ) a
+                    connect by prior id = parent_id
+                     start with id = #{id}) a
+             where nvl(del_flag,'0') != '1' and type!=4
+             order by typpe,scsj desc
+             ]]>
     </select>
 </mapper>

@@ -4,7 +4,7 @@
 
     <select id="getDeptList" resultType="java.util.HashMap">
         <include refid="com.base.baseMapper.pageStart"/>
-        select t.dwmc,t.dwdm,t.lxr,t.lxr_dh,t.bz,
+        select t.dwmc,t.dwdm,t.lxr,t.lxr_dh,t.bz,(select id from sys_office where code=t.dwdm||'00') id,
         sfqy,decode(sfqy,'1','启用','未启用') sfqymc,
         to_char(createtime,'yyyymmdd hh24:mi:ss') createtime from app_dept t where isdel='0'
         order by createtime desc
@@ -54,6 +54,50 @@
         where isdel='0' order by createtime desc
         <include refid="com.base.baseMapper.pageEnd"/>
     </select>
+    <select id="getUserListD" resultType="java.util.HashMap">
+        <include refid="com.base.baseMapper.pageStart"/>
+        select r.userid,
+            r.username,
+            r.loginname,
+            r.pwd,
+            r.upwd,
+            r.gddh,
+            r.yddh,
+            r.dw,
+            r.sfqy,
+            decode(sfqy, '1', '启用', '未启用') sfqymc,
+            r.fpz,
+            r.email,
+            r.bzxx,
+        (select b.id
+        from SYS_USERROLE a, V_OFFICE b
+        where b.type in ('1','2','3') and a.userid = r.userid
+        and a.roleid = b.id) admin,
+        (select b.name
+        from SYS_USERROLE a, V_OFFICE b
+        where b.type in ('1','2','3') and a.userid = r.userid
+        and a.roleid = b.id) adminmc,
+        to_char(createtime, 'yyyymmdd hh24:mi:ss') createtime
+        from app_user r
+        where isdel = '0'
+        and r.userid != '1'
+        and r.userid != '2'
+        and r.userid !=#{userid}
+        and (exists
+        (select 1
+        from SYS_USERROLE s, v_office t
+        where r.userid = s.userid
+        and s.roleid = t.id
+        and t.rt = #{dwdm}) or not exists
+        (select 1
+        from SYS_USERROLE s, v_office t
+        where r.userid = s.userid
+        and s.roleid = t.id
+        and t.rt != #{dwdm}
+        and t.type in ('1', '2', '3')))
+        order by createtime desc
+        <include refid="com.base.baseMapper.pageEnd"/>
+    </select>
 
 
     <update id="saveDeptList">
@@ -92,25 +136,31 @@
     <update id="saveUserList">
         DECLARE
         v_id varchar2(100):='';
+        v_tt varchar2(50):='';
         BEGIN
         <foreach collection="list" item="record" index="index">
-            <!--delete from SYS_USERROLE t where userid=#{record.USERID} and exists (select 1 from v_office b where b.id=t.roleid and b.code like '%00' and length(b.code)=6);
             <if test="record.ADMIN!=null and record.ADMIN!=''">
+                delete from SYS_USERROLE t where userid=#{record.USERID} and exists (select 1 from v_office b where b.id=t.roleid and b.type in ('1','2','3'));
                 insert into SYS_USERROLE (userid,roleid) values(#{record.USERID} ,#{record.ADMIN});
-            </if>-->
+            </if>
+            select sys_guid() into v_id from dual;
             merge into APP_USER a using (select #{record.USERID} userid,#{record.LOGINNAME} loginname,#{record.USERNAME} username,#{record.DW} DW,#{record.GDDH} GDDH,
-            #{record.YDDH} YDDH,#{record.EMAIL} EMAIL,#{record.BZXX} BZXX , #{record.UPWD} UPWD,#{record.PWD} PWD,#{record.SFQY} SFQY,#{record.FPZ}  FPZ
+            #{record.YDDH} YDDH,#{record.EMAIL} EMAIL,#{record.BZXX} BZXX , #{record.UPWD} UPWD,#{record.PWD} PWD,#{record.SFQY} SFQY
             from dual) b
             on (a.userid= b.userid)
-            when matched then update set a.username=username,a.gddh=b.gddh,
+            when matched then update set a.username=username,a.gddh=b.gddh,a.dw=b.dw,
             a.yddh=b.yddh,a.email=b.email,a.bzxx=b.bzxx,a.upwd=b.upwd,a.pwd=b.pwd,a.sfqy=b.sfqy
             when not matched then
-            insert (a.loginname,a.username,a.dw,a.gddh,a.yddh,a.email,a.bzxx,a.pwd,a.upwd,sfqy,a.fpz)
-            values(b.loginname,b.username,b.dw,b.gddh,b.yddh,b.email,b.bzxx,'7c4a8d09ca3762af61e59520943dc26494f8941b','7c4a8d09ca3762af61e59520943dc26494f8941b',b.sfqy,b.fpz);
-            merge into SYS_MYPAN a using (select #{record.USERID} userid,0 parent_id from dual) b
-            on (a.id=b.userid)
+            insert (userid,a.loginname,a.username,a.dw,a.gddh,a.yddh,a.email,a.bzxx,a.pwd,a.upwd,sfqy)
+            values(v_id,b.loginname,b.username,b.dw,b.gddh,b.yddh,b.email,b.bzxx,'7c4a8d09ca3762af61e59520943dc26494f8941b','7c4a8d09ca3762af61e59520943dc26494f8941b',b.sfqy);
+            <if test="record.USERID==null or record.USERID==''">
+                insert into SYS_MYPAN(id,parent_id,name) values (v_id,0,'个人空间');
+            </if>
+            select id into v_tt from SYS_OFFICE where code='999911';
+            merge into SYS_USERROLE a using (select v_id userid,v_tt roleid from dual ) b
+            on (a.userid=b.userid and b.roleid=b.roleid)
             when not matched then
-            insert (a.id,a.parent_id) values (b.userid,b.parent_id);
+            insert (a.userid,a.roleid) values (b.userid,b.roleid);
         </foreach>
         COMMIT;
         END;
@@ -147,6 +197,83 @@
             on (a.roleid=b.roleid and a.userid=b.userid)
             when not matched then
             insert (a.roleid,a.userid) values(b.roleid,b.userid);
+        </foreach>
+        COMMIT;
+        END;
+    </update>
+    <update id="qyUserlist">
+        DECLARE
+        v_id varchar2(100):='';
+        BEGIN
+        <foreach collection="list" item="record" index="index">
+            update app_user set sfqy='1'  where userid=#{record.USERID};
+        </foreach>
+        COMMIT;
+        END;
+    </update>
+    <update id="tyUserlist">
+        DECLARE
+        v_id varchar2(100):='';
+        BEGIN
+        <foreach collection="list" item="record" index="index">
+            update app_user set sfqy='0'  where userid=#{record.USERID};
+        </foreach>
+        COMMIT;
+        END;
+    </update>
+    <update id="assignUserGly">
+        DECLARE
+        v_id varchar2(100):='';
+        v_ct number(2):=0;
+        v_dwrole varchar2(50):='';
+        BEGIN
+        <foreach collection="list" item="record" index="index">
+           <![CDATA[
+            select count(1) into v_ct from sys_userrole a,sys_office b
+              where a.roleid=b.id and a.userid=#{record.USERID} and b.code like '%00' and length(b.code)=6;
+            if v_ct >0 then
+              raise_application_error(-20000, 'NEW_EMP::单位管理员重复设置');
+            end if;
+            merge into SYS_USERROLE a using (select #{id} roleid,#{record.USERID} userid from dual) b
+            on (a.roleid=b.roleid and a.userid=b.userid)
+            when not matched then
+            insert (a.roleid,a.userid) values(b.roleid,b.userid);
+            select id into v_dwrole from sys_office where code='999912';
+            merge into SYS_USERROLE a using (select v_dwrole roleid,#{record.USERID} userid from dual) b
+            on (a.roleid=b.roleid and a.userid=b.userid)
+            when not matched then
+            insert (a.roleid,a.userid) values(b.roleid,b.userid);
+            ]]>
+        </foreach>
+        COMMIT;
+        END;
+
+    </update>
+    <update id="saveUserListD">
+        DECLARE
+        v_id varchar2(100):='';
+        v_tt varchar2(50):='';
+        BEGIN
+        <foreach collection="list" item="record" index="index">
+            delete from SYS_USERROLE t where userid=#{record.USERID} and exists (select 1 from v_office b where b.id=t.roleid and b.type in ('1','2','3'));
+            <if test="record.ADMIN!=null and record.ADMIN!=''">
+                insert into SYS_USERROLE (userid,roleid) values(#{record.USERID} ,#{record.ADMIN});
+            </if>
+            select sys_guid() into v_id from dual;
+            merge into APP_USER a using (select #{record.USERID} userid,#{record.USERNAME} username,#{record.DW} DW,#{record.GDDH} GDDH,
+            #{record.YDDH} YDDH,#{record.EMAIL} EMAIL,#{record.BZXX} BZXX , #{record.UPWD} UPWD,#{record.PWD} PWD,#{record.SFQY} SFQY
+            from dual) b
+            on (a.userid= b.userid)
+            when matched then update set a.username=username,a.gddh=b.gddh,
+            a.yddh=b.yddh,a.email=b.email,a.bzxx=b.bzxx,a.upwd=b.upwd,a.pwd=b.pwd,a.sfqy=b.sfqy;
+            <if test="record.USERID==null or record.USERID==''">
+                insert into SYS_MYPAN(id,parent_id,name) values (v_id,0,'个人空间');
+            </if>
+            select id into v_tt from SYS_OFFICE where code='999911';
+            merge into SYS_USERROLE a using (select v_id userid,v_tt roleid from dual ) b
+            on (a.userid=b.userid and b.roleid=b.roleid)
+            when not matched then
+            insert (a.userid,a.roleid) values (b.userid,b.roleid);
         </foreach>
         COMMIT;
         END;

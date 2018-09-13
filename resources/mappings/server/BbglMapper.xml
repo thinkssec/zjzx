@@ -45,9 +45,10 @@
         select * from APP_BB_SJTYPE
     </select>
     <select id="getXtSjInfo" resultType="java.util.HashMap">
-       select * from  (select * from APP_BB_XT where status=1
-        and RKSJ>=to_date(#{SJC},'yyyymmdd hh24:mi:ss') order by rksj desc)
-
+<![CDATA[
+       select * from  (select a.* from APP_BB_XT a where status=1
+        and bbh>#{BBH} order by BBH desc)
+]]>
     </select>
     <update id="saveBbxt">
         BEGIN

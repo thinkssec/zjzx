@@ -73,7 +73,11 @@
 			<ref bean="dataSource1"/>
 		</constructor-arg>
 	</bean>-->
-
+	<!--<bean id="myMyBatisCursorItemReader" class="org.mybatis.spring.batch.MyBatisPagingItemReader">
+		<property name="sqlSessionFactory" ref="sqlSessionFactory" />
+		<property name="queryId"
+				  value="com.taobao.accs.mass.petadata.dal.sqlmap.AccsDeviceInfoDAOMapper.selectByExampleForPetaData" />
+	</bean>-->
 	<bean id ="dataSource" class= "com.common.config.DynamicDataSource" >
 		<property name ="targetDataSources">
 			<map key-type ="java.lang.String">
@@ -223,4 +227,5 @@
 		<property name="username" value="root"/>
 		<property name="password" value="root"/>
 	</bean>-->
+
 </beans>

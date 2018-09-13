@@ -31,9 +31,18 @@ public interface FrameMapper extends MainMapper {
     public int updateMenuSort(HashMap m);
     public List<Role> findAllRole(Role entity);
     public void panMCreate(Map m);
+    public void panDCreate(Map m);
     public void panMUpdate(Map m);
     public void panMDelete(Map m);
+    public void panDDelete(Map m);
+    public void panMXmDelete(Map m);
+    public void panDXmDelete(Map m);
+    public void panMUpload(Map m);
+    public void panDUpload(Map m);
     public List<HashMap> getPanMList(Map m);
+    public List<HashMap> getPanDList(Map m);
+    public List<HashMap> getPanMXmList(Map m);
+    public List<HashMap> getPanDXmList(Map m);
     public int insertRole(Role entity);
     public int updateRole(Role entity);
 
@@ -43,17 +52,27 @@ public interface FrameMapper extends MainMapper {
     public int insertOfficeMenu(Office entity);
     public void deleteRole(Role role);
     public void deleteOffice(Office office);
+    public void deleteMypan(Office office);
+    public void deleteXm(Office office);
     public void outrole(User user);
+    public void outroleGly(User user);
     public List<User> findUserByRoleId(User user);
     public List<User> findUserByOfficeId(Office office);
     List<Office> getOfficeList(Office office);
     List<Office> getOfficeRList(Office office);
+    List<Office> getOfficeDList(Office office);
     List<Office> getOfficeMList(Office office);
+    List<Office> getOfficeMyList(Office office);
+    List<Office> xmglLists(Office office);
+    List<Office> xmglListsD(Office office);
     List<Office> getOfficeMList2(Office office);
+    List<Office> getOfficeMmyList2(Office office);
     public List<Office> getAllOffice();
     public Office getOfficeById(Office office);
+    public Office getMypanById(Office office);
     public List<Menu> getOfficeMenuById(Office office);
     public void saveOffice(Office office);
     public void saveOfficer(Office office);
     public void saveOfficem(Office office);
+    public void saveMypan(Office office);
 }

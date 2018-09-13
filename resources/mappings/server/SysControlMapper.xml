@@ -68,10 +68,10 @@
         delete from sys_request
     </delete>
     <select id="getRequestList" resultType="java.util.HashMap">
-        select t.*,to_char(intime,'yyyymmdd hh24:mi:ss') i,
+        select t.username,t.CALL,t.STATUS,t.ID,to_char(intime,'yyyymmdd hh24:mi:ss') i,
         to_char(outtime,'yyyymmdd hh24:mi:ss') o,
         decode(status,1,'正在接收','接收成功') s
-        from sys_request t where 1=1
+        from sys_request t where 1=1 and to_char(intime,'yyyyMMdd')=to_char(sysdate,'yyyyMMdd') and username is not null
         <if test="id!=null and id!=''">
             id=#{id}
         </if>
@@ -84,11 +84,10 @@
         select * from sys_request where id=#{id} and status=1
     </select>
     <select id="getHandleMsgList" resultType="java.util.HashMap">
-        select t.*,to_char(intime,'yyyymmdd hh24:mi:ss') i,
+        select t.username,t.CALL,t.STATUS,t.ID,to_char(intime,'yyyymmdd hh24:mi:ss') i,
         to_char(outtime,'yyyymmdd hh24:mi:ss') o,
         decode(status,1,'正在处理','处理完成') s
-        from SYS_HANDLEMSG t where 1=1
+        from SYS_HANDLEMSG t where 1=1 and to_char(intime,'yyyyMMdd')=to_char(sysdate,'yyyyMMdd') and username is not null
         order by intime desc
-
     </select>
 </mapper>
