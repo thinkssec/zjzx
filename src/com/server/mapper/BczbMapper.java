@@ -4,6 +4,7 @@ package com.server.mapper;
 import com.common.annotation.MyBatisDao;
 import com.server.Entity.Condition;
 import org.apache.ibatis.annotations.MapKey;
+import org.apache.ibatis.annotations.Param;
 
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -29,5 +30,6 @@ public interface BczbMapper {
 	List<LinkedHashMap> getOtherTest();
 	List<LinkedHashMap> getOtherTest2();
 	//获取原始补充指标
-	List<HashMap> getYsBczb(Condition c);
+	List<HashMap> getYsBczb(Map c);
+	List<HashMap> getProjectByScope(@Param("scope") String scope);
 }

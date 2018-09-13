@@ -7,9 +7,7 @@ import com.common.realm.StatelessRealm;
 import com.common.sys.entity.Office;
 import com.common.sys.entity.Role;
 import com.common.sys.entity.User;
-import com.common.utils.AppUtils;
-import com.common.utils.StringUtils;
-import com.common.utils.UserUtils;
+import com.common.utils.*;
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.server.Entity.Condition;
@@ -22,6 +20,8 @@ import com.sun.jna.Native;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringEscapeUtils;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
+import org.dom4j.Document;
+import org.dom4j.DocumentException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
@@ -31,12 +31,10 @@ import org.springframework.web.context.WebApplicationContext;
 
 import javax.servlet.ServletContext;
 import java.io.File;
+import java.io.IOException;
 import java.io.InputStream;
 import java.sql.Blob;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Created by Administrator on 2017/10/18.
@@ -64,6 +62,8 @@ public class SysService{
     PermisionMapper permisionMapper;
     @Autowired
     FrameMapper frameMapper;
+    @Autowired
+    BczbMapper bczbMapper;
     //同步用户信息
     public ResponseBody authupduser(RequestBody rq, Map params, String id){
         ResponseBody rp=new ResponseBody(params,"1","用户信息更新成功",id,rq.getTaskid());
@@ -2218,6 +2218,169 @@ public class SysService{
         }catch(Exception e){
             rp.setIssuccess("0");
             rp.setMessage("操作失败！"+e.getMessage());
+            e.printStackTrace();
+        }
+        return rp;
+    }
+
+    //补充指标
+    public ResponseBody getBczbList(RequestBody rq, Map params, String id) {
+        ResponseBody rp = new ResponseBody(params, "1", "获取原始补充指标成功", id, rq.getTaskid());
+        try {
+            ObjectMapper objectMapper = new ObjectMapper();
+            Condition condition=objectMapper.readValue(rq.getParams(), Condition.class);
+
+            User user = UserUtils.getUser();
+            Map pa=new HashMap();
+            pa.put("DEPTID", user.getDeptCode().substring(0,4));
+            System.out.println(pa);
+            //params.put("DEPTID", "1045");
+            try {
+                List<HashMap> bbls = bczbMapper.getYsBczb(pa);
+                //转换后的指标Map
+                HashMap<String,HashMap> objects=new HashMap();
+                HashMap<String,String> plist=new HashMap();
+                for(HashMap m:bbls){
+                    plist.put((String)m.get("PID"),"project");
+                    HashMap zb=(HashMap)objects.get((String)m.get("OID"));
+                    if(zb==null){
+                        zb=new HashMap();
+                        objects.put((String)m.get("OID"),zb);
+                    }
+                    zb.put((String)m.get("OKEY"),(String)m.get("OVALUE"));
+                    zb.put("PID",(String)m.get("PID"));
+                    zb.put("OID",(String)m.get("OID"));
+                    zb.put("RKSJ",(String)m.get("RKSJ"));
+                }
+                //获取project 范围
+                String scope="''";
+                for(String k:plist.keySet()){
+                    scope+=",'"+k+"'";
+                }
+                List<HashMap> lsP=bczbMapper.getProjectByScope(scope);
+
+                //转换后的project
+                HashMap<String,HashMap> projects=new HashMap();
+                for(HashMap m:lsP){
+                    HashMap pro=(HashMap)projects.get((String)m.get("OID"));
+                    if(pro==null){
+                        pro=new HashMap();
+                        projects.put((String)m.get("OID"),pro);
+                    }
+                    pro.put((String)m.get("OKEY"),(String)m.get("OVALUE"));
+                    pro.put("PRO_ID",(String)m.get("OID"));
+                }
+                //给指标绑定项目属性
+                for(String k :objects.keySet()){
+                    HashMap o=objects.get(k);
+                    o.putAll(projects.get(o.get("PID")));
+                }
+                List<HashMap> mdList=new ArrayList<HashMap>(objects.values());
+                LinkedHashMap<String,String> orderby=new LinkedHashMap<>();
+                if(StringUtils.isNotBlank(condition.getSort())) {
+                    String[] sort = condition.getSort().split(",");
+                    for (String s : sort) {
+                        if (StringUtils.isBlank(s)) continue;
+                        String[] ss = s.split(" ");
+                        orderby.put(ss[0], ss[1]);
+                    }
+                }else{
+                    orderby.put("RKSJ","desc");
+                }
+                AppUtils.sort(mdList,orderby);
+                HashMap datas = new HashMap();
+                int pageNo = Integer.parseInt(condition.getStart());   //从1开始
+                int pageSize = Integer.parseInt(condition.getLimit());
+                int fromIndex = pageSize * (pageNo - 1);
+                int toIndex = pageSize * pageNo;
+                if (toIndex > mdList.size()) {
+                    toIndex = mdList.size();
+                }
+                if (fromIndex > toIndex) {
+                    fromIndex = toIndex;
+                }
+                datas.put("rows",mdList.subList(fromIndex, toIndex));
+                datas.put("total",mdList.size());
+                rp.setDatas(com.common.annotation.mapper.JsonMapper.toJsonString(datas));
+            } catch (Exception e) {
+                e.printStackTrace();
+                rp.setIssuccess("0");
+                rp.setMessage("获取原始补充指标失败！" + e.getMessage());
+            }
+        } catch (Exception e) {
+            rp.setIssuccess("0");
+            rp.setMessage("获取原始补充指标失败！" + e.getMessage());
+            e.printStackTrace();
+        }
+        return rp;
+    }
+
+    public ResponseBody bczbCk(RequestBody rq, Map params, String id) {
+        ResponseBody rp = new ResponseBody(params, "1", "获取成功", id, rq.getTaskid());
+        String root="54bc0d83-300d-479c-87c2-c8ef998e681e";
+        LinkedHashMap<String,LinkedHashMap> treeM=new LinkedHashMap<>();
+        List<LinkedHashMap> treeMm=bczbMapper.getBczbTreeById(root);
+        for(LinkedHashMap t:treeMm){
+            treeM.put((String)t.get("ID"),t);
+        }
+        //System.out.println("00 "+new SimpleDateFormat("hh:mm:ss.SSS").format(System.currentTimeMillis()));
+        List<LinkedHashMap> test1=bczbMapper.getOtherTest();
+        //System.out.println("01 "+new SimpleDateFormat("hh:mm:ss.SSS").format(System.currentTimeMillis()));
+        List<LinkedHashMap> test2=bczbMapper.getOtherTest2();
+        //System.out.println("11 "+new SimpleDateFormat("hh:mm:ss.SSS").format(System.currentTimeMillis()));
+        List<LinkedHashMap> propertyL=bczbMapper.getBczbProperty(root);
+        //System.out.println("22 "+new SimpleDateFormat("hh:mm:ss.SSS").format(System.currentTimeMillis()));
+        Map<String,Map> propertyM=new HashMap<String,Map>();
+        for(LinkedHashMap m:propertyL){
+            Map<String,Object> p=propertyM.get((String)m.get("OID"));
+            if(p==null){
+                p=new LinkedHashMap<String,Object>();
+                propertyM.put((String)m.get("OID"),p);
+            }
+            p.put((String)m.get("OKEY"),(String)m.get("OVALUE")==null?"":(String)m.get("OVALUE"));
+        }
+        //System.out.println("33 "+new SimpleDateFormat("hh:mm:ss.SSS").format(System.currentTimeMillis()));
+        Map<String,List> tree=new LinkedHashMap<String,List>();
+        for (String key : treeM.keySet()) {
+            LinkedHashMap m=treeM.get(key);
+            List children=tree.get(m.get("PID"));
+            if(children==null){
+                children=new ArrayList();
+                tree.put((String)m.get("PID"),children);
+            }
+            children.add(treeM.get(key));
+        }
+        //System.out.println("44 "+new SimpleDateFormat("hh:mm:ss.SSS").format(System.currentTimeMillis()));
+        Map<String,Object> docStr=AppUtils.readSql2Map(treeM,tree,root,propertyM);
+        //System.out.println("55 "+new SimpleDateFormat("hh:mm:ss.SSS").format(System.currentTimeMillis()));
+        Document doc = null;
+        try {
+            //System.out.println(docStr);
+            doc = XmlUtils.Map2Xml(docStr);
+            //System.out.println("66 "+new SimpleDateFormat("hh:mm:ss.SSS").format(System.currentTimeMillis()));
+            //System.out.println(XmlUtils.FormatXml(doc));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return rp;
+    }
+
+    public ResponseBody bczbRk(RequestBody rq, Map params, String id) {
+        ResponseBody rp = new ResponseBody(params, "1", "获取成功", id, rq.getTaskid());
+        String textFromFile = "";
+        try {
+            textFromFile = FileUtils.readFileToString(new File("c:/bczb.xml"), "UTF-8");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        Map<String, Object> map = null;
+        try {
+            map = XmlUtils.Xml2MapWithAttr(textFromFile, true);
+            String sql = AppUtils.readMap2Sql(map, "-1");
+            HashMap h = new HashMap();
+            h.put("sql", sql);
+            bczbMapper.mergeProject(h);
+        } catch (DocumentException e) {
             e.printStackTrace();
         }
         return rp;

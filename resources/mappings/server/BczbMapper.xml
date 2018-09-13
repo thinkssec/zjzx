@@ -37,15 +37,22 @@
                where level = 2
                  and nvl(zt, 0) <> 1 ]]>
               connect by prior id = pid
-               start with pid = '-1' <if test=""> and deptid=#{deptid}</if> ),
+               start with pid = '-1' <if test="DEPTID!=null and DEPTID!=''"> and deptid=#{DEPTID}</if> ),
             d as
              (select * from APP_OBJECTDIC)
-            select a.*
+            select a.*,p.pid,to_char(p.rksj,'yyyymmdd hh24:mi:ss') rksj
               from app_oproperty a, p, d
              where a.oid = p.id
                and p.otype = d.otype
                and d.okey = a.okey
                and display1 = '1'
 
+    </select>
+    <select id="getProjectByScope" resultType="java.util.HashMap">
+      with p as
+     (select *
+        from app_object_bczbtree
+       where id in ( ${scope}))
+    select 'PRO_'||a.OKEY OKEY,a.OVALUE,a.OID from app_oproperty a, p where a.oid = p.id
     </select>
 </mapper>
