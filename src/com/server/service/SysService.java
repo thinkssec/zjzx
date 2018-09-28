@@ -1039,6 +1039,7 @@ public class SysService{
                     c.add(lsHt.get(key));
                 }
                 if(StringUtils.isBlank(rootId)){
+
                     frameMapper.insertBczbRoot(user.getDeptCode(),user.getDeptId());
                     lsHt = frameMapper.bczbMlLists(pa);
                     children = new HashMap();
