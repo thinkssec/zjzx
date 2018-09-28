@@ -9,12 +9,12 @@
         insert into APP_EMAIL (ID, HFID, FJRYHM,
           FJRXM, SJRYHM, SJRXM,
           SFYJS, XMBH, XMMC,
-          ZT, ZWNR, FSRQ, BZ,BCID)
+          ZT, ZWNR, FSRQ, BZ,BCID,LB,FJRID,SJRID)
         values (v_id, #{HFID,jdbcType=VARCHAR}, #{FJRYHM,jdbcType=VARCHAR},
           #{FJRXM,jdbcType=VARCHAR}, #{SJRYHM,jdbcType=VARCHAR}, #{SJRXM,jdbcType=VARCHAR},
           #{SFYJS,jdbcType=VARCHAR}, #{XMBH,jdbcType=VARCHAR}, #{XMMC,jdbcType=VARCHAR},
           #{ZT,jdbcType=VARCHAR}, #{ZWNR,jdbcType=VARCHAR}, to_date(#{FSRQ,jdbcType=DATE},'yyyy-MM-dd hh24:mi:ss'),
-          #{BZ,jdbcType=VARCHAR},#{BCID,jdbcType=VARCHAR});
+          #{BZ,jdbcType=VARCHAR},#{BCID,jdbcType=VARCHAR},#{LB,jdbcType=VARCHAR},#{FJRID,jdbcType=VARCHAR},#{SJRID,jdbcType=VARCHAR});
           insert into APP_EMAIL_ATTACH ( EID, PATH)
         values ( v_id, #{PATH,jdbcType=VARCHAR});
         commit;

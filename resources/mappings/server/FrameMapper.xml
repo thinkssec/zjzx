@@ -193,7 +193,9 @@
             SELECT #{id}, #{menu.id} from dual
         </foreach>
     </insert>
-
+    <insert id="insertBczbRoot">
+        insert into SYS_OFFICE(parent_id,name,code,type) values(#{DEPTID},'单位补充指标',#{CODE}||'03','2')
+    </insert>
     <update id="updateMenu">
         UPDATE sys_menu SET
         parent_id = #{parentId},
@@ -764,5 +766,14 @@ END;
              where nvl(del_flag,'0') != '1' and type!=4
              order by typpe,scsj desc
              ]]>
+    </select>
+    <select id="bczbMlLists" resultType="com.common.sys.entity.Office">
+        select *
+          from SYS_OFFICE
+        connect by prior id = PARENT_ID
+         start with length(code) = 8
+                and type = 2
+                and substr(code,1,4)=#{CODE}
+                and substr(code, 7, 8) = '03'
     </select>
 </mapper>

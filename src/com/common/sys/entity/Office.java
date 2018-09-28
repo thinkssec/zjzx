@@ -494,7 +494,7 @@ public class Office extends TreeEntity<Office> {
 	
 
 	public String toString() {
-		return dwmc;
+		return name;
 	}
 
 	public String getLxrDh() {

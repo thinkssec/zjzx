@@ -1,13 +1,48 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
 <mapper namespace="com.server.mapper.BczbMapper">
+    <insert id="saveBczbZh">
+        merge into APP_ZB_BCZH  a using (select #{c1} id,#{c2} name,#{c3} bz,#{c4} userid from dual) b
+        on (a.id=b.id)
+        when not matched then
+        insert (name,bz,userid,deptid,rkry) values (b.name,b.bz,b.userid,#{dwdm},#{userid})
+        when matched then  update set a.name=b.name,a.bz=b.bz,a.userid=b.userid
+    </insert>
+    <insert id="addZb2Fz">
+        BEGIN
+        <foreach collection="list" item="record" index="index">
+            update APP_OBJECT_BCZBTREE set zt='1' where id=#{record.OID};
+            merge into APP_ZB_BCRALATION a using(select #{fzid} zhzbid,#{record.OID} bczbid from dual) b
+            on (a.zhzbid=b.zhzbid and a.bczbid=b.bczbid)
+            when not matched then
+            insert (zhzbid,bczbid) values (b.zhzbid,b.bczbid)
+            when matched then
+            update set rksj=sysdate;
+        </foreach>
+        commit;
+        END;
+    </insert>
+    <insert id="delZb2Fz">
+        BEGIN
+        <foreach collection="list" item="record" index="index">
+            update APP_OBJECT_BCZBTREE set zt='0' where id=#{record.OID};
+            delete from APP_ZB_BCRALATION a where zhzbid=#{fzid} and bczbid=#{record.OID};
+        </foreach>
+        commit;
+        END;
+    </insert>
     <update id="mergeProject">
         DECLARE
         v_deptid number(4):=-1;
+        v_count number(1):=0;
+        v_infoid varchar2(50):='';
         BEGIN
         ${sql}
         commit;
         end;
+    </update>
+    <update id="updateFzPath">
+        update APP_ZB_BCZH set path=#{path},status='1' where id=#{id}
     </update>
     <select id="getBczbProperty" fetchSize="50000"  resultType="java.util.LinkedHashMap">
         with b as (select id
@@ -20,9 +55,15 @@
               from APP_OPROPERTY a,b where a.oid=b.id
     </select>
     <select id="getBczbTreeById"  resultType="java.util.LinkedHashMap">
-        select * from (select a.*,b.ovalue oder from APP_OBJECT_BCZBTREE a left join  (select * from APP_OPROPERTY where okey='ID') b on a.id=b.oid ) connect by prior id=pid start with id=#{bczbid}
+        select * from (select a.*,b.ovalue oder from APP_OBJECT_BCZBTREE a left join
+         (select * from APP_OPROPERTY where okey='ID') b on a.id=b.oid )
+         connect by prior id=pid start with id=#{bczbid}
         order siblings by oder
     </select>
+    <!--<select id="getBczbTreeById"  resultType="java.util.LinkedHashMap">
+        select * from APP_OBJECT_BCZBTREE connect by prior id=pid start with id=#{bczbid}
+        order siblings by oder
+    </select>-->
     <select id="getOtherTest" resultType="java.util.LinkedHashMap">
         select * from APP_OBJTEST
     </select>
@@ -34,7 +75,7 @@
         with p as
              (select t.*
                 from APP_OBJECT_BCZBTREE t
-               where level = 2
+               where level = 3
                  and nvl(zt, 0) <> 1 ]]>
               connect by prior id = pid
                start with pid = '-1' <if test="DEPTID!=null and DEPTID!=''"> and deptid=#{DEPTID}</if> ),
@@ -53,6 +94,98 @@
      (select *
         from app_object_bczbtree
        where id in ( ${scope}))
-    select 'PRO_'||a.OKEY OKEY,a.OVALUE,a.OID from app_oproperty a, p where a.oid = p.id
+    select 'PRO_'||a.OKEY OKEY,a.OVALUE,a.OID,p.ID,(select ovalue
+          from app_oproperty
+         where okey = 'ProjectTitle'
+           and oid = p.id) PRO_DXGC
+    from app_oproperty a, p where a.oid = p.pid
+    </select>
+
+    <select id="getZhzbList" resultType="java.util.HashMap">
+        <include refid="com.base.baseMapper.pageStart"/>
+        select (select username from app_user where userid=w.userid) ry,to_char(rksj,'yyyymmdd hh24:mi:ss') sj,decode(status,'1','已下发','未下发') zt,w.* from APP_ZB_BCZH w where 1=1
+        <if test="dwdm != null">
+            and deptid=#{dwdm}
+        </if>
+        <if test="c1 != null">
+            and name like '%'||#{c1}||'%'
+        </if>
+        <include refid="com.base.baseMapper.pageEnd"/>
+        order by rksj desc
+        <if test="sort != null">
+            ${sort}
+        </if>
+    </select>
+    <select id="getJsrList" resultType="java.util.HashMap">
+        select t.*
+          from app_user t, sys_userrole s, v_office w
+         where t.userid = s.userid
+           and s.roleid = w.id
+           <if test="dwdm!=null and dwdm!=''">
+               and substr(w.code, 1, 4) = #{dwdm}
+           </if>
+    </select>
+
+    <select id="getBczbByFz" fetchSize="50000" resultType="java.util.HashMap">
+
+        with p as
+             (select a.* from APP_OBJECT_BCZBTREE a,APP_ZB_BCRALATION t where a.id=t.bczbid <if test="c1!=null and c1!=''"> and t.zhzbid=#{c1}</if> ),
+        d as
+        (select * from APP_OBJECTDIC)
+        select a.*,p.pid,to_char(p.rksj,'yyyymmdd hh24:mi:ss') rksj
+        from app_oproperty a, p, d
+        where a.oid = p.id
+        and p.otype = d.otype
+        and d.okey = a.okey
+        and display1 = '1'
+
+    </select>
+    <select id="getZbByFz" resultType="java.util.HashMap">
+        select a.*,(select pid from APP_OBJECT_BCZBTREE where id=(select pid from APP_OBJECT_BCZBTREE where id=a.bczbid)) info from APP_ZB_BCRALATION a where zhzbid=#{c1}
+    </select>
+    <select id="getBczbTreeById2" resultType="java.util.LinkedHashMap">
+        select *
+              from (select a.*, decode(level, 1, '1', 2, '1', 3, id, id) flag
+                      from (select a.*, b.ovalue oder
+                              from APP_OBJECT_BCZBTREE a
+                              left join (select * from APP_OPROPERTY where okey = 'ID') b
+                                on a.id = b.oid) a
+
+                    connect by prior id = pid
+                     start with id = #{rootId}
+                     order siblings by oder)
+             where flag = '1'
+                or flag in (${scope})
+            union
+            select *
+              from (select a.*, id flag
+                      from (select a.*, b.ovalue oder
+                              from APP_OBJECT_BCZBTREE a
+                              left join (select * from APP_OPROPERTY where okey = 'ID') b
+                                on a.id = b.oid) a
+                    connect by prior id = pid
+                     start with id in (${scope})
+                     order siblings by oder)
+
+    </select>
+    <select id="getBczbProperty2" resultType="java.util.LinkedHashMap">
+        with b as (select id
+                  from (select id, decode(level, 1, '1', 2, '1', 3, id, id) flag
+                          from APP_OBJECT_BCZBTREE a
+                        connect by prior id = pid
+                         start with id = #{rootId})
+                 where flag = '1'
+                    or flag in (${scope})
+                union
+                select id
+                  from (select id, id flag
+                          from APP_OBJECT_BCZBTREE a
+                        connect by prior id = pid
+                         start with id in (${scope}))
+                )
+            select oid,
+                   decode(okey, 'text', '#', '@') || okey okey,
+                   nvl(ovalue, '') ovalue
+              from APP_OPROPERTY a,b where a.oid=b.id
     </select>
 </mapper>

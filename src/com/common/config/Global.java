@@ -59,7 +59,7 @@ public class Global {
 	 * 上传文件基础虚拟路径
 	 */
 	public static final String USERFILES_BASE_URL = "/userfiles/";
-
+	public static final String YSBCZBXF_BASE_URL = "/bczbXf/";
 	public static final String USERFILES = "userfiles";
 	/**
 	 * 软件升级目录

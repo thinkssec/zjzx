@@ -26,7 +26,7 @@ import java.util.Map;
 @Component
 public class FileService {
 
-    String curProjectPath = Global.getConfig("upLoadPath");;
+    String curProjectPath = Global.getConfig("upLoadPath");
     @Autowired
     SysControlMapper sysControlMapper;
     public String upLoad(RequestBody rq, Map params, String id, CommonsMultipartFile file) {

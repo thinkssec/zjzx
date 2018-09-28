@@ -25,8 +25,10 @@ public interface UserMapper extends MainMapper {
     HashMap validRegst(String cpu);
     HashMap getUserOne2(String username);
     List<HashMap> getRoleList(String userid);
+
     @MapKey("KEY")
     HashMap<String,HashMap> getPermissionList(String userid);
+
     @MapKey("KEY")
     HashMap<String,HashMap> getPermissionListAll(String userid);
     void modifyPsw(Condition c);

@@ -25,11 +25,20 @@ import java.util.Map;
 public interface BczbMapper {
 	void mergeProject(HashMap map);
 	List<LinkedHashMap> getBczbProperty(String bczbid);
-
+	List<LinkedHashMap> getBczbProperty2(@Param("rootId") String rootId,@Param("scope") String scope);
 	List<LinkedHashMap> getBczbTreeById(String bczbid);
+	List<LinkedHashMap> getBczbTreeById2(@Param("rootId") String rootId,@Param("scope") String scope);
 	List<LinkedHashMap> getOtherTest();
 	List<LinkedHashMap> getOtherTest2();
 	//获取原始补充指标
 	List<HashMap> getYsBczb(Map c);
+    List<HashMap> getBczbByFz(Map c);
 	List<HashMap> getProjectByScope(@Param("scope") String scope);
+	List<HashMap> getZhzbList(Condition params);
+	List<HashMap> getJsrList(Condition params);
+	List<HashMap> getZbByFz(Condition params);
+	void updateFzPath(@Param("id") String id,@Param("path") String path);
+	void saveBczbZh(Condition params);
+	void addZb2Fz(Map params);
+	void delZb2Fz(Map params);
 }

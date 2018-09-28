@@ -347,8 +347,71 @@ public class AnonService {
         rp.setIp(Global.getConfig("server.ip.port"));
         return rp;
     }
-
-
+    public ResponseBody bczbRk2(RequestBody rq, Map params, String id) {
+        ResponseBody rp = new ResponseBody(params, "1", "获取成功", id, rq.getTaskid());
+        String textFromFile = "";
+        try {
+            textFromFile = FileUtils.readFileToString(new File("c:/bczb.xml"), "UTF-8");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        Map<String, Object> map = null;
+        try {
+            map = XmlUtils.Xml2MapWithAttr(textFromFile, true);
+            String sql = AppUtils.readMap2Sql2(map, "-1","","");
+            HashMap h = new HashMap();
+            h.put("sql", sql);
+            bczbMapper.mergeProject(h);
+        } catch (DocumentException e) {
+            e.printStackTrace();
+        }
+        return rp;
+    }
+    public ResponseBody bczbCk2(RequestBody rq, Map params, String id) {
+        ResponseBody rp = new ResponseBody(params, "1", "获取成功", id, rq.getTaskid());
+        String root="8b7f5824833143a18045b9e620521eb2";
+        LinkedHashMap<String,LinkedHashMap> treeM=new LinkedHashMap<>();
+        List<LinkedHashMap> treeMm=bczbMapper.getBczbTreeById(root);
+        for(LinkedHashMap t:treeMm){
+            treeM.put((String)t.get("ID"),t);
+        }
+        //System.out.println("11 "+new SimpleDateFormat("hh:mm:ss.SSS").format(System.currentTimeMillis()));
+        List<LinkedHashMap> propertyL=bczbMapper.getBczbProperty(root);
+        //System.out.println("22 "+new SimpleDateFormat("hh:mm:ss.SSS").format(System.currentTimeMillis()));
+        Map<String,Map> propertyM=new HashMap<String,Map>();
+        for(LinkedHashMap m:propertyL){
+            Map<String,Object> p=propertyM.get((String)m.get("OID"));
+            if(p==null){
+                p=new LinkedHashMap<String,Object>();
+                propertyM.put((String)m.get("OID"),p);
+            }
+            p.put((String)m.get("OKEY"),(String)m.get("OVALUE")==null?"":(String)m.get("OVALUE"));
+        }
+        //System.out.println("33 "+new SimpleDateFormat("hh:mm:ss.SSS").format(System.currentTimeMillis()));
+        Map<String,List> tree=new LinkedHashMap<String,List>();
+        for (String key : treeM.keySet()) {
+            LinkedHashMap m=treeM.get(key);
+            List children=tree.get(m.get("PID"));
+            if(children==null){
+                children=new ArrayList();
+                tree.put((String)m.get("PID"),children);
+            }
+            children.add(treeM.get(key));
+        }
+        //System.out.println("44 "+new SimpleDateFormat("hh:mm:ss.SSS").format(System.currentTimeMillis()));
+        Map<String,Object> docStr=AppUtils.readSql2Map(treeM,tree,root,propertyM);
+        //System.out.println("55 "+new SimpleDateFormat("hh:mm:ss.SSS").format(System.currentTimeMillis()));
+        Document doc = null;
+        try {
+            //System.out.println(docStr);
+            doc = XmlUtils.Map2Xml(docStr);
+            //System.out.println("66 "+new SimpleDateFormat("hh:mm:ss.SSS").format(System.currentTimeMillis()));
+            System.out.println(XmlUtils.FormatXml(doc));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return rp;
+    }
 
     public void traverseFolder2(List<String> l, String path, String doc) {
         File file = new File(path);

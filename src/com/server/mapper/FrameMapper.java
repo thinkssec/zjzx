@@ -7,6 +7,8 @@ import com.common.sys.entity.User;
 import com.server.Entity.Condition;
 import com.server.Entity.MainMapper;
 import com.server.Entity.Menu;
+import org.apache.ibatis.annotations.MapKey;
+import org.apache.ibatis.annotations.Param;
 
 import java.util.HashMap;
 import java.util.List;
@@ -65,6 +67,8 @@ public interface FrameMapper extends MainMapper {
     List<Office> getOfficeMyList(Office office);
     List<Office> xmglLists(Office office);
     List<Office> xmglListsD(Office office);
+    @MapKey("id")
+    HashMap<String,Office> bczbMlLists(Map office);
     List<Office> getOfficeMList2(Office office);
     List<Office> getOfficeMmyList2(Office office);
     public List<Office> getAllOffice();
@@ -75,4 +79,6 @@ public interface FrameMapper extends MainMapper {
     public void saveOfficer(Office office);
     public void saveOfficem(Office office);
     public void saveMypan(Office office);
+
+    void insertBczbRoot(@Param("CODE") String deptCode,@Param("DEPTID")String deptid);
 }

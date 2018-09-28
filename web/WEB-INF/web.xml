@@ -90,6 +90,14 @@
         <url-pattern>/databb/*</url-pattern>
     </servlet-mapping>
     <servlet>
+        <servlet-name>BczbDownLoadServlet</servlet-name>
+        <servlet-class>com.common.servlet.BczbDownLoadServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>BczbDownLoadServlet</servlet-name>
+        <url-pattern>/bczbXf/*</url-pattern>
+    </servlet-mapping>
+    <servlet>
         <servlet-name>CKFinderConnectorServlet</servlet-name>
         <servlet-class>com.common.servlet.CKFinderConnectorServlet</servlet-class>
         <init-param>
