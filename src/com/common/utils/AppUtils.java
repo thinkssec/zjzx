@@ -1,5 +1,7 @@
 package com.common.utils;
 
+import com.common.sys.entity.Office;
+
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
@@ -44,17 +46,184 @@ public class AppUtils {
             });
         }
     }
-
-    public static String readMap2Sql2(Map<String, Object> map, String pid,String pk,String dept) {
+    public static String readMap2Sql4(Map<String, Object> map, String pid,String pk,String deptid,String cpuid,String userid) {
         StringBuffer sql = new StringBuffer("");
         for (String key : map.keySet()) {
             //Map<String, Object> node = (Map<String, Object>) map.get(key);
             Object node = map.get(key);
             if("GeneralInformation".equals(key) && node instanceof Map){
                 String id = (String) ((Map<String, Object>) node).get("@ProjectVersionID");
-                String cpuid = (String) ((Map<String, Object>) node).get("@CpuID");
+                /*String cpuid = (String) ((Map<String, Object>) node).get("@CpuID");
                 String userid = (String) ((Map<String, Object>) node).get("@UserID");
-                String deptid = (String) ((Map<String, Object>) node).get("@DeptID");
+                String deptid = (String) ((Map<String, Object>) node).get("@DeptID");*/
+                String pkey = id + cpuid + userid;
+                String uuid = IdGen.uuid();
+                for (String okey : ((Map<String, Object>) node).keySet()) {
+                    Object property = ((Map<String, Object>) node).get(okey);
+                    if (property instanceof String) {
+
+                    }else if (property instanceof Map) {
+                        Map<String, Object> child1 = new HashMap<String, Object>();
+                        child1.put(okey, (Map<String, Object>) property);
+                        sql.append(readMap2Sql4(child1, "",pkey,deptid,cpuid,userid));
+                    } else if (property instanceof List) {
+                        for (int i = 0; i < ((List) property).size(); i++) {
+                            /*if((Map<String, Object>) ((List) property).get(i) instanceof Map)
+                            else*/
+                            Map<String, Object> child1 = new HashMap<String, Object>();
+                            child1.put(okey, ((List) property).get(i));
+                            sql.append(readMap2Sql4(child1, "",pkey,deptid,cpuid,userid));
+                        }
+                    }
+                }
+
+            }
+            else if ("Project".equals(key) && node instanceof Map) {
+                String id = (String) ((Map<String, Object>) node).get("@ProjectID");
+                String pkey = pk+id;
+
+                String uuid = IdGen.uuid();
+                for (String okey : ((Map<String, Object>) node).keySet()) {
+                    Object property = ((Map<String, Object>) node).get(okey);
+                    if (property instanceof String){
+
+                    }else if (property instanceof Map) {
+                        Map<String, Object> child1 = new HashMap<String, Object>();
+                        child1.put(okey, (Map<String, Object>) property);
+                        sql.append(readMap2Sql4(child1, "",pkey,deptid,cpuid,userid));
+                    } else if (property instanceof List) {
+                        for (int i = 0; i < ((List) property).size(); i++) {
+                            /*if((Map<String, Object>) ((List) property).get(i) instanceof Map)
+                            else*/
+                            Map<String, Object> child1 = new HashMap<String, Object>();
+                            child1.put(okey, ((List) property).get(i));
+                            sql.append(readMap2Sql4(child1, "",pkey,deptid,cpuid,userid));
+                        }
+                    }
+                }
+            } else {
+                String uuid = IdGen.uuid();
+                //if(map.get("@SERVERID")!=null&&!"".equals((String)map.get("@SERVERID"))) uuid=map.get("@SERVERID").toString();
+                if(StringUtils.isBlank(pid)) pid="-1";
+                if (node instanceof String) {
+                    sql.append(" insert into APP_OPROPERTY_DWCBBCZB(OID,OKEY,OVALUE,ODEPTID) VALUES ('" + uuid + "','" + key.substring(1) + "','" + node.toString() + "','"+deptid+"');");
+                } else {
+                    sql.append("insert into APP_OBJECT_DWCBBCZB(ID,PID,OTYPE,LB,DEPTID,USERID) VALUES ('" + uuid + "','" + pid + "','" + key + "','1','"+deptid+"','"+userid+"');");
+                    for (String okey : ((Map<String, Object>) node).keySet()) {
+                        Object property = ((Map<String, Object>) node).get(okey);
+                        if (property instanceof String)
+                            sql.append(" insert into APP_OPROPERTY_DWCBBCZB(OID,OKEY,OVALUE,ODEPTID) VALUES ('" + uuid + "','" + okey.substring(1) + "','" + property.toString() + "','"+deptid+"');");
+                        else if (property instanceof Map) {
+                            Map<String, Object> child1 = new HashMap<String, Object>();
+                            child1.put(okey, (Map<String, Object>) property);
+                            sql.append(readMap2Sql4(child1, uuid,"",deptid,cpuid,userid));
+                        } else if (property instanceof List) {
+                            for (int i = 0; i < ((List) property).size(); i++) {
+                                Map<String, Object> child1 = new HashMap<String, Object>();
+                                child1.put(okey, ((List) property).get(i));
+                                sql.append(readMap2Sql4(child1, uuid,"",deptid,cpuid,userid));
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return sql.toString();
+    }
+    public static String readMap2Sql3(Map<String, Object> map, String pid,String pk,String deptid,String cpuid,String userid) {
+        StringBuffer sql = new StringBuffer("");
+        for (String key : map.keySet()) {
+            //Map<String, Object> node = (Map<String, Object>) map.get(key);
+            Object node = map.get(key);
+            if("GeneralInformation".equals(key) && node instanceof Map){
+                String id = (String) ((Map<String, Object>) node).get("@ProjectVersionID");
+                /*String cpuid = (String) ((Map<String, Object>) node).get("@CpuID");
+                String userid = (String) ((Map<String, Object>) node).get("@UserID");
+                String deptid = (String) ((Map<String, Object>) node).get("@DeptID");*/
+                String pkey = id + cpuid + userid;
+                String uuid = IdGen.uuid();
+                for (String okey : ((Map<String, Object>) node).keySet()) {
+                    Object property = ((Map<String, Object>) node).get(okey);
+                    if (property instanceof String) {
+
+                    }else if (property instanceof Map) {
+                        Map<String, Object> child1 = new HashMap<String, Object>();
+                        child1.put(okey, (Map<String, Object>) property);
+                        sql.append(readMap2Sql3(child1, "",pkey,deptid,cpuid,userid));
+                    } else if (property instanceof List) {
+                        for (int i = 0; i < ((List) property).size(); i++) {
+                            /*if((Map<String, Object>) ((List) property).get(i) instanceof Map)
+                            else*/
+                            Map<String, Object> child1 = new HashMap<String, Object>();
+                            child1.put(okey, ((List) property).get(i));
+                            sql.append(readMap2Sql3(child1, "",pkey,deptid,cpuid,userid));
+                        }
+                    }
+                }
+
+            }
+            else if ("Project".equals(key) && node instanceof Map) {
+                String id = (String) ((Map<String, Object>) node).get("@ProjectID");
+                String pkey = pk+id;
+
+                String uuid = IdGen.uuid();
+                for (String okey : ((Map<String, Object>) node).keySet()) {
+                    Object property = ((Map<String, Object>) node).get(okey);
+                    if (property instanceof String){
+
+                    }else if (property instanceof Map) {
+                        Map<String, Object> child1 = new HashMap<String, Object>();
+                        child1.put(okey, (Map<String, Object>) property);
+                        sql.append(readMap2Sql3(child1, "",pkey,deptid,cpuid,userid));
+                    } else if (property instanceof List) {
+                        for (int i = 0; i < ((List) property).size(); i++) {
+                            /*if((Map<String, Object>) ((List) property).get(i) instanceof Map)
+                            else*/
+                            Map<String, Object> child1 = new HashMap<String, Object>();
+                            child1.put(okey, ((List) property).get(i));
+                            sql.append(readMap2Sql3(child1, "",pkey,deptid,cpuid,userid));
+                        }
+                    }
+                }
+            } else {
+                String uuid = IdGen.uuid();
+                //if(map.get("@SERVERID")!=null&&!"".equals((String)map.get("@SERVERID"))) uuid=map.get("@SERVERID").toString();
+                if(StringUtils.isBlank(pid)) pid="-1";
+                if (node instanceof String) {
+                    sql.append(" insert into APP_OPROPERTY_YHBCZB(OID,OKEY,OVALUE,ODEPTID) VALUES ('" + uuid + "','" + key.substring(1) + "','" + node.toString() + "','"+deptid+"');");
+                } else {
+                    sql.append("insert into APP_OBJECT_YHBCZB(ID,PID,OTYPE,LB,DEPTID,USERID) VALUES ('" + uuid + "','" + pid + "','" + key + "','1','"+deptid+"','"+userid+"');");
+                    for (String okey : ((Map<String, Object>) node).keySet()) {
+                        Object property = ((Map<String, Object>) node).get(okey);
+                        if (property instanceof String)
+                            sql.append(" insert into APP_OPROPERTY_YHBCZB(OID,OKEY,OVALUE,ODEPTID) VALUES ('" + uuid + "','" + okey.substring(1) + "','" + property.toString() + "','"+deptid+"');");
+                        else if (property instanceof Map) {
+                            Map<String, Object> child1 = new HashMap<String, Object>();
+                            child1.put(okey, (Map<String, Object>) property);
+                            sql.append(readMap2Sql3(child1, uuid,"",deptid,cpuid,userid));
+                        } else if (property instanceof List) {
+                            for (int i = 0; i < ((List) property).size(); i++) {
+                                Map<String, Object> child1 = new HashMap<String, Object>();
+                                child1.put(okey, ((List) property).get(i));
+                                sql.append(readMap2Sql3(child1, uuid,"",deptid,cpuid,userid));
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return sql.toString();
+    }
+    public static String readMap2Sql2(Map<String, Object> map, String pid,String pk,String deptid,String cpuid,String userid) {
+        StringBuffer sql = new StringBuffer("");
+        for (String key : map.keySet()) {
+            //Map<String, Object> node = (Map<String, Object>) map.get(key);
+            Object node = map.get(key);
+            if("GeneralInformation".equals(key) && node instanceof Map){
+                String id = (String) ((Map<String, Object>) node).get("@ProjectVersionID");
+                /*String cpuid = (String) ((Map<String, Object>) node).get("@CpuID");
+                String userid = (String) ((Map<String, Object>) node).get("@UserID");
+                String deptid = (String) ((Map<String, Object>) node).get("@DeptID");*/
                 String pkey = id + cpuid + userid;
                 sql.append("begin ");
                 sql.append(" select count(1),id into v_count,v_infoid from APP_OBJECT_BCZBTREE where pkey='"+pkey+"' group by id;");
@@ -62,7 +231,7 @@ public class AppUtils {
                 sql.append(" if v_count=0 then begin ");
                 String uuid = IdGen.uuid();
                 sql.append(" v_infoid:='"+uuid+"';");
-                sql.append("insert into APP_OBJECT_BCZBTREE(ID,PID,OTYPE,PKEY,LB,DEPTID) VALUES ('" + uuid + "','" + pid + "','" + key + "','" + pkey + "','1','" + deptid + "');");
+                sql.append("insert into APP_OBJECT_BCZBTREE(ID,PID,OTYPE,PKEY,LB,DEPTID,USERID) VALUES ('" + uuid + "','" + pid + "','" + key + "','" + pkey + "','1','" + deptid + "','"+userid+"');");
                 sql.append("end; end if;");
                 for (String okey : ((Map<String, Object>) node).keySet()) {
                     Object property = ((Map<String, Object>) node).get(okey);
@@ -72,14 +241,14 @@ public class AppUtils {
                     }else if (property instanceof Map) {
                         Map<String, Object> child1 = new HashMap<String, Object>();
                         child1.put(okey, (Map<String, Object>) property);
-                        sql.append(readMap2Sql2(child1, uuid,pkey,deptid));
+                        sql.append(readMap2Sql2(child1, uuid,pkey,deptid,cpuid,userid));
                     } else if (property instanceof List) {
                         for (int i = 0; i < ((List) property).size(); i++) {
                             /*if((Map<String, Object>) ((List) property).get(i) instanceof Map)
                             else*/
                             Map<String, Object> child1 = new HashMap<String, Object>();
                             child1.put(okey, ((List) property).get(i));
-                            sql.append(readMap2Sql2(child1, uuid,pkey,deptid));
+                            sql.append(readMap2Sql2(child1, uuid,pkey,deptid,cpuid,userid));
                         }
                     }
                 }
@@ -87,13 +256,16 @@ public class AppUtils {
             }
             else if ("Project".equals(key) && node instanceof Map) {
                 String id = (String) ((Map<String, Object>) node).get("@ProjectID");
-                String deptid = dept;
                 String pkey = pk+id;
+                sql.append(" begin ");
+                sql.append(" select count(1) into v_cdxgc from APP_OBJECT_BCZBTREE where nvl(zt,0)>0 and pkey='"+pkey+"';");
+                sql.append(" if v_cdxgc =0 then ");
+                sql.append(" begin ");
                 sql.append(" delete from APP_OPROPERTY where oid in (select id from APP_OBJECT_BCZBTREE connect by prior id=pid start with PKEY='" + pkey + "');");
                 sql.append(" delete from APP_OBJECT_BCZBTREE where id in (select id from APP_OBJECT_BCZBTREE connect by prior id=pid start with PKEY='" + pkey + "');");
                 //String uuid = UUID.randomUUID().toString();
                 String uuid = IdGen.uuid();
-                sql.append("insert into APP_OBJECT_BCZBTREE(ID,PID,OTYPE,PKEY,LB,DEPTID) VALUES ('" + uuid + "',v_infoid,'" + key + "','" + pkey + "','1','" + deptid + "');");
+                sql.append("insert into APP_OBJECT_BCZBTREE(ID,PID,OTYPE,PKEY,LB,DEPTID,USERID) VALUES ('" + uuid + "',v_infoid,'" + key + "','" + pkey + "','1','" + deptid + "','"+userid+"');");
                 for (String okey : ((Map<String, Object>) node).keySet()) {
                     Object property = ((Map<String, Object>) node).get(okey);
                     if (property instanceof String)
@@ -101,23 +273,27 @@ public class AppUtils {
                     else if (property instanceof Map) {
                         Map<String, Object> child1 = new HashMap<String, Object>();
                         child1.put(okey, (Map<String, Object>) property);
-                        sql.append(readMap2Sql2(child1, uuid,pkey,""));
+                        sql.append(readMap2Sql2(child1, uuid,pkey,"",cpuid,userid));
                     } else if (property instanceof List) {
                         for (int i = 0; i < ((List) property).size(); i++) {
                             /*if((Map<String, Object>) ((List) property).get(i) instanceof Map)
                             else*/
                             Map<String, Object> child1 = new HashMap<String, Object>();
                             child1.put(okey, ((List) property).get(i));
-                            sql.append(readMap2Sql2(child1, uuid,pkey,""));
+                            sql.append(readMap2Sql2(child1, uuid,pkey,"",cpuid,userid));
                         }
                     }
                 }
+                sql.append(" end;");
+                sql.append(" end if;");
+                sql.append(" end;");
             } else {
                 String uuid = IdGen.uuid();
+                //if(map.get("@SERVERID")!=null&&!"".equals((String)map.get("@SERVERID"))) uuid=map.get("@SERVERID").toString();
                 if (node instanceof String) {
                     sql.append(" insert into APP_OPROPERTY(OID,OKEY,OVALUE,ODEPTID) VALUES ('" + uuid + "','" + key.substring(1) + "','" + node.toString() + "',v_deptid);");
                 } else {
-                    sql.append("insert into APP_OBJECT_BCZBTREE(ID,PID,OTYPE,LB,DEPTID) VALUES ('" + uuid + "','" + pid + "','" + key + "','1',v_deptid);");
+                    sql.append("insert into APP_OBJECT_BCZBTREE(ID,PID,OTYPE,LB,DEPTID,USERID) VALUES ('" + uuid + "','" + pid + "','" + key + "','1',v_deptid,'"+userid+"');");
                     for (String okey : ((Map<String, Object>) node).keySet()) {
                         Object property = ((Map<String, Object>) node).get(okey);
                         if (property instanceof String)
@@ -125,12 +301,12 @@ public class AppUtils {
                         else if (property instanceof Map) {
                             Map<String, Object> child1 = new HashMap<String, Object>();
                             child1.put(okey, (Map<String, Object>) property);
-                            sql.append(readMap2Sql2(child1, uuid,"",""));
+                            sql.append(readMap2Sql2(child1, uuid,"","",cpuid,userid));
                         } else if (property instanceof List) {
                             for (int i = 0; i < ((List) property).size(); i++) {
                                 Map<String, Object> child1 = new HashMap<String, Object>();
                                 child1.put(okey, ((List) property).get(i));
-                                sql.append(readMap2Sql2(child1, uuid,"",""));
+                                sql.append(readMap2Sql2(child1, uuid,"","",cpuid,userid));
                             }
                         }
                     }
@@ -223,6 +399,43 @@ public class AppUtils {
                     ccc.add(readSql2Map(objdic, tree, (String) ((Map) c).get("ID"), propertyM).get((String) ((Map) c).get("OTYPE")));
                 }
             }
+        }
+        return doc;
+    }
+    public static Map<String, Object> getMlMap(HashMap<String, Office> objdic, Map<String, List<Office>> tree, String root, Map<String, List<Map>> zbM) {
+        Map<String, Object> doc = new LinkedHashMap<String, Object>();
+        Office r=objdic.get(root);
+        if(r!=null) {
+            Map m = new HashMap();
+            m.put("Level", r.getGrade()==null?"":r.getGrade());
+            m.put("Code", r.getId()==null?"":r.getId());
+            m.put("Text", r.getName()==null?"":r.getName());
+            List ccc=new ArrayList();
+            List ddd=new ArrayList();
+            HashMap eee=new HashMap();
+            m.put("BCZBLocalClasses",eee);
+            eee.put("BCZBLocalClass",ccc);
+            HashMap fff=new HashMap();
+            m.put("BCZBLocals",fff);
+            fff.put("BCZBLocal",ddd);
+            if(tree.get(root)!=null){
+                List<Office> lll=tree.get(root);
+                for(Office o:lll){
+                    ccc.add(getMlMap(objdic,tree,o.getId(),zbM).get("BCZBLocalClass"));
+                }
+            }
+            if(zbM.get(root)!=null){
+                List<Map> lll=zbM.get(root);
+                for(Map o:lll){
+                    Map sss=new HashMap();
+                    sss.put("BM",o.get("BM")==null?"":o.get("BM"));
+                    sss.put("TITLE",o.get("TITLE")==null?"":o.get("TITLE"));
+                    /*Map ttt=new HashMap();
+                    ttt.put("BCZBLocal",sss);*/
+                    ddd.add(sss);
+                }
+            }
+            doc.put("BCZBLocalClass",m);
         }
         return doc;
     }

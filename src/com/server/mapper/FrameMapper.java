@@ -81,4 +81,7 @@ public interface FrameMapper extends MainMapper {
     public void saveMypan(Office office);
 
     void insertBczbRoot(@Param("CODE") String deptCode,@Param("DEPTID")String deptid);
+
+    void bczbmlsave(Condition condition);
+    List<HashMap> getMlZbAList(Map m);
 }

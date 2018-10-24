@@ -93,7 +93,7 @@ public class WaitingAop {
             e[0] = d[0];
             e[1] = id;
             if (d.length == 3) e[2] = d[2];
-            System.out.println("WaitingAop--请求参数：" + args);
+            //System.out.println("WaitingAop--请求参数：" + args);
             r = (RequestBody) JsonMapper.fromJsonString(args, RequestBody.class);
             if (r == null) {
                 ResponseBody oo = new ResponseBody();

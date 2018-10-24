@@ -60,6 +60,8 @@ public class Global {
 	 */
 	public static final String USERFILES_BASE_URL = "/userfiles/";
 	public static final String YSBCZBXF_BASE_URL = "/bczbXf/";
+	public static final String YHBCZBXF_BASE_URL = "/yhbczb/";
+	public static final String DWBCZBXF_BASE_URL = "/dwbczb/";
 	public static final String USERFILES = "userfiles";
 	/**
 	 * 软件升级目录

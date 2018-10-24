@@ -43,7 +43,7 @@ public class ServiceController {
     @RequestMapping("request")
     public String request(String requestBody, String id) throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
         ResponseBody res = new ResponseBody();
-        System.out.println("requestBody "+requestBody);
+        //System.out.println("requestBody "+requestBody);
         RequestBody r = (RequestBody) JsonMapper.fromJsonString(requestBody, RequestBody.class);
         Map<String, String> params = null;
         try {
@@ -78,7 +78,7 @@ public class ServiceController {
     @Queuen
     @RequestMapping("requestf")
     public String requestf(String requestBody, String id, @RequestParam("file") CommonsMultipartFile file) {
-        System.out.println("requestf==requestBody="+requestBody);
+        //System.out.println("requestf==requestBody="+requestBody);
         ResponseBody res = new ResponseBody();
         RequestBody r = (RequestBody) JsonMapper.fromJsonString(requestBody, RequestBody.class);
         Map<String, String> params = null;
@@ -96,14 +96,13 @@ public class ServiceController {
     @RequestMapping("requestb")
     public String requestb(String requestBody, String id) throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
         ResponseBody res = new ResponseBody();
-        System.out.println("requestBody="+requestBody);
+        //System.out.println("requestBody=============================================="+requestBody);
         RequestBody r = (RequestBody) JsonMapper.fromJsonString(requestBody, RequestBody.class);
         Map<String, String> params = null;
         try {
             params = (Map<String, String>) JsonMapper.fromJsonString(r.getParams(), Map.class);
         }catch(Exception e){
-
-            //e.printStackTrace();
+            e.printStackTrace();
         }
         if(params==null)params=new HashMap<String,String>();
         String call = r.getCall();

@@ -394,6 +394,22 @@ END;
     <update id="panDXmDelete">
         update APP_PAN_FILE set ISDEL='1' where id=#{ID}
     </update>
+    <update id="bczbmlsave">
+         DECLARE
+        v_code varchar2(100);
+        BEGIN
+        select (max(code)+1) into v_code from sys_office where parent_id=#{c4};
+        if v_code is null then select code||'03' into v_code from sys_office where id=#{c4}; end if;
+        merge into sys_office a using (select #{c1} id,
+        #{c4} parent_id,#{c2} name,'1' useable,#{c3} remarks from dual) b
+        on (a.id=b.id)
+        when matched then
+        update set a.name=b.name,a.useable=b.useable,a.remarks=b.remarks
+        when not matched then
+        insert (a.id,a.parent_id,a.name,a.useable,a.remarks,a.type,a.code) values (sys_guid(),b.parent_id,b.name,b.useable,b.remarks,'2',v_code);
+        commit;
+        END;
+    </update>
 
 
     <select id="findAllRole" resultType="com.common.sys.entity.Role">
@@ -768,12 +784,30 @@ END;
              ]]>
     </select>
     <select id="bczbMlLists" resultType="com.common.sys.entity.Office">
-        select *
-          from SYS_OFFICE
+        select level grade,a.*
+          from SYS_OFFICE a
         connect by prior id = PARENT_ID
          start with length(code) = 8
                 and type = 2
                 and substr(code,1,4)=#{CODE}
                 and substr(code, 7, 8) = '03'
+    </select>
+    <select id="getMlZbAList" resultType="java.util.HashMap">
+        with a as
+             (select a.id
+                from SYS_OFFICE a
+              connect by prior id = PARENT_ID
+               start with length(code) = 8
+                      and type = 2
+                      and substr(code, 1, 4) = #{CODE}
+                      and substr(code, 7, 8) = '03')
+            select b.*,
+                   b.bczbid bm,
+                   (select ovalue
+                      from app_oproperty_dwcbbczb
+                     where oid = b.bczbid
+                       and okey = 'MC') title
+              from app_zb_mlralation b, a
+             where b.zhzbid = a.id
     </select>
 </mapper>

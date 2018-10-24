@@ -350,19 +350,21 @@ public class AnonService {
     public ResponseBody bczbRk2(RequestBody rq, Map params, String id) {
         ResponseBody rp = new ResponseBody(params, "1", "获取成功", id, rq.getTaskid());
         String textFromFile = "";
+        User user = UserUtils.getUser();
         try {
-            textFromFile = FileUtils.readFileToString(new File("c:/bczb.xml"), "UTF-8");
+            textFromFile = FileUtils.readFileToString(new File("c:/55555555.xml"), "UTF-8");
         } catch (IOException e) {
             e.printStackTrace();
         }
         Map<String, Object> map = null;
         try {
             map = XmlUtils.Xml2MapWithAttr(textFromFile, true);
-            String sql = AppUtils.readMap2Sql2(map, "-1","","");
+            String sql = AppUtils.readMap2Sql3(map, "-1","","1045","askdf;allasdj;kf","12313121312");
+            //System.out.println(sql);
             HashMap h = new HashMap();
             h.put("sql", sql);
-            bczbMapper.mergeProject(h);
-        } catch (DocumentException e) {
+            bczbMapper.mergeProject3(h);
+        } catch (Exception e) {
             e.printStackTrace();
         }
         return rp;

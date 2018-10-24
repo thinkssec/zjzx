@@ -9,11 +9,11 @@
         insert into APP_EMAIL (ID, HFID, FJRYHM,
           FJRXM, SJRYHM, SJRXM,
           SFYJS, XMBH, XMMC,
-          ZT, ZWNR, FSRQ, BZ,BCID,LB,FJRID,SJRID)
+          ZT, ZWNR, BZ,BCID,LB,FJRID,SJRID)
         values (v_id, #{HFID,jdbcType=VARCHAR}, #{FJRYHM,jdbcType=VARCHAR},
           #{FJRXM,jdbcType=VARCHAR}, #{SJRYHM,jdbcType=VARCHAR}, #{SJRXM,jdbcType=VARCHAR},
           #{SFYJS,jdbcType=VARCHAR}, #{XMBH,jdbcType=VARCHAR}, #{XMMC,jdbcType=VARCHAR},
-          #{ZT,jdbcType=VARCHAR}, #{ZWNR,jdbcType=VARCHAR}, to_date(#{FSRQ,jdbcType=DATE},'yyyy-MM-dd hh24:mi:ss'),
+          #{ZT,jdbcType=VARCHAR}, #{ZWNR,jdbcType=VARCHAR},
           #{BZ,jdbcType=VARCHAR},#{BCID,jdbcType=VARCHAR},#{LB,jdbcType=VARCHAR},#{FJRID,jdbcType=VARCHAR},#{SJRID,jdbcType=VARCHAR});
           insert into APP_EMAIL_ATTACH ( EID, PATH)
         values ( v_id, #{PATH,jdbcType=VARCHAR});
@@ -33,11 +33,11 @@
         insert into APP_EMAIL (ID, HFID, FJRYHM,
           FJRXM, SJRYHM, SJRXM,
           SFYJS, XMBH, XMMC,
-          ZT, ZWNR, FSRQ, BZ,BCID)
+          ZT, ZWNR, BZ,BCID)
         values (v_id, #{HFID,jdbcType=VARCHAR}, #{FJRYHM,jdbcType=VARCHAR},
           #{FJRXM,jdbcType=VARCHAR}, #{SJRYHM,jdbcType=VARCHAR}, #{SJRXM,jdbcType=VARCHAR},
           #{SFYJS,jdbcType=VARCHAR}, #{XMBH,jdbcType=VARCHAR}, #{XMMC,jdbcType=VARCHAR},
-          #{ZT,jdbcType=VARCHAR}, #{ZWNR,jdbcType=VARCHAR}, to_date(#{FSRQ,jdbcType=DATE},'yyyy-MM-dd hh24:mi:ss'),
+          #{ZT,jdbcType=VARCHAR}, #{ZWNR,jdbcType=VARCHAR},
           #{BZ,jdbcType=VARCHAR},#{BCID,jdbcType=VARCHAR});
           insert into APP_EMAIL_ATTACH ( EID, PATH)
         values ( v_id, #{PATH,jdbcType=VARCHAR});
@@ -53,13 +53,16 @@
 
 
     <select id="getMailList" resultType="java.util.HashMap">
-        select * from APP_EMAIL where FJRYHM=#{USERNAME} and isdel!=1
+        select * from APP_EMAIL where (FJRID=#{USERID} or SJRID=#{USERID}) and isdel!=1
         <if test="ID!='' and ID!=null">
           and  id=#{ID}
         </if>
     </select>
     <select id="getMailAList" resultType="java.util.HashMap">
-        select * from APP_EMAIL_ATTACH where mid=#{ID}
+        select * from APP_EMAIL_ATTACH where eid=#{ID}
+    </select>
+    <select id="getMailUList" resultType="java.util.HashMap">
+        select * from APP_EMAIL where  isdel!=1 and SJRID=#{SJRID}
     </select>
 
 </mapper>

@@ -96,6 +96,8 @@
     <servlet-mapping>
         <servlet-name>BczbDownLoadServlet</servlet-name>
         <url-pattern>/bczbXf/*</url-pattern>
+        <url-pattern>/yhbczb/*</url-pattern>
+        <url-pattern>/bczbDwcb/*</url-pattern>
     </servlet-mapping>
     <servlet>
         <servlet-name>CKFinderConnectorServlet</servlet-name>

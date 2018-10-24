@@ -11,7 +11,8 @@
     <insert id="addZb2Fz">
         BEGIN
         <foreach collection="list" item="record" index="index">
-            update APP_OBJECT_BCZBTREE set zt='1' where id=#{record.OID};
+            update APP_OBJECT_BCZBTREE set zt=1 where id=#{record.OID};
+            update APP_OBJECT_BCZBTREE set zt=zt+1 where id=#{record.PID};
             merge into APP_ZB_BCRALATION a using(select #{fzid} zhzbid,#{record.OID} bczbid from dual) b
             on (a.zhzbid=b.zhzbid and a.bczbid=b.bczbid)
             when not matched then
@@ -25,8 +26,23 @@
     <insert id="delZb2Fz">
         BEGIN
         <foreach collection="list" item="record" index="index">
-            update APP_OBJECT_BCZBTREE set zt='0' where id=#{record.OID};
+            update APP_OBJECT_BCZBTREE set zt=0 where id=#{record.OID};
+            update APP_OBJECT_BCZBTREE set zt=zt-1 where id=#{record.PID};
             delete from APP_ZB_BCRALATION a where zhzbid=#{fzid} and bczbid=#{record.OID};
+        </foreach>
+        commit;
+        END;
+    </insert>
+    <insert id="addZb2Ml">
+        BEGIN
+        <foreach collection="list" item="record" index="index">
+            update APP_OBJECT_DWCBBCZB set zt=1 where id=#{record.OID};
+            merge into APP_ZB_MLRALATION a using(select #{fzid} zhzbid,#{record.OID} bczbid from dual) b
+            on (a.zhzbid=b.zhzbid and a.bczbid=b.bczbid)
+            when not matched then
+            insert (zhzbid,bczbid) values (b.zhzbid,b.bczbid)
+            when matched then
+            update set rksj=sysdate;
         </foreach>
         commit;
         END;
@@ -36,6 +52,7 @@
         v_deptid number(4):=-1;
         v_count number(1):=0;
         v_infoid varchar2(50):='';
+        v_cdxgc number(1):=0;
         BEGIN
         ${sql}
         commit;
@@ -44,6 +61,56 @@
     <update id="updateFzPath">
         update APP_ZB_BCZH set path=#{path},status='1' where id=#{id}
     </update>
+    <update id="mergeProject3">
+        DECLARE
+        v_deptid number(4):=-1;
+        v_count number(1):=0;
+        v_infoid varchar2(50):='';
+        v_cdxgc number(1):=0;
+        BEGIN
+        ${sql}
+        commit;
+        end;
+    </update>
+    <update id="mergeProject4">
+        DECLARE
+        v_deptid number(4):=-1;
+        v_count number(1):=0;
+        v_infoid varchar2(50):='';
+        v_cdxgc number(1):=0;
+        BEGIN
+        ${sql}
+        commit;
+        end;
+    </update>
+    <delete id="delFz">
+        declare
+          cursor cur_1 is
+            select * from app_zb_bcralation where zhzbid = #{ID};
+        begin
+          delete from APP_ZB_BCZH where id=#{ID} and nvl(status,'')!='1';
+          for c1 in cur_1 loop
+            begin
+              update APP_OBJECT_BCZBTREE set zt = 0 where id = c1.bczbid;
+              update APP_OBJECT_BCZBTREE a
+                 set zt = zt - 1
+               where id =
+                     (select pid from APP_OBJECT_BCZBTREE where id = c1.bczbid);
+            end;
+          end loop;
+          delete app_zb_bcralation where zhzbid = #{ID};
+          commit;
+        end;
+    </delete>
+    <delete id="delZb2Ml">
+        BEGIN
+        <foreach collection="list" item="record" index="index">
+            update APP_OBJECT_DWCBBCZB set zt=0 where id=#{record.OID};
+            delete from APP_ZB_MLRALATION a where zhzbid=#{fzid} and bczbid=#{record.OID};
+        </foreach>
+        commit;
+        END;
+    </delete>
     <select id="getBczbProperty" fetchSize="50000"  resultType="java.util.LinkedHashMap">
         with b as (select id
                  from APP_OBJECT_BCZBTREE
@@ -76,7 +143,7 @@
              (select t.*
                 from APP_OBJECT_BCZBTREE t
                where level = 3
-                 and nvl(zt, 0) <> 1 ]]>
+                 and nvl(zt, 0) =0 ]]>
               connect by prior id = pid
                start with pid = '-1' <if test="DEPTID!=null and DEPTID!=''"> and deptid=#{DEPTID}</if> ),
             d as
@@ -187,5 +254,91 @@
                    decode(okey, 'text', '#', '@') || okey okey,
                    nvl(ovalue, '') ovalue
               from APP_OPROPERTY a,b where a.oid=b.id
+    </select>
+    <select id="getBczbByMl" resultType="java.util.HashMap">
+        with p as
+        (select a.* from APP_OBJECT_DWCBBCZB a,APP_ZB_MLRALATION t where a.id=t.bczbid <if test="c1!=null and c1!=''"> and t.zhzbid=#{c1}</if> ),
+        d as
+        (select * from APP_OBJECTDIC)
+        select a.*,p.pid,to_char(p.rksj,'yyyymmdd hh24:mi:ss') rksj
+        from app_oproperty_dwcbbczb a, p, d
+        where a.oid = p.id
+        and p.otype = d.otype
+        and d.okey = a.okey
+        and display1 = '1'
+    </select>
+    <select id="getDwBczb"  fetchSize="50000" resultType="java.util.HashMap">
+        <![CDATA[
+        with p as
+             (select t.*
+                from APP_OBJECT_DWCBBCZB t
+               where level = 1
+                 and nvl(zt, 0) =0 ]]>
+        connect by prior id = pid
+        start with pid = '-1' <if test="DEPTID!=null and DEPTID!=''"> and deptid=#{DEPTID}</if> ),
+        d as
+        (select * from APP_OBJECTDIC)
+        select a.*,p.pid,to_char(p.rksj,'yyyymmdd hh24:mi:ss') rksj
+        from app_oproperty_dwcbbczb a, p, d
+        where a.oid = p.id
+        and p.otype = d.otype
+        and d.okey = a.okey
+        and display1 = '1'
+    </select>
+    <select id="getYhBczb" fetchSize="50000" resultType="java.util.HashMap">
+        <![CDATA[
+        with p as
+             (select t.*
+                from APP_OBJECT_YHBCZB t
+               where level = 1
+                 and nvl(zt, 0) =0 ]]>
+        connect by prior id = pid
+        start with pid = '-1' <if test="DEPTID!=null and DEPTID!=''"> and deptid=#{DEPTID}</if> ),
+        d as
+        (select * from APP_OBJECTDIC)
+        select a.*,p.pid,to_char(p.rksj,'yyyymmdd hh24:mi:ss') rksj
+        from app_oproperty_yhbczb a, p, d
+        where a.oid = p.id
+        and p.otype = d.otype
+        and d.okey = a.okey
+        and display1 = '1'
+    </select>
+    <select id="getYhBczbTreeById" resultType="java.util.LinkedHashMap">
+        select * from (select a.*,b.ovalue oder from APP_OBJECT_YHBCZB a left join
+         (select * from APP_OPROPERTY_YHBCZB where okey='ID') b on a.id=b.oid )
+         connect by prior id=pid start with id=#{bczbid}
+        order siblings by oder
+    </select>
+    <select id="getYhBczbProperty" resultType="java.util.LinkedHashMap">
+        with b as (select id
+                 from APP_OBJECT_YHBCZB
+               connect by prior id = pid
+                start with id = #{bczbid})
+            select oid,
+                   decode(okey, 'text', '#', '@') || okey okey,
+                   nvl(ovalue, '') ovalue
+              from APP_OPROPERTY_YHBCZB a,b where a.oid=b.id
+    </select>
+    <select id="getZbByServerId" resultType="java.util.HashMap">
+        select * from APP_OPROPERTY_YHBCZB where okey='SERVERID' and ovalue in ${SCOPE}
+    </select>
+    <select id="getDwBczbTreeById" resultType="java.util.LinkedHashMap">
+        select * from (select a.*,b.ovalue oder from APP_OBJECT_DWCBBCZB a left join
+         (select * from APP_OPROPERTY_DWCBBCZB where okey='ID') b on a.id=b.oid )
+         connect by prior id=pid start with id=#{bczbid}
+        order siblings by oder
+    </select>
+    <select id="getDwBczbProperty" resultType="java.util.LinkedHashMap">
+        with b as (select id
+                 from APP_OBJECT_DWCBBCZB
+               connect by prior id = pid
+                start with id = #{bczbid})
+            select oid,
+                   decode(okey, 'text', '#', '@') || okey okey,
+                   nvl(ovalue, '') ovalue
+              from APP_OPROPERTY_DWCBBCZB a,b where a.oid=b.id
+    </select>
+    <select id="getDwZbByServerId" resultType="java.util.HashMap">
+        select * from APP_OPROPERTY_DWCBBCZB where okey='SERVERID' and ovalue in ${SCOPE}
     </select>
 </mapper>
