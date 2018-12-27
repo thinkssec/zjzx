@@ -24,7 +24,7 @@
         select id code ,name  from sys_office where nvl(del_flag, '0') != '1' and type='1'
     </select>
     <select id="getYq" resultType="java.util.HashMap">
-        select id,name from app_yq
+        select id,name from app_yq order by id
     </select>
     <select id="isRegist" resultType="java.util.HashMap">
         select * from SYS_JQRZ_HP where cpuid=#{CPUID} and (status is null or status=1)
@@ -39,7 +39,7 @@
          where code like '%00' and length(code)=6
     </select>
     <select id="getDw3" resultType="java.util.HashMap">
-      select a.id code,a.name name from v_office a where rt=#{dwdm} and type!=5 and nvl(del_flag, '0') != '1'
+      select a.id code,a.name name from v_office a where rt=#{dwdm} and type!=5 and length(code)=6 and substr(code, 5, 6) in ('00','01') and nvl(del_flag, '0') != '1'
     </select>
     <select id="getRysq" resultType="java.util.HashMap">
         <include refid="com.base.baseMapper.pageStart"/>
@@ -55,6 +55,22 @@
     </select>
     <select id="isRegistUser" resultType="java.util.HashMap">
          select * from APP_USER where LOGINNAME=#{LOGINNAME}
+    </select>
+    <select id="getJqdept" resultType="java.util.HashMap">
+        <include refid="com.base.baseMapper.pageStart"/>
+        select a.*,to_char(sqtime,'yyyymmdd hh24:mi:ss') sj,
+        to_char(HPTIME,'yyyymmdd hh24:mi:ss') hpsj,decode(status,1,'停用',2,'注销','在用') zt
+        from SYS_JQRZ_HP a where (status =1 or status is null) and nvl(hpdw,'-1100')!=#{dwdm} and hpdw is null
+        order by hpsj desc
+        <include refid="com.base.baseMapper.pageEnd"/>
+    </select>
+    <select id="getOurJq" resultType="java.util.HashMap">
+        <include refid="com.base.baseMapper.pageStart"/>
+        select a.*,to_char(sqtime,'yyyymmdd hh24:mi:ss') sj,
+        to_char(HPTIME,'yyyymmdd hh24:mi:ss') hpsj,decode(status,1,'停用',2,'注销','在用') zt
+        from SYS_JQRZ_HP a where (status =1 or status is null) and nvl(hpdw,'-1100')=#{dwdm}
+        order by hpsj desc
+        <include refid="com.base.baseMapper.pageEnd"/>
     </select>
     <update id="saveJqsqty">
         DECLARE

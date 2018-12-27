@@ -121,11 +121,15 @@ public class WaitingAop {
             try {
                 if (e != null && (e.length == 2 || e.length == 3)) {
                     synchronized (pd) {
-                        DataSourceContextHolder.setDbType(DataSourceType.Datasource1);
-                        sysControlMapper.insertRequest(r);
-                        filePath = (String) pjp.proceed(e);
-                        r.setAttach(filePath);
-                        closeRequest2(r, id);
+                        try {
+                            DataSourceContextHolder.setDbType(DataSourceType.Datasource1);
+                            sysControlMapper.insertRequest(r);
+                            filePath = (String) pjp.proceed(e);
+                            r.setAttach(filePath);
+                            closeRequest2(r, id);
+                        } catch (Exception ed) {
+                            ed.printStackTrace();
+                        }
                     }
                 }
             } catch (Exception ex) {
@@ -133,32 +137,56 @@ public class WaitingAop {
             }
         } else {
             synchronized (nm) {
-                closeRequest2(r, id);
+                try {
+                    closeRequest2(r, id);
+                }catch(Exception ed){
+                    ed.printStackTrace();
+                }
             }
         }
         //}
         //System.out.println("******************106"+e.length);
         synchronized (dl) {
-            closeRequest3(r, id);
+            try {
+                closeRequest3(r, id);
+            }catch (Exception ed){
+                ed.printStackTrace();
+            }
             if ("f".equals(r.getType())) {
                 Map<String, String> params = (Map<String, String>) JsonMapper.fromJsonString(r.getParams(), Map.class);
                 String call = r.getCall();
                 Method m = SysService.class.getMethod(call, new Class[]{RequestBody.class, Map.class, String.class});
-                o = m.invoke(sysService, r, params, id);
+                try {
+                    o = m.invoke(sysService, r, params, id);
+                }catch(Exception ed){
+                    ed.printStackTrace();
+                }
                 if (o instanceof ResponseBody) {
                     String oo = "";
                     oo = JsonMapper.toJsonString(o);
                     o = oo;
                 }
                 //System.out.println("------114"+o);
-                closeHandMsg(r, id);
+                try {
+                    closeHandMsg(r, id);
+                }catch(Exception ed){
+                    ed.printStackTrace();
+                }
             } else {
                 //System.out.println("******************"+e.length);
                 try {
                     if (e != null && (e.length == 2 || e.length == 3)) {
-                        o = pjp.proceed(e);
+                        try {
+                            o = pjp.proceed(e);
+                        }catch(Exception ed){
+                            ed.printStackTrace();
+                        }
                         //System.out.println("------120"+o);
-                        closeHandMsg(r, id);
+                        try {
+                            closeHandMsg(r, id);
+                        }catch(Exception ed){
+                            ed.printStackTrace();
+                        }
                     }
                 } catch (InterruptedException ex) {
                     ex.printStackTrace();
@@ -229,11 +257,17 @@ public class WaitingAop {
             try {
                 if (e != null && (e.length == 2 || e.length == 3)) {
                     synchronized (pd) {
-                        DataSourceContextHolder.setDbType(DataSourceType.Datasource1);
-                        sysControlMapper.insertRequest(r);
-                        filePath = (String) pjp.proceed(e);
-                        r.setAttach(filePath);
-                        closeRequest2(r, id);
+                        try {
+                            DataSourceContextHolder.setDbType(DataSourceType.Datasource1);
+                            sysControlMapper.insertRequest(r);
+                            filePath = (String) pjp.proceed(e);
+                            r.setAttach(filePath);
+                        }catch(Exception ed){
+                            ed.printStackTrace();
+                        }
+                        try{closeRequest2(r, id);}catch(Exception ed){
+                            ed.printStackTrace();
+                        }
                     }
                 }
             } catch (Exception ex) {
@@ -241,32 +275,56 @@ public class WaitingAop {
             }
         } else {
             synchronized (nm) {
-                closeRequest2(r, id);
+                try {
+                    closeRequest2(r, id);
+                }catch (Exception ed){
+                    ed.printStackTrace();
+                }
             }
         }
         //}
         //System.out.println("******************106"+e.length);
         synchronized (dl) {
-            closeRequest3(r, id);
+            try {
+                closeRequest3(r, id);
+            }catch(Exception ed){
+                ed.printStackTrace();
+            }
             if ("f".equals(r.getType())) {
-                Map<String, String> params = (Map<String, String>) JsonMapper.fromJsonString(r.getParams(), Map.class);
-                String call = r.getCall();
-                Method m = SysService.class.getMethod(call, new Class[]{RequestBody.class, Map.class, String.class});
-                o = m.invoke(sysService, r, params, id);
-                if (o instanceof ResponseBody) {
-                    String oo = "";
-                    oo = JsonMapper.toJsonString(o);
-                    o = oo;
+                try {
+                    Map<String, String> params = (Map<String, String>) JsonMapper.fromJsonString(r.getParams(), Map.class);
+                    String call = r.getCall();
+                    Method m = SysService.class.getMethod(call, new Class[]{RequestBody.class, Map.class, String.class});
+                    o = m.invoke(sysService, r, params, id);
+                    if (o instanceof ResponseBody) {
+                        String oo = "";
+                        oo = JsonMapper.toJsonString(o);
+                        o = oo;
+                    }
+                }catch(Exception ed){
+                    ed.printStackTrace();
                 }
                 //System.out.println("------114"+o);
-                closeHandMsg(r, id);
+                try {
+                    closeHandMsg(r, id);
+                }catch(Exception ed){
+                    ed.printStackTrace();
+                }
             } else {
                 //System.out.println("******************"+e.length);
                 try {
                     if (e != null && (e.length == 2 || e.length == 3)) {
-                        o = pjp.proceed(e);
+                        try {
+                            o = pjp.proceed(e);
+                        }catch(Exception ed){
+                            ed.printStackTrace();
+                        }
                         //System.out.println("------120"+o);
-                        closeHandMsg(r, id);
+                        try {
+                            closeHandMsg(r, id);
+                        }catch(Exception ed){
+                            ed.printStackTrace();
+                        }
                     }
                 } catch (InterruptedException ex) {
                     ex.printStackTrace();
@@ -328,7 +386,11 @@ public class WaitingAop {
                 System.out.println("当前队列位置：" + dl.size());
             }
             DataSourceContextHolder.setDbType(DataSourceType.Datasource1);
-            sysControlMapper.insertRequest(r);
+            try {
+                sysControlMapper.insertRequest(r);
+            }catch (Exception ed){
+                ed.printStackTrace();
+            }
             //System.out.println("74：" + new Date());
         }
         synchronized (dl) {
@@ -344,7 +406,11 @@ public class WaitingAop {
                     sysControlMapper.insertRequest(r);
                 }*/
                 if (e != null && (e.length == 2 || e.length == 3)) {
-                    o = pjp.proceed(e);
+                    try {
+                        o = pjp.proceed(e);
+                    }catch(Exception ed){
+                        ed.printStackTrace();
+                    }
                 }
             } catch (InterruptedException ex) {
                 ex.printStackTrace();

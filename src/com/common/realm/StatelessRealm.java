@@ -37,7 +37,7 @@ public class StatelessRealm extends AuthorizingRealm {
     protected AuthorizationInfo doGetAuthorizationInfo(PrincipalCollection principals) {
         //根据用户名查找角色，请根据需求实现
         String username = (String) principals.getPrimaryPrincipal();
-        System.out.println("usernameusernameusernameusername++"+username);
+        //System.out.println("usernameusernameusernameusername++"+username);
         SimpleAuthorizationInfo authorizationInfo =  new SimpleAuthorizationInfo();
         authorizationInfo.addRole("admin");
         return authorizationInfo;
@@ -63,9 +63,9 @@ public class StatelessRealm extends AuthorizingRealm {
         //System.out.println(statelessToken.getClientDigest());
         //System.out.println(serverDigest);
         //然后进行客户端消息摘要和服务器端消息摘要的匹配
-        System.out.println(username);
-        System.out.println(key);
-        System.out.println(getName());
+        //System.out.println(username);
+        //System.out.println(key);
+        //System.out.println(getName());
         return new SimpleAuthenticationInfo(
                 username,
                 key,

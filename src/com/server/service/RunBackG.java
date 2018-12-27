@@ -59,7 +59,7 @@ public class RunBackG implements java.lang.Runnable {
                     e2.printStackTrace();
                 }
                 refresh = true;
-                System.out.println("=========runback=========");
+                //System.out.println("=========runback=========");
                 while (true) {
                     try {
                         runnable.refresh(beforeTime);

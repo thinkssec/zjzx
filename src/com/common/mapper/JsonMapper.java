@@ -249,7 +249,7 @@ public class JsonMapper extends ObjectMapper {
 		map.put("open", true);
 		list.add(map);
 		String json = JsonMapper.getInstance().toJson(list);
-		System.out.println(json);
+		//System.out.println(json);
 	}
 	
 }

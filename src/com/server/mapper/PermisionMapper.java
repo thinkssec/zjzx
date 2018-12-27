@@ -21,6 +21,7 @@ public interface PermisionMapper {
 
     List<HashMap> getUserList(Condition condition);
     List<HashMap> getUserListD(Condition condition);
+    List<HashMap> getourUserList(Condition condition);
     List<HashMap> getUserList2(Condition condition);
     void saveUserList(HashMap condition);
     void saveUserListD(HashMap condition);

@@ -38,4 +38,10 @@ public interface BbglMapper {
 	void delBbxt(HashMap params);
 	void delBbsj(HashMap params);
 	List<HashMap> getXtSjInfo(Map map);
+	List<HashMap> getBbsbzclist(Condition condition);
+	void saveBbsbzc(HashMap map);
+    void xfSbzcxt(HashMap params);
+    void delBbsbzc(HashMap params);
+	List<HashMap> getSbzcBbList(Map params);
+	void jcBbsbzc(HashMap params);
 }

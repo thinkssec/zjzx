@@ -47,7 +47,7 @@ public class ServiceController2 {
     @QueuenT
     @RequestMapping("requestf")
     public String requestf(String requestBody, String id, @RequestParam("file") CommonsMultipartFile file) {
-        System.out.println("requestf==requestBody="+requestBody);
+        //System.out.println("requestf==requestBody="+requestBody);
         ResponseBody res = new ResponseBody();
         RequestBody r = (RequestBody) JsonMapper.fromJsonString(requestBody, RequestBody.class);
         Map<String, String> params = null;

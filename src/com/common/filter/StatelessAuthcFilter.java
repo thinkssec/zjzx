@@ -40,22 +40,22 @@ public class StatelessAuthcFilter extends FormAuthenticationFilter /*AccessContr
         //2、客户端传入的用户身份
         //String username = request.getParameter(Constants.PARAM_USERNAME);
         String requestBody=request.getParameter("requestBody");
-        System.out.println("------------------------------------------------"+((HttpServletRequest)request).getRequestURI());
-        System.out.println("------------------------------------------------"+request.getContentType());
-        System.out.println("------------------------------------------------"+request.getParameterMap());
-        System.out.println("------------------------------------------------"+request.getCharacterEncoding());
-        System.out.println("------------------------------------------------"+request.getInputStream());
+        //System.out.println("------------------------------------------------"+((HttpServletRequest)request).getRequestURI());
+        //System.out.println("------------------------------------------------"+request.getContentType());
+        //System.out.println("------------------------------------------------"+request.getParameterMap());
+        //System.out.println("------------------------------------------------"+request.getCharacterEncoding());
+        //System.out.println("------------------------------------------------"+request.getInputStream());
         BASE64Decoder decoder = new BASE64Decoder();
         requestBody= new String(decoder.decodeBuffer(requestBody), "UTF-8");
-        System.out.println("------------------------------------------------"+requestBody);
+        //System.out.println("------------------------------------------------"+requestBody);
         //System.out.println("(((((("+requestBody);
        /* JavaType javaType = JsonMapper.getInstance().getTypeFactory().constructParametricType(List.class, double[].class);
         exclude = JsonMapper.getInstance().fromJson(condition.getC8(), javaType);*/
         RequestBody ppp=(RequestBody)JsonMapper.fromJsonString(requestBody,RequestBody.class);
         //System.out.println("----------filter"+requestBody);
-        System.out.println("----------filter"+ppp.getUsername());
-        System.out.println("----------filter"+ppp.getPassword());
-        System.out.println("----------filter"+ppp.getParams());
+        //System.out.println("----------filter"+ppp.getUsername());
+        //System.out.println("----------filter"+ppp.getPassword());
+        //System.out.println("----------filter"+ppp.getParams());
         //System.out.println("----------filter"+ppp);
         //String clientDigest = (String)((ArrayList)ppp.get(Constants.PARAM_PASSWORD)).get(0);
         //String clientDigest = ppp.getPassword();略去密码验证

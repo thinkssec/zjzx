@@ -28,6 +28,7 @@ public class AnonController {
     @RequestMapping("request")
     public String request(String requestBody, String id) throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
         ResponseBody res = new ResponseBody();
+        //System.out.println("requestBody=============================================="+requestBody);
         RequestBody r = (RequestBody) JsonMapper.fromJsonString(requestBody, RequestBody.class);
         Map<String, String> params = (Map<String, String>) JsonMapper.fromJsonString(r.getParams(), Map.class);
         String call = r.getCall();

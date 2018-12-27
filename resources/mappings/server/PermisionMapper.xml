@@ -98,6 +98,44 @@
         order by createtime desc
         <include refid="com.base.baseMapper.pageEnd"/>
     </select>
+    <select id="getourUserList" resultType="java.util.HashMap">
+        <include refid="com.base.baseMapper.pageStart"/>
+        select r.userid,
+                r.username,
+                r.loginname,
+                r.pwd,
+                r.upwd,
+                r.gddh,
+                r.yddh,
+                r.dw,
+                r.sfqy,
+                decode(sfqy, '1', '启用', '未启用') sfqymc,
+                r.fpz,
+                r.email,
+                r.bzxx,
+                (select b.id
+                from SYS_USERROLE a, V_OFFICE b
+                where b.type in ('1','2','3') and a.userid = r.userid
+                and a.roleid = b.id) admin,
+                (select b.name
+                from SYS_USERROLE a, V_OFFICE b
+                where b.type in ('1','2','3') and a.userid = r.userid
+                and a.roleid = b.id) adminmc,
+                to_char(createtime, 'yyyymmdd hh24:mi:ss') createtime
+                from app_user r
+                where isdel = '0'
+                and r.userid != '1'
+                and r.userid != '2'
+                and r.userid !=#{userid}
+                and exists
+                (select 1
+                from SYS_USERROLE s, v_office t
+                where r.userid = s.userid
+                and s.roleid = t.id
+                and t.rt = #{dwdm})
+                order by createtime desc
+        <include refid="com.base.baseMapper.pageEnd"/>
+    </select>
 
 
     <update id="saveDeptList">
@@ -232,6 +270,13 @@
             select count(1) into v_ct from sys_userrole a,sys_office b
               where a.roleid=b.id and a.userid=#{record.USERID} and b.code like '%00' and length(b.code)=6;
             if v_ct >0 then
+              raise_application_error(-20000, 'NEW_EMP::单位管理员重复设置');
+            end if;
+            select count(1) into v_ct from SYS_USERROLE a, V_OFFICE b
+                 where b.type in ('1', '2', '3')
+                   and a.userid = #{record.USERID}
+                   and a.roleid = b.id;
+            if v_ct>0 then
               raise_application_error(-20000, 'NEW_EMP::单位管理员重复设置');
             end if;
             merge into SYS_USERROLE a using (select #{id} roleid,#{record.USERID} userid from dual) b

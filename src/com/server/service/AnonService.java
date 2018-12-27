@@ -2,6 +2,7 @@ package com.server.service;
 
 import com.common.config.Global;
 import com.common.mapper.JsonMapper;
+import com.common.sys.entity.Office;
 import com.common.sys.entity.User;
 import com.common.utils.*;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -20,6 +21,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.math.BigDecimal;
 import java.sql.Blob;
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -44,6 +46,11 @@ public class AnonService {
     BbglMapper bbglMapper;
     @Autowired
     BczbMapper bczbMapper;
+    String bczbXfPath = Global.YSBCZBXF_BASE_URL;
+    String yhbczbPath = Global.YHBCZBXF_BASE_URL;
+    String dwbczbPath = Global.DWBCZBXF_BASE_URL;
+    String dwbcsbzcPath = Global.DWBCSBZC_BASE_URL;
+    String bbh_last="@_@";
 
     private static String upgradeDec = "upgrade";
     private static String databbDec = "databb";
@@ -189,7 +196,7 @@ public class AnonService {
         ResponseBody r = new ResponseBody(params, "1", "登录成功", id, rq.getTaskid());
         try {
             HashMap info = userMapper.validRegst(rq.getCpu());
-            System.out.println(rq.getCpu());
+            //System.out.println(rq.getCpu());
             if (userMapper.validRegst(rq.getCpu()) == null) {
                 r.setIssuccess("03");
                 r.setMessage("登录机器未注册！");
@@ -213,8 +220,8 @@ public class AnonService {
                 return r;
             } else {
                 if (StringUtils.isNotBlank(rq.getPassword())) {
-                    System.out.println("11   (" + (String) m.get("PWD"));
-                    System.out.println(rq.getPassword());
+                    //System.out.println("11   (" + (String) m.get("PWD"));
+                    //System.out.println(rq.getPassword());
                     if (rq.getPassword().equals((String) m.get("PWD"))) {
                         r.setIssuccess("1");
                         r.setMessage("登录成功！");
@@ -359,7 +366,7 @@ public class AnonService {
         Map<String, Object> map = null;
         try {
             map = XmlUtils.Xml2MapWithAttr(textFromFile, true);
-            String sql = AppUtils.readMap2Sql3(map, "-1","","1045","askdf;allasdj;kf","12313121312");
+            String sql = AppUtils.readMap2Sql3(map, "-1","","1045","askdf;allasdj;kf","12313121312","");
             //System.out.println(sql);
             HashMap h = new HashMap();
             h.put("sql", sql);
@@ -408,13 +415,225 @@ public class AnonService {
             //System.out.println(docStr);
             doc = XmlUtils.Map2Xml(docStr);
             //System.out.println("66 "+new SimpleDateFormat("hh:mm:ss.SSS").format(System.currentTimeMillis()));
-            System.out.println(XmlUtils.FormatXml(doc));
+            //System.out.println(XmlUtils.FormatXml(doc));
         } catch (Exception e) {
             e.printStackTrace();
         }
         return rp;
     }
+    public ResponseBody gxList(RequestBody rq, Map params, String id) {
+        ResponseBody rp = new ResponseBody(params, "1", "获取单位补充指标更新列表成功", id, rq.getTaskid());
+        try {
+            String code = frameMapper.getCodeByCpu(rq.getCpu());
+            //String rootMl = bczbMapper.getBczbRootByCode(code);
+            String oil=frameMapper.getOilByCpu(rq.getCpu());
+            Map pp = new HashMap();
+            pp.put("CODE", code);
+            {
+                try {
+                    HashMap<String, Office> lsHt = frameMapper.bczbMlLists(pp);
+                    pp.put("OILIDS",oil);
+                    List<HashMap> zbdic = frameMapper.getMlZbAList(pp);
+                    LinkedHashMap<String, LinkedHashMap<String, Object>> rs = new LinkedHashMap();
+                    HashMap<String, List<Office>> children = new HashMap();
+                    Map<String, List<Map>> zbchildren = new HashMap();
+                    String rootId = "";
+                    for (String key : lsHt.keySet()) {
+                        if (lsHt.get(key).getCode().length() == 8) rootId = key;
+                        List c = children.get(lsHt.get(key).getParentId());
+                        if("9".equals(lsHt.get(key).getType())) continue;
+                        zbchildren.put(lsHt.get(key).getId(), new ArrayList());
+                        if (c == null) {
+                            c = new ArrayList<Office>();
+                            children.put((String) lsHt.get(key).getParentId(), c);
+                        }
+                        c.add(lsHt.get(key));
+                    }
+                    for (HashMap z : zbdic) {
+                        String mlid = (String) z.get("ZHZBID");
+                        String ppp=lsHt.get(mlid).getParentId();
+                        List c = zbchildren.get(ppp);
+                        c.add(z);
+                    }
+                    Map<String, Object> docStr = AppUtils.getMlMap(lsHt, children, rootId, zbchildren);
+                    String xml = "";
+                    Document doc = XmlUtils.Map2Xml(docStr);
+                    String saveDirectoryPath = Global.getConfig("upLoadPath") + "/" + dwbczbPath + "/" + rq.getCpu();
 
+                    xml = XmlUtils.FormatXml(doc);
+                    FileUtils.writeToFile(saveDirectoryPath, xml, false);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    rp.setIssuccess("0");
+                    rp.setMessage("操作失败！" + e.getMessage());
+                }
+            }
+            List<HashMap> ml = frameMapper.getMlZbAList(pp);
+            try {
+                Map rrr = new HashMap();
+                rrr.put("ML", rq.getCpu());
+                rrr.put("BCZB", ml);
+                rp.setDatas(com.common.annotation.mapper.JsonMapper.toJsonString(rrr));
+            } catch (Exception e) {
+                rp.setIssuccess("0");
+                rp.setMessage("获取单位补充指标失败");
+            }
+        }catch(Exception e){
+            e.printStackTrace();
+        }
+        return rp;
+    }
+    public ResponseBody gxSbzcList(RequestBody rq, Map params, String id) {
+        ResponseBody rp = new ResponseBody(params, "1", "获取单位补充设备主材更新列表成功", id, rq.getTaskid());
+        try {
+            String code = frameMapper.getCodeByCpu(rq.getCpu());
+            //String rootMl = bczbMapper.getBczbRootByCode(code);
+            String oil=frameMapper.getOilByCpu(rq.getCpu());
+            Map pp = new HashMap();
+            pp.put("CODE", code);
+            {
+                try {
+                    HashMap<String, Office> lsHt = frameMapper.bcsbzcAMlLists(pp);
+                    pp.put("OILIDS",oil);
+                    List<HashMap> zbdic = frameMapper.getMlSbzcAList(pp);
+                    LinkedHashMap<String, LinkedHashMap<String, Object>> rs = new LinkedHashMap();
+                    HashMap<String, List<Office>> children = new HashMap();
+                    Map<String, List<Map>> zbchildren = new HashMap();
+                    String rootId = "";
+                    for (String key : lsHt.keySet()) {
+                        if (lsHt.get(key).getCode().length() == 8) rootId = key;
+                        List c = children.get(lsHt.get(key).getParentId());
+                        if("10".equals(lsHt.get(key).getType())) continue;
+                        zbchildren.put(lsHt.get(key).getId(), new ArrayList());
+                        if (c == null) {
+                            c = new ArrayList<Office>();
+                            children.put((String) lsHt.get(key).getParentId(), c);
+                        }
+                        c.add(lsHt.get(key));
+                    }
+                    for (HashMap z : zbdic) {
+                        String mlid = (String) z.get("ZHID");
+                        String ppp=lsHt.get(mlid).getParentId();
+                        List c = zbchildren.get(ppp);
+                        c.add(z);
+                    }
+                    Map<String, Object> docStr = AppUtils.getSbzcMlMap(lsHt, children, rootId, zbchildren);
+                    String xml = "";
+                    Document doc = XmlUtils.Map2Xml(docStr);
+                    String saveDirectoryPath = Global.getConfig("upLoadPath") + "/" + dwbcsbzcPath + "/" + rq.getCpu();
+                    xml = XmlUtils.FormatXml(doc);
+                    FileUtils.writeToFile(saveDirectoryPath, xml, false);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    rp.setIssuccess("0");
+                    rp.setMessage("操作失败！" + e.getMessage());
+                }
+            }
+            List<HashMap> ml = frameMapper.getMlSbzcAList(pp);
+            try {
+                Map rrr = new HashMap();
+                rrr.put("ML", rq.getCpu());
+                rrr.put("BCSBZC", ml);
+                rp.setDatas(com.common.annotation.mapper.JsonMapper.toJsonString(rrr));
+            } catch (Exception e) {
+                rp.setIssuccess("0");
+                rp.setMessage("获取单位补充设备主材失败");
+            }
+        }catch(Exception e){
+            e.printStackTrace();
+        }
+        return rp;
+    }
+    public ResponseBody getSbzcBbList(RequestBody rq, Map params, String id){
+        ResponseBody rp = new ResponseBody(params, "1", "获取单位补充设备主材更新列表成功", id, rq.getTaskid());
+        String code = frameMapper.getCodeByCpu(rq.getCpu());
+        //String rootMl = bczbMapper.getBczbRootByCode(code);
+        String oil=frameMapper.getOilByCpu(rq.getCpu());
+
+        params.put("DEPTID",code);
+        try {
+            try {
+                List<HashMap> infos = bbglMapper.getSbzcBbList(params);
+                //System.out.println(params);
+                Map<String,Object> bbM=new HashMap();
+                Map wwwww=new HashMap();
+                List lll=new ArrayList();
+                wwwww.put("BBXX",lll);
+                bbM.put("ArrayOfBBXX",wwwww);
+                for (HashMap info : infos) {
+                    Map bbb=new HashMap();
+                    bbb.put("XH",info.get("BBH")==null?"":(BigDecimal)info.get("BBH")+"");
+                    bbb.put("BBMC",info.get("MC")==null?"":(String)info.get("MC"));
+                    bbb.put("SYSJ",info.get("SYSJ")==null?"":(String)info.get("SYSJ"));
+                    bbb.put("WJH",info.get("WJH")==null?"":(String)info.get("WJH"));
+                    bbb.put("SM",info.get("BZ")==null?"":(String)info.get("BZ"));
+                    bbb.put("WJ",rq.getCpu()+bbh_last+(BigDecimal)info.get("BBH"));
+                    lll.add(bbb);
+                    String bbh=(BigDecimal)info.get("BBH")+"";
+                    List<String> ul = new ArrayList<String>();
+                    ul.add(rq.getCpu()+bbh_last+bbh);
+                    info.put("filelist", ul);
+                    {
+                        try {
+                            Map pp=new HashMap();
+                            pp.put("CODE", code);
+                            pp.put("BBH",info.get("BBH"));
+                            HashMap<String, Office> lsHt = frameMapper.bcsbzcAMlLists(pp);
+                            pp.put("OILIDS",oil);
+                            //System.out.println("--------0"+pp);
+                            List<HashMap> zbdic = frameMapper.getMlSbzcAList2(pp);
+                            LinkedHashMap<String, LinkedHashMap<String, Object>> rs = new LinkedHashMap();
+                            HashMap<String, List<Office>> children = new HashMap();
+                            Map<String, List<Map>> zbchildren = new HashMap();
+                            String rootId = "";
+                            for (String key : lsHt.keySet()) {
+                                if (lsHt.get(key).getCode().length() == 8) rootId = key;
+                                List c = children.get(lsHt.get(key).getParentId());
+                                if("10".equals(lsHt.get(key).getType())) continue;
+                                zbchildren.put(lsHt.get(key).getId(), new ArrayList());
+                                if (c == null) {
+                                    c = new ArrayList<Office>();
+                                    children.put((String) lsHt.get(key).getParentId(), c);
+                                }
+                                c.add(lsHt.get(key));
+                            }
+                            for (HashMap z : zbdic) {
+                                String mlid = (String) z.get("ZHID");
+                                String ppp=lsHt.get(mlid).getParentId();
+                                List c = zbchildren.get(ppp);
+                                c.add(z);
+                            }
+                            //System.out.println("-----------1"+zbdic);
+                            //System.out.println("-----------2"+zbchildren);
+                            Map<String, Object> docStr = AppUtils.getSbzcMlMap(lsHt, children, rootId, zbchildren);
+                            String xml = "";
+                            Document doc = XmlUtils.Map2Xml(docStr);
+                            String saveDirectoryPath = Global.getConfig("upLoadPath") + "/" + dwbcsbzcPath + "/" + rq.getCpu()+bbh_last+bbh;
+                            xml = XmlUtils.FormatXml(doc);
+                            FileUtils.writeToFile(saveDirectoryPath, xml, false);
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                            rp.setIssuccess("0");
+                            rp.setMessage("操作失败！" + e.getMessage());
+                        }
+                    }
+                }
+                Document wowo=XmlUtils.Map2Xml(bbM);
+                String zbstr = com.common.annotation.mapper.JsonMapper.getInstance().toJson(infos);
+                rp.setDatas(zbstr);
+                rp.setMessage(XmlUtils.FormatXml(wowo));
+            } catch (Exception e) {
+                e.printStackTrace();
+                rp.setIssuccess("0");
+                rp.setMessage("获取补充设备主材更新信息失败！" + e.getMessage());
+            }
+        } catch (Exception e) {
+            rp.setIssuccess("0");
+            rp.setMessage("获取补充设备主材更新信息失败！" + e.getMessage());
+            e.printStackTrace();
+        }
+        return rp;
+    }
     public void traverseFolder2(List<String> l, String path, String doc) {
         File file = new File(path);
         if (file.exists()) {
@@ -429,7 +648,7 @@ public class AnonService {
                         //l.add(file2.getAbsolutePath());
                         traverseFolder2(l, file2.getAbsolutePath(), doc);
                     } else {
-                        System.out.println("文件:" + file2.getPath());
+                        //System.out.println("文件:" + file2.getPath());
                         l.add(file2.getPath().substring(file2.getPath().
                                 indexOf(Global.USERFILES) + Global.USERFILES.length()));
                         //l.add(file2.getPath());

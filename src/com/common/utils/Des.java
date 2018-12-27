@@ -27,12 +27,12 @@ public class Des {
         String password = "9588028820109132570743325311898426347857298773549468758875018579537757772163084478873699447306034466200616411960574122434059469100235892702736860872901247123456";
 
         byte[] result = Des.encrypt(str.getBytes(),password);
-        System.out.println("加密后："+new String(result));
+        //System.out.println("加密后："+new String(result));
 
 //直接将如上内容解密
         try {
             byte[] decryResult = Des.decrypt(result, password);
-            System.out.println("解密后："+new String(decryResult));
+            //System.out.println("解密后："+new String(decryResult));
         } catch (Exception e1) {
             e1.printStackTrace();
         }

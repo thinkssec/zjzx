@@ -36,12 +36,17 @@ public interface BczbMapper {
 	List<LinkedHashMap> getOtherTest2();
 	//获取原始补充指标
 	List<HashMap> getYsBczb(Map c);
+	List<HashMap> getYsBczbXf(Map c);
+	List<HashMap> getDwBczbByDw(Map c);
+	List<HashMap> getDwElfByDw(Map c);
+	List<HashMap> getBcsbzcByDw(Map c);
 	List<HashMap> getZbByServerId(@Param("SCOPE") String scope);
 	List<HashMap> getDwZbByServerId(@Param("SCOPE") String scope);
 	List<HashMap> getYhBczb(Map c);
 	List<HashMap> getDwBczb(Map c);
     List<HashMap> getBczbByFz(Map c);
 	List<HashMap> getBczbByMl(Map c);
+	List<HashMap> getBcsbzcByMl(Map c);
 	List<HashMap> getProjectByScope(@Param("scope") String scope);
 	List<HashMap> getZhzbList(Condition params);
 	List<HashMap> getJsrList(Condition params);
@@ -49,12 +54,22 @@ public interface BczbMapper {
 	void updateFzPath(@Param("id") String id,@Param("path") String path);
 	void saveBczbZh(Condition params);
 	void addZb2Fz(Map params);
+	void addElf2Fz(Map params);
 	void addZb2Ml(Map params);
+	void addZb2MlSbzc(Condition params);
+    void updSbzc(Condition params);
+	void addZb2Zb(Map params);
+    void addZb2ZbSbzc(Condition params);
 	void delZb2Fz(Map params);
 	void delFz(@Param("ID") String id);
 
 	void delZb2Ml(Map m);
-
+	void delElf2Ml(Map m);
+    void delSbzc2Ml(Map m);
 	List<LinkedHashMap> getYhBczbProperty(String bczbid);
 	List<LinkedHashMap> getDwBczbProperty(String bczbid);
+//补充设备主材
+    List<HashMap> getBcsbzcList(Condition params);
+    String getBczbRootByCode(@Param("CODE") String code);
+	String getBcSbzcRootByCode(@Param("CODE") String code,@Param("BBH") String bbh);
 }

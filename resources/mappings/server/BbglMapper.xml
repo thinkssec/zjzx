@@ -17,6 +17,14 @@
         COMMIT;
         END;
     </delete>
+    <delete id="delBbsbzc">
+        BEGIN
+        <foreach collection="list" item="record" index="index">
+            delete from  APP_BB_BCSBZC where id=#{record.ID};
+        </foreach>
+        COMMIT;
+        END;
+    </delete>
     <select id="getBbxtlist" resultType="java.util.HashMap">
         <include refid="com.base.baseMapper.pageStart"/>
         select decode(status,'1','已下发','未下发') zt,to_char(rksj,'yyyymmdd hh24:mi:ss') sj,t.* from APP_BB_XT t where 1=1
@@ -49,6 +57,33 @@
        select * from  (select a.* from APP_BB_XT a where status=1
         and bbh>#{BBH} order by BBH desc)
 ]]>
+    </select>
+    <select id="getBbsbzclist" resultType="java.util.HashMap">
+        <include refid="com.base.baseMapper.pageStart"/>
+        with a as
+        (select oilid, bbh, count(1) ct
+        from app_sbzc_mlralation
+        group by oilid, bbh)
+        select decode(status,'1','已下发','未下发') zt,to_char(rksj,'yyyymmdd hh24:mi:ss') sj,t.*,
+        (select listagg(b.name || '(' || ct || ')', ',') within group(order by b.name) name
+        from a, app_yq b
+        where a.oilid = b.bzyqh
+        and a.bbh = t.bbh) ss
+        from APP_BB_BCSBZC t where 1=1 and deptid=#{dwdm}
+        <if test="c1 != null">
+            and mc like '%'||#{c1}||'%'
+        </if>
+        <include refid="com.base.baseMapper.pageEnd"/>
+        order by bbh desc
+        <if test="sort != null">
+            ${sort}
+        </if>
+    </select>
+    <select id="getSbzcBbList" resultType="java.util.HashMap">
+        <![CDATA[
+        select * from APP_BB_BCSBZC where deptid=#{DEPTID} and bbh>#{BBH} and status=1
+        order by bbh desc
+        ]]>
     </select>
     <update id="saveBbxt">
         BEGIN
@@ -97,5 +132,157 @@
         </foreach>
         COMMIT;
         END;
+    </update>
+    <update id="saveBbsbzc">
+        BEGIN
+        <foreach collection="list" item="record" index="index">
+            merge into APP_BB_BCSBZC a using (select #{record.ID} ID from dual) b
+            on (a.ID=b.ID)
+            when matched then
+            update set mc=#{record.MC},
+            bz=#{record.BZ},
+            sysj=#{record.SYSJ},
+            wjh=#{record.WJH},
+            wj=#{record.WJ}
+            when not matched then
+            insert (a.bbh,a.mc,a.bz,a.submitter,deptid,sysj,wjh,wj)
+            values(SEQ_BCZBBB.nextval,#{record.MC},#{record.BZ},#{submitter},#{dwdm},#{record.SYSJ},#{record.WJH},#{record.WJ});
+        </foreach>
+        COMMIT;
+        END;
+    </update>
+    <update id="xfSbzcxt">
+        BEGIN
+        <foreach collection="list" item="record" index="index">
+            update APP_BB_BCSBZC  set status='1' where bbh=#{record.BBH};
+        </foreach>
+        COMMIT;
+        END;
+    </update>
+    <update id="jcBbsbzc">
+        <![CDATA[
+        DECLARE
+        v_lastb varchar2(50):='';
+        BEGIN
+        select bbh into v_lastb from APP_BB_BCSBZC where bbh<#{BBH} and deptid=#{DEPTID} and rownum=1 order by bbh desc;
+        delete from APP_SBZC_MLRALATION where bbh=#{BBH};
+        delete from APP_SBZC_ML where bbh=#{BBH};
+        delete from APP_SBZC_BC where bbh=#{BBH};
+        insert into APP_SBZC_MLRALATION (ZHID,
+                                            BCID,
+                                            RKSJ,
+                                            ISDEL,
+                                            OILID,
+                                            CODE,
+                                            BBH)
+                                          select
+                                            ZHID,
+                                            BCID,
+                                            RKSJ,
+                                            ISDEL,
+                                            OILID,
+                                            CODE,
+                                            #{BBH} BBH from APP_SBZC_MLRALATION where bbh=v_lastb;
+        insert into APP_SBZC_ML (ID,
+                                    PARENT_ID,
+                                    PARENT_IDS,
+                                    NAME,
+                                    SORT,
+                                    AREA_ID,
+                                    CODE,
+                                    TYPE,
+                                    GRADE,
+                                    ADDRESS,
+                                    ZIP_CODE,
+                                    MASTER,
+                                    PHONE,
+                                    FAX,
+                                    EMAIL,
+                                    USEABLE,
+                                    PRIMARY_PERSON,
+                                    DEPUTY_PERSON,
+                                    CREATE_BY,
+                                    CREATE_DATE,
+                                    UPDATE_BY,
+                                    UPDATE_DATE,
+                                    REMARKS,
+                                    DEL_FLAG,
+                                    BBH)
+                                          select
+                                            ID,
+                                            PARENT_ID,
+                                            PARENT_IDS,
+                                            NAME,
+                                            SORT,
+                                            AREA_ID,
+                                            CODE,
+                                            TYPE,
+                                            GRADE,
+                                            ADDRESS,
+                                            ZIP_CODE,
+                                            MASTER,
+                                            PHONE,
+                                            FAX,
+                                            EMAIL,
+                                            USEABLE,
+                                            PRIMARY_PERSON,
+                                            DEPUTY_PERSON,
+                                            CREATE_BY,
+                                            CREATE_DATE,
+                                            UPDATE_BY,
+                                            UPDATE_DATE,
+                                            REMARKS,
+                                            DEL_FLAG,
+                                            #{BBH} BBH from APP_SBZC_ML where bbh=v_lastb;
+                        insert into APP_SBZC_BC (ID,
+                                                        LB,
+                                                        BM,
+                                                        MC,
+                                                        XH,
+                                                        DW,
+                                                        JG,
+                                                        SL,
+                                                        CJMC,
+                                                        PX,
+                                                        DEPTID,
+                                                        ZT,
+                                                        RKSJ,
+                                                        PP,
+                                                        CCRQ,
+                                                        CCJG,
+                                                        GYJG,
+                                                        GYLY,
+                                                        OILID,
+                                                        GXSJ,
+                                                        LYSM,
+                                                        BZ,
+                                                        BBH)
+                                          select
+                                            ID,
+                                            LB,
+                                            BM,
+                                            MC,
+                                            XH,
+                                            DW,
+                                            JG,
+                                            SL,
+                                            CJMC,
+                                            PX,
+                                            DEPTID,
+                                            ZT,
+                                            RKSJ,
+                                            PP,
+                                            CCRQ,
+                                            CCJG,
+                                            GYJG,
+                                            GYLY,
+                                            OILID,
+                                            GXSJ,
+                                            LYSM,
+                                            BZ,
+                                            #{BBH} BBH from APP_SBZC_BC where bbh=v_lastb;
+                                            commit;
+        END;
+        ]]>
     </update>
 </mapper>

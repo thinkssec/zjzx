@@ -66,9 +66,22 @@ public interface FrameMapper extends MainMapper {
     List<Office> getOfficeMList(Office office);
     List<Office> getOfficeMyList(Office office);
     List<Office> xmglLists(Office office);
+    List<Office> xtxmglLists(Office office);
     List<Office> xmglListsD(Office office);
     @MapKey("id")
     HashMap<String,Office> bczbMlLists(Map office);
+    @MapKey("id")
+    HashMap<String,Office> bcelfMlLists(Map office);
+    @MapKey("id")
+    HashMap<String,Office> bcsbzcAMlLists(Map office);
+    @MapKey("id")
+    HashMap<String,Office> bczbMlListsDt(Map office);
+    @MapKey("id")
+    HashMap<String,Office> bcsbzcMlLists(Map office);
+    @MapKey("id")
+    HashMap<String,Office> xtxmMlLists(Map office);
+    @MapKey("id")
+    HashMap<String,Office> xtxmMlLists2(Map office);
     List<Office> getOfficeMList2(Office office);
     List<Office> getOfficeMmyList2(Office office);
     public List<Office> getAllOffice();
@@ -79,9 +92,19 @@ public interface FrameMapper extends MainMapper {
     public void saveOfficer(Office office);
     public void saveOfficem(Office office);
     public void saveMypan(Office office);
-
+    public void saveXtxm(Office office);
     void insertBczbRoot(@Param("CODE") String deptCode,@Param("DEPTID")String deptid);
-
+    void insertBcsbzcRoot(@Param("CODE") String deptCode,@Param("DEPTID")String deptid,@Param("BBH")String bbh);
+    void insertElfRoot(@Param("CODE") String deptCode,@Param("DEPTID")String deptid);
     void bczbmlsave(Condition condition);
+    void bcsbzcmlsave(Condition condition);
     List<HashMap> getMlZbAList(Map m);
+    List<HashMap> getMlElfAList(Map m);
+    List<HashMap> getMlSbzcAList(Map m);
+    List<HashMap> getMlSbzcAList2(Map m);
+    List<HashMap> getAdminByCode(@Param("CODE") String code);
+    String getCodeByCpu(@Param("CPU") String CPU);
+    String getOilByCpu(@Param("CPU") String CPU);
+
+    int isAdmin(@Param("USERID") String userid);
 }

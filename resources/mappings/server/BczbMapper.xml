@@ -5,8 +5,8 @@
         merge into APP_ZB_BCZH  a using (select #{c1} id,#{c2} name,#{c3} bz,#{c4} userid from dual) b
         on (a.id=b.id)
         when not matched then
-        insert (name,bz,userid,deptid,rkry) values (b.name,b.bz,b.userid,#{dwdm},#{userid})
-        when matched then  update set a.name=b.name,a.bz=b.bz,a.userid=b.userid
+        insert (name,bz,userid,deptid,rkry,oilid,bbh) values (b.name,b.bz,b.userid,#{dwdm},#{userid},#{c5},#{c6})
+        when matched then  update set a.name=b.name,a.bz=b.bz,a.userid=b.userid,oilid=#{c5},bbh=#{c6}
     </insert>
     <insert id="addZb2Fz">
         BEGIN
@@ -34,15 +34,213 @@
         END;
     </insert>
     <insert id="addZb2Ml">
+        DECLARE
+          v_id varchar2(50):='';
+          v_code varchar2(100);
+          v_count number(2):=0;
         BEGIN
         <foreach collection="list" item="record" index="index">
+            select count(1) into v_count from APP_ZB_MLRALATION where zhzbid=#{fzid} and oilid=#{record.OILID};
+            if v_count=0 then
+                begin
+                    select (max(code)+1) into v_code from sys_office where parent_id=#{fzid};
+                    if v_code is null then select code||'001' into v_code from sys_office where id=#{fzid}; end if;
+                    update APP_OBJECT_DWCBBCZB set zt=1 where id=#{record.OID};
+                    select sys_guid() into v_id from dual;
+                    insert into SYS_OFFICE(id,parent_id,name,code,type,USEABLE) values (v_id,#{fzid},#{record.MC},v_code,'9','1');
+                    merge into APP_ZB_MLRALATION a using(select v_id zhzbid,#{record.OID} bczbid from dual) b
+                    on (a.zhzbid=b.zhzbid and a.bczbid=b.bczbid)
+                    when not matched then
+                    insert (zhzbid,bczbid,code,oilid) values (b.zhzbid,b.bczbid,v_code,#{record.OILID})
+                    when matched then
+                    update set rksj=sysdate;
+                end;
+            end if;
+        </foreach>
+        commit;
+        END;
+    </insert>
+    <insert id="addZb2Zb">
+        DECLARE
+        v_code varchar2(100);
+        BEGIN
+        <foreach collection="list" item="record" index="index">
+            select code into v_code from sys_office where id=#{fzid};
             update APP_OBJECT_DWCBBCZB set zt=1 where id=#{record.OID};
             merge into APP_ZB_MLRALATION a using(select #{fzid} zhzbid,#{record.OID} bczbid from dual) b
             on (a.zhzbid=b.zhzbid and a.bczbid=b.bczbid)
             when not matched then
-            insert (zhzbid,bczbid) values (b.zhzbid,b.bczbid)
+            insert (zhzbid,bczbid,code,oilid) values (b.zhzbid,b.bczbid,v_code,#{record.OILID})
             when matched then
             update set rksj=sysdate;
+        </foreach>
+        commit;
+        END;
+    </insert>
+    <insert id="addZb2MlSbzc">
+        DECLARE
+        v_id varchar2(50):='';
+        v_bcid varchar2(50):='';
+        v_code varchar2(100);
+        v_count number(2):=0;
+        BEGIN
+            select count(1) into v_count from APP_SBZC_MLRALATION where zhid=#{c4} and oilid=#{c13} and bbh=#{c21};
+            if v_count=0 then
+            begin
+            select (max(code)+1) into v_code from APP_SBZC_ML where parent_id=#{c4} and bbh=#{c21};
+            if v_code is null then select code||'0000000001' into v_code from APP_SBZC_ML where id=#{c4} and bbh=#{c21}; end if;
+            select sys_guid() into v_id from dual;
+            select sys_guid() into v_bcid from dual;
+            insert into APP_SBZC_ML(id,parent_id,name,master,phone,fax,email,code,type,USEABLE,bbh) values (v_id,#{c4},#{c2},#{c14},#{c16},#{c3},#{c6},v_code,'10','1',#{c21});
+            delete from APP_SBZC_MLRALATION where oilid=#{c13} and zhid=v_id and bbh=#{c21};
+            merge into APP_SBZC_BC a using (select #{c1} ID,
+                                                    #{c14} LB,
+                                                    v_code BM,
+                                                    #{c2} MC,
+                                                    #{c5} CJMC,
+                                                    #{c6} XH,
+                                                    #{c3} PP,
+                                                    #{c7} CCRQ,
+                                                    #{c8} CCJG,
+                                                    #{c15} GYJG,
+                                                    #{c9} GYLY,
+                                                    #{c13} OILID,
+                                                    #{c10} GXSJ,
+                                                     #{c11} LYSM,
+                                                     #{c12} BZ,
+                                                     #{c16} DW,
+                                                     #{c21} BBH
+                                                     from dual) b
+            on (a.id=b.id and a.bbh=b.bbh)
+            when matched then
+            update set a.lb=b.lb,a.xh=b.xh,a.cjmc=b.cjmc,a.pp=b.pp,a.ccrq=b.ccrq,a.ccjg=b.ccjg,a.gyjg=b.gyjg,a.gyly=b.gyly,a.oilid=b.oilid,a.gxsj=b.gxsj,a.lysm=b.lysm,a.bz=b.bz,a.dw=b.dw
+            when not matched then
+            insert (ID,
+                    LB,
+                    BM,
+                    MC,
+                    XH,
+                    CJMC,
+                    PP,
+                    CCRQ,
+                    CCJG,
+                    GYJG,
+                    GYLY,
+                    OILID,
+                    GXSJ,DW,BBH
+                    )values (v_bcid,
+                                b.LB,
+                                b.BM,
+                                b.MC,
+                                b.XH,
+                                b.CJMC,
+                                b.PP,
+                                b.CCRQ,
+                                b.CCJG,
+                                b.GYJG,
+                                b.GYLY,
+                                b.OILID,
+                                b.GXSJ,b.DW,b.BBH
+                                );
+            merge into APP_SBZC_MLRALATION a using(select v_id zhid,v_bcid bcid,#{c21} bbh from dual) b
+            on (a.zhid=b.zhid and a.bcid=b.bcid and a.bbh=b.bbh)
+            when not matched then
+            insert (zhid,bcid,code,oilid,bbh) values (b.zhid,b.bcid,v_code,#{c13},b.bbh)
+            when matched then
+            update set rksj=sysdate;
+            end;
+            end if;
+        commit;
+        END;
+    </insert>
+    <insert id="addZb2ZbSbzc">
+        DECLARE
+        v_code varchar2(100);
+        v_bcid varchar2(50);
+        BEGIN
+            select code into v_code from APP_SBZC_ML where id=#{c4} and bbh=#{c21};
+            delete from APP_SBZC_MLRALATION where oilid=#{c13} and zhid=#{c4} and bbh=#{c21};
+            select sys_guid() into v_bcid from dual;
+            merge into APP_SBZC_BC a using (select #{c1} ID,
+                                                    #{c14} LB,
+                                                    v_code BM,
+                                                    #{c2} MC,
+                                                    #{c5} CJMC,
+                                                    #{c6} XH,
+                                                    #{c3} PP,
+                                                    #{c7} CCRQ,
+                                                    #{c8} CCJG,
+                                                    #{c15} GYJG,
+                                                    #{c9} GYLY,
+                                                    #{c13} OILID,
+                                                    #{c10} GXSJ,
+                                                     #{c11} LYSM,
+                                                     #{c12} BZ,
+                                                     #{c16} DW,#{c21} BBH
+                                                     from dual) b
+            on (a.id=b.id and a.bbh=b.bbh)
+            when matched then
+            update set a.lb=b.lb,a.xh=b.xh,a.cjmc=b.cjmc,a.pp=b.pp,a.ccrq=b.ccrq,a.ccjg=b.ccjg,a.gyjg=b.gyjg,a.gyly=b.gyly,a.oilid=b.oilid,a.gxsj=b.gxsj,a.lysm=b.lysm,a.bz=b.bz,a.dw=b.dw,a.mc=b.mc
+            when not matched then
+            insert (ID,
+                    LB,
+                    BM,
+                    MC,
+                    XH,
+                    CJMC,
+                    PP,
+                    CCRQ,
+                    CCJG,
+                    GYJG,
+                    GYLY,
+                    OILID,
+                    GXSJ,DW,BBH
+                    )values (v_bcid,
+                                b.LB,
+                                b.BM,
+                                b.MC,
+                                b.XH,
+                                b.CJMC,
+                                b.PP,
+                                b.CCRQ,
+                                b.CCJG,
+                                b.GYJG,
+                                b.GYLY,
+                                b.OILID,
+                                b.GXSJ,b.DW,B.BBH
+                                );
+            merge into APP_SBZC_MLRALATION a using(select #{c4} zhid,v_bcid bcid,#{c21} bbh  from dual) b
+            on (a.zhid=b.zhid and a.bcid=b.bcid and a.bbh=b.bbh)
+            when not matched then
+            insert (zhid,bcid,code,oilid,bbh) values (b.zhid,b.bcid,v_code,#{c13},b.bbh)
+            when matched then
+            update set rksj=sysdate;
+        commit;
+        END;
+    </insert>
+    <insert id="addElf2Fz">
+        DECLARE
+        v_id varchar2(50):='';
+        v_code varchar2(100);
+        v_count number(2):=0;
+        BEGIN
+        <foreach collection="list" item="record" index="index">
+            select count(1) into v_count from APP_ELF_MLRALATION where zhzbid=#{fzid};
+            if v_count=0 then
+            begin
+            select (max(code)+1) into v_code from sys_office where parent_id=#{fzid};
+            if v_code is null then select code||'001' into v_code from sys_office where id=#{fzid}; end if;
+            update APP_OBJECT_YHBCELF set zt=1 where id=#{record.OID};
+            select sys_guid() into v_id from dual;
+            insert into SYS_OFFICE(id,parent_id,name,code,type,USEABLE) values (v_id,#{fzid},#{record.MC},v_code,'2','1');
+            merge into APP_ELF_MLRALATION a using(select v_id zhzbid,#{record.OID} bczbid from dual) b
+            on (a.zhzbid=b.zhzbid and a.bczbid=b.bczbid)
+            when not matched then
+            insert (zhzbid,bczbid,code) values (b.zhzbid,b.bczbid,v_code)
+            when matched then
+            update set rksj=sysdate;
+            end;
+            end if;
         </foreach>
         commit;
         END;
@@ -83,6 +281,35 @@
         commit;
         end;
     </update>
+    <update id="updSbzc">
+        DECLARE
+        v_code varchar2(100);
+        v_id varchar2(50);
+        BEGIN
+            select zhid into v_id from APP_SBZC_MLRALATION where bcid=#{c1} and bbh=#{c21};
+            delete from APP_SBZC_MLRALATION where oilid=#{c13} and zhid=v_id and bcid!=#{c1} and bbh=#{c21};
+            merge into APP_SBZC_BC a using (select #{c1} ID,
+                                                    #{c14} LB,
+                                                    #{c2} MC,
+                                                    #{c5} CJMC,
+                                                    #{c6} XH,
+                                                    #{c3} PP,
+                                                    #{c7} CCRQ,
+                                                    #{c8} CCJG,
+                                                    #{c15} GYJG,
+                                                    #{c9} GYLY,
+                                                    #{c13} OILID,
+                                                    #{c10} GXSJ,
+                                                     #{c11} LYSM,
+                                                     #{c12} BZ,
+                                                     #{c16} DW,#{c21} BBH
+                                                     from dual) b
+            on (a.id=b.id and a.bbh=b.bbh)
+            when matched then
+            update set a.lb=b.lb,a.xh=b.xh,a.cjmc=b.cjmc,a.pp=b.pp,a.ccrq=b.ccrq,a.ccjg=b.ccjg,a.gyjg=b.gyjg,a.gyly=b.gyly,a.oilid=b.oilid,a.gxsj=b.gxsj,a.lysm=b.lysm,a.bz=b.bz,a.dw=b.dw,a.mc=b.mc;
+        commit;
+        END;
+    </update>
     <delete id="delFz">
         declare
           cursor cur_1 is
@@ -103,13 +330,34 @@
         end;
     </delete>
     <delete id="delZb2Ml">
+        declare
+        v_id varchar2(50):='';
+        v_count number(3):=0;
         BEGIN
-        <foreach collection="list" item="record" index="index">
-            update APP_OBJECT_DWCBBCZB set zt=0 where id=#{record.OID};
-            delete from APP_ZB_MLRALATION a where zhzbid=#{fzid} and bczbid=#{record.OID};
-        </foreach>
+            select bczbid into v_id from APP_ZB_MLRALATION where zhzbid=#{fzid} and oilid=#{oilid};
+            update APP_OBJECT_DWCBBCZB set zt=0 where id=v_id;
+            delete from APP_ZB_MLRALATION a where zhzbid=#{fzid} and oilid=#{oilid};
+            select count(1) into v_count from APP_ZB_MLRALATION where zhzbid=#{fzid};
+            if v_count =0 then delete from sys_office where id=#{fzid}; end if;
         commit;
         END;
+    </delete>
+    <delete id="delSbzc2Ml">
+        delete from app_sbzc_mlralation where bcid=#{bcid} and bbh=#{BBH}
+    </delete>
+    <delete id="delElf2Ml">
+        declare
+        v_id varchar2(50):='';
+        v_count number(3):=0;
+        BEGIN
+            select bczbid into v_id from APP_ELF_MLRALATION where zhzbid=#{fzid};
+            update APP_OBJECT_YHBCELF set zt=0 where id=v_id;
+            delete from APP_ELF_MLRALATION a where zhzbid=#{fzid};
+            select count(1) into v_count from APP_ELF_MLRALATION where zhzbid=#{fzid};
+            if v_count =0 then delete from sys_office where id=#{fzid}; end if;
+        commit;
+        END;
+
     </delete>
     <select id="getBczbProperty" fetchSize="50000"  resultType="java.util.LinkedHashMap">
         with b as (select id
@@ -140,7 +388,7 @@
     <select id="getYsBczb" fetchSize="50000" resultType="java.util.HashMap">
         <![CDATA[
         with p as
-             (select t.*
+             (select t.*,(select username from APP_USER where userid=t.userid) username
                 from APP_OBJECT_BCZBTREE t
                where level = 3
                  and nvl(zt, 0) =0 ]]>
@@ -148,7 +396,7 @@
                start with pid = '-1' <if test="DEPTID!=null and DEPTID!=''"> and deptid=#{DEPTID}</if> ),
             d as
              (select * from APP_OBJECTDIC)
-            select a.*,p.pid,to_char(p.rksj,'yyyymmdd hh24:mi:ss') rksj
+            select a.*,p.pid,to_char(p.rksj,'yyyymmdd hh24:mi:ss') rksj,username
               from app_oproperty a, p, d
              where a.oid = p.id
                and p.otype = d.otype
@@ -170,7 +418,7 @@
 
     <select id="getZhzbList" resultType="java.util.HashMap">
         <include refid="com.base.baseMapper.pageStart"/>
-        select (select username from app_user where userid=w.userid) ry,to_char(rksj,'yyyymmdd hh24:mi:ss') sj,decode(status,'1','已下发','未下发') zt,w.* from APP_ZB_BCZH w where 1=1
+        select (select username from app_user where userid=w.userid) ry,to_char(rksj,'yyyymmdd hh24:mi:ss') sj,(select name from APP_YQ where bzyqh=oilid) oilname,decode(status,'1','已下发','未下发') zt,w.* from APP_ZB_BCZH w where 1=1
         <if test="dwdm != null">
             and deptid=#{dwdm}
         </if>
@@ -278,7 +526,8 @@
         start with pid = '-1' <if test="DEPTID!=null and DEPTID!=''"> and deptid=#{DEPTID}</if> ),
         d as
         (select * from APP_OBJECTDIC)
-        select a.*,p.pid,to_char(p.rksj,'yyyymmdd hh24:mi:ss') rksj
+        select a.*,p.pid,to_char(p.rksj,'yyyymmdd hh24:mi:ss') rksj,p.oilid,
+        (select name from app_yq where bzyqh=p.OILID) yqname
         from app_oproperty_dwcbbczb a, p, d
         where a.oid = p.id
         and p.otype = d.otype
@@ -288,7 +537,7 @@
     <select id="getYhBczb" fetchSize="50000" resultType="java.util.HashMap">
         <![CDATA[
         with p as
-             (select t.*
+             (select t.*,(select username from APP_USER where userid=t.userid) username
                 from APP_OBJECT_YHBCZB t
                where level = 1
                  and nvl(zt, 0) =0 ]]>
@@ -296,7 +545,7 @@
         start with pid = '-1' <if test="DEPTID!=null and DEPTID!=''"> and deptid=#{DEPTID}</if> ),
         d as
         (select * from APP_OBJECTDIC)
-        select a.*,p.pid,to_char(p.rksj,'yyyymmdd hh24:mi:ss') rksj
+        select a.*,p.pid,to_char(p.rksj,'yyyymmdd hh24:mi:ss') rksj,p.username
         from app_oproperty_yhbczb a, p, d
         where a.oid = p.id
         and p.otype = d.otype
@@ -340,5 +589,100 @@
     </select>
     <select id="getDwZbByServerId" resultType="java.util.HashMap">
         select * from APP_OPROPERTY_DWCBBCZB where okey='SERVERID' and ovalue in ${SCOPE}
+    </select>
+    <select id="getBcsbzcList" resultType="java.util.HashMap">
+        select t.*,(select name from app_yq where bzyqh=t.OILID) yqname from APP_SBZC_BC t,
+        app_sbzc_mlralation s where t.id=s.bcid and t.bbh=#{c11} and t.bbh=s.bbh
+        <if test="c1 != null">
+            and s.zhid=#{c1}
+        </if>
+        order by t.rksj desc
+    </select>
+    <select id="getBcsbzcByMl" resultType="java.util.HashMap">
+        select a.* from APP_SBZC_BC a,APP_SBZC_MLRALATION  b
+        where a.id=b.bcid and a.bbh=b.bbh and a.bbh=#{c11} <if test="c1!=null and c1!=''"> and b.zhid=#{c1} </if>
+    </select>
+    <select id="getBczbRootByCode" resultType="java.lang.String">
+        select id from sys_office where  substr(code,1,4)=#{CODE}
+                and substr(code, 7, 8) = '03'
+                and length(code) = 8
+                      and type = 2
+    </select>
+    <select id="getDwBczbByDw" resultType="java.util.HashMap">
+        with ml as
+         (select level grade, a.*
+            from SYS_OFFICE a
+          connect by prior id = PARENT_ID
+           start with length(code) = 8
+                  and type = 2
+                  and substr(code, 1, 4) = #{CODE}
+                  and substr(code, 7, 8) = '03')
+        select t.id,t.zhzbid,t.bczbid,t.code,t.rksj,
+               (select ovalue
+                  from app_oproperty_dwcbbczb
+                 where oid = t.bczbid
+                   and okey = 'ZHDJ') zhdj,oilid
+          from APP_ZB_MLRALATION t, ml s
+         where t.zhzbid = s.id
+         order by rksj, bczbid, zhzbid
+    </select>
+    <select id="getBcsbzcByDw" resultType="java.util.HashMap">
+        with ml as
+         (select level grade, a.*
+            from (select * from APP_SBZC_ML where bbh=#{BBH}) a
+          connect by prior id = PARENT_ID
+           start with length(code) = 8
+                  and type = 2
+                  and substr(code, 1, 4) = #{CODE}
+                  and substr(code, 7, 8) = '04')
+        select sk.*,t.code,t.zhid
+          from APP_SBZC_BC sk,APP_SBZC_MLRALATION t, ml s
+         where t.zhid = s.id and sk.id=t.bcid and sk.bbh=#{BBH} and sk.bbh=t.bbh
+         order by sk.rksj, t.bcid, t.zhid
+    </select>
+    <select id="getBcSbzcRootByCode" resultType="java.lang.String">
+        select id from APP_SBZC_ML where  substr(code,1,4)=#{CODE}
+                and substr(code, 7, 8) = '04'
+                and length(code) = 8
+                      and type = 2
+                      and bbh=#{BBH}
+    </select>
+    <select id="getYsBczbXf" resultType="java.util.HashMap">
+        <![CDATA[
+        with p as
+             (select t.*,(select username from APP_USER where userid=t.userid) username
+                from APP_OBJECT_BCZBTREE t
+               where level = 3]]>
+        connect by prior id = pid
+        start with pid = '-1' <if test="DEPTID!=null and DEPTID!=''"> and deptid=#{DEPTID}</if> ),
+        d as
+        (select * from APP_OBJECTDIC)
+        select a.*,p.pid,to_char(p.rksj,'yyyymmdd hh24:mi:ss') rksj,username,y.name fzmc,(select username from app_user where userid=y.userid) xfry
+        from app_oproperty a, p, d,APP_ZB_BCRALATION z,APP_ZB_BCZH y
+        where a.oid = p.id
+        and p.otype = d.otype
+        and d.okey = a.okey
+        and display1 = '1'
+        and a.oid=z.bczbid and z.zhzbid=y.id
+        and y.status='1'
+
+    </select>
+    <select id="getDwElfByDw" resultType="java.util.HashMap">
+        with ml as
+         (select level grade, a.*
+            from SYS_OFFICE a
+          connect by prior id = PARENT_ID
+           start with length(code) = 8
+                  and type = 2
+                  and substr(code, 1, 4) = #{CODE}
+                  and substr(code, 7, 8) = '05')
+        select t.id,t.zhzbid,t.bczbid,t.code,t.rksj,
+               (select ovalue
+                  from APP_OPROPERTY_YHBCELF
+                 where oid = t.bczbid
+                   and okey = 'TypeDisplayTitle') title
+          from APP_ELF_MLRALATION t, ml s
+         where t.zhzbid = s.id
+         order by rksj, bczbid, zhzbid
     </select>
 </mapper>

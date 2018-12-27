@@ -196,6 +196,12 @@
     <insert id="insertBczbRoot">
         insert into SYS_OFFICE(parent_id,name,code,type) values(#{DEPTID},'单位补充指标',#{CODE}||'03','2')
     </insert>
+    <insert id="insertBcsbzcRoot">
+         insert into APP_SBZC_ML(parent_id,name,code,type,bbh) values(#{DEPTID},'单位补充设备主材',#{CODE}||'04','2',#{BBH})
+    </insert>
+    <insert id="insertElfRoot">
+        insert into SYS_OFFICE(parent_id,name,code,type) values(#{DEPTID},'单位补充二类费',#{CODE}||'05','2')
+    </insert>
     <update id="updateMenu">
         UPDATE sys_menu SET
         parent_id = #{parentId},
@@ -398,8 +404,8 @@ END;
          DECLARE
         v_code varchar2(100);
         BEGIN
-        select (max(code)+1) into v_code from sys_office where parent_id=#{c4};
-        if v_code is null then select code||'03' into v_code from sys_office where id=#{c4}; end if;
+        select (max(code)+1) into v_code from sys_office where parent_id=#{c4} and length(code) between 0 and 14;
+        if v_code is null then select code||'001' into v_code from sys_office where id=#{c4}; end if;
         merge into sys_office a using (select #{c1} id,
         #{c4} parent_id,#{c2} name,'1' useable,#{c3} remarks from dual) b
         on (a.id=b.id)
@@ -409,6 +415,36 @@ END;
         insert (a.id,a.parent_id,a.name,a.useable,a.remarks,a.type,a.code) values (sys_guid(),b.parent_id,b.name,b.useable,b.remarks,'2',v_code);
         commit;
         END;
+    </update>
+    <update id="bcsbzcmlsave">
+        DECLARE
+        v_code varchar2(100);
+        BEGIN
+        select (max(code)+1) into v_code from APP_SBZC_ML where parent_id=#{c4} and length(code) between 0 and 14 and bbh=#{c21};
+        if v_code is null then select code||'01' into v_code from APP_SBZC_ML where id=#{c4} and bbh=#{c21}; end if;
+        merge into APP_SBZC_ML a using (select #{c1} id,
+        #{c4} parent_id,#{c2} name,'1' useable,#{c3} remarks,#{c21} bbh from dual) b
+        on (a.id=b.id and a.bbh=b.bbh)
+        when matched then
+        update set a.name=b.name,a.useable=b.useable,a.remarks=b.remarks
+        when not matched then
+        insert (a.id,a.parent_id,a.name,a.useable,a.remarks,a.type,a.code,a.bbh) values (sys_guid(),b.parent_id,b.name,b.useable,b.remarks,'2',v_code,b.bbh);
+        commit;
+        END;
+    </update>
+    <update id="saveXtxm">
+        DECLARE
+            v_code varchar2(100);
+            BEGIN
+                    merge into sys_mypan a using (select #{id} id,
+                        #{parentId} parent_id,#{code} code,#{name} name,#{useable} useable,#{remarks} remarks from dual) b
+                        on (a.id=b.id)
+                        when matched then
+                        update set a.name=b.name,a.useable=b.useable,a.remarks=b.remarks
+                        when not matched then
+                        insert (a.id,a.parent_id,a.name,a.useable,a.remarks,a.type) values (sys_guid(),b.parent_id,b.name,b.useable,b.remarks,'5');
+                    commit;
+            END;
     </update>
 
 
@@ -613,7 +649,7 @@ END;
           from v_office a
         connect by prior id = parent_id
          start with id = #{dwdm})
-          where nvl(del_flag,'0') != '1' and type!=4
+          where nvl(del_flag,'0') != '1' and type!=4 and nvl(substr(code,7,2),'99')!='03' and nvl(substr(code,7,2),'99')!='04'
          order by type desc
     </select>
     <select id="getOfficeMList2" resultType="com.common.sys.entity.Office">
@@ -666,6 +702,7 @@ END;
         select * from APP_PAN_FILE where MLIDM in (select id from SYS_MYPAN t connect by prior id=parent_id start with id=#{USERID})
     </select>
     <select id="getOfficeMyList" resultType="com.common.sys.entity.Office">
+        <![CDATA[
         select a.*,(select count(1)
           from app_pan_file
          where mlidm in (select id
@@ -681,13 +718,15 @@ END;
                            decode(a.parent_id, '0', 1, '') as typpe,
                            decode(a.parent_id, '0', '', 1) as typppe
                       from SYS_MYPAN a
+                      where nvl(type,'0')<'5'
                     connect by prior id = parent_id
                      start with id = #{id}) a
              where nvl(del_flag,'0') != '1'
+             ]]>
     </select>
     <select id="getMypanById" resultType="com.common.sys.entity.Office">
         select
-      a.id,
+        a.id,
 		a.parent_id,
 		a.parent_ids,
 		a.code,
@@ -749,6 +788,7 @@ END;
   FROM v_office a
  where nvl(a.del_flag, '0') != '1'
    and a.type != 4
+   and nvl(substr(code,7,2),'99')!='03' and nvl(substr(code,7,2),'99')!='04'
    and a.type != 5 and rt=#{dwdm}
     </select>
     <select id="getPanDList" resultType="java.util.HashMap">
@@ -769,7 +809,7 @@ END;
                          start with id = a.id)) anyone1
               from (select a.*
                       from (select id, parent_id, name,'' xmmc, del_flag,type, '1' typpe, '' typppe,'' path,'-' scsj,'-' xmid,remarks,'-' xmh,'-' xmlb,'' anyone2
-                              from V_OFFICE where rt=#{id}
+                              from V_OFFICE where rt=#{id} and nvl(substr(code,7,2),'99')!='03' and nvl(substr(code,7,2),'99')!='04'
                             union all
                             select id, mlid,'' name, xmmc, isdel,'5' type, '' typpe, '1' typppe,path,to_char(scsj,'yyyy-mm-dd') scsj,xmid,remarks,xmh,xmlb,case when trunc(sysdate)-trunc(scsj) <4 then '1' else '' end anyone2
                               from APP_PAN_FILE where mlid in (select id from v_office connect by prior id=parent_id start with id=#{dwdm})
@@ -788,10 +828,11 @@ END;
           from SYS_OFFICE a
         connect by prior id = PARENT_ID
          start with length(code) = 8
-                and type = 2
+                and (type = 2 or type=9)
                 and substr(code,1,4)=#{CODE}
                 and substr(code, 7, 8) = '03'
     </select>
+
     <select id="getMlZbAList" resultType="java.util.HashMap">
         with a as
              (select a.id
@@ -806,8 +847,172 @@ END;
                    (select ovalue
                       from app_oproperty_dwcbbczb
                      where oid = b.bczbid
-                       and okey = 'MC') title
+                       and okey = 'MC') title,
+                       (select ovalue
+                      from app_oproperty_dwcbbczb
+                     where oid = b.bczbid
+                       and okey = 'BM') ysbm
               from app_zb_mlralation b, a
              where b.zhzbid = a.id
+             <if test="OILIDS!=null and OILIDS!=''">
+                 and b.oilid in (${OILIDS})
+             </if>
+    </select>
+    <select id="bcsbzcMlLists" resultType="com.common.sys.entity.Office">
+        select level grade,a.*
+          from (select * from APP_SBZC_ML where bbh=#{BBH}) a
+        connect by prior id = PARENT_ID
+         start with length(code) = 8
+                and type = 2
+                and substr(code,1,4)=#{CODE}
+                and substr(code, 7, 8) = '04'
+    </select>
+    <select id="getMlSbzcAList" resultType="java.util.HashMap">
+         with a as
+             (select a.id
+                from (select * from APP_SBZC_ML where bbh=#{BBH}) a
+              connect by prior id = PARENT_ID
+               start with length(code) = 8
+                      and type = 2
+                      and substr(code, 1, 4) = #{CODE}
+                      and substr(code, 7, 8) = '04')
+            select b.*,
+                   b.bcid bm,
+                   (select mc
+                      from APP_SBZC_BC
+                     where id = b.bcid and bbh=b.bbh) title
+              from app_sbzc_mlralation b, a
+             where b.zhid = a.id and b.bbh=#{BBH}
+        <if test="OILIDS!=null and OILIDS!=''">
+            and b.oilid in (${OILIDS})
+        </if>
+    </select>
+    <select id="getAdminByCode" resultType="java.util.HashMap">
+        select *
+          from SYS_USERROLE t
+         where roleid = (select id from SYS_OFFICE t where code = #{CODE} || '00')
+    </select>
+    <select id="getCodeByCpu" resultType="java.lang.String">
+        select a.code from  SYS_OFFICE a,SYS_JQRZ_HP b where b.hpdw=a.id and b.CPUID=#{CPU}
+    </select>
+    <select id="bczbMlListsDt" resultType="java.util.HashMap">
+         select level grade,a.*
+          from SYS_OFFICE a
+        connect by prior id = PARENT_ID
+         start with length(code) = 8
+                and type = 2
+                and substr(code,1,4)=#{CODE}
+                and substr(code, 7, 8) = '03'
+    </select>
+    <select id="getOilByCpu" resultType="java.lang.String">
+        select b.hpyqsj from  SYS_JQRZ_HP b where  b.CPUID=#{CPU}
+    </select>
+    <select id="bcsbzcAMlLists" resultType="com.common.sys.entity.Office">
+        select level grade,a.*
+          from (select * from APP_SBZC_ML where bbh=#{BBH}) a
+        connect by prior id = PARENT_ID
+         start with length(code) = 8
+                and (type = 2 or type=10)
+                and substr(code,1,4)=#{CODE}
+                and substr(code, 7, 8) = '04'
+    </select>
+    <select id="isAdmin" resultType="java.lang.Integer">
+        select count(1)
+          from SYS_USERROLE t, sys_office s
+         where t.roleid = s.id
+           and length(code) = 6
+           and substr(code, 5, 6) = '00'
+           and t.userid=#{USERID}
+    </select>
+    <select id="getMlSbzcAList2" resultType="java.util.HashMap">
+        with a as
+        (select a.id
+        from (select * from APP_SBZC_ML where bbh=#{BBH}) a
+        connect by prior id = PARENT_ID
+        start with length(code) = 8
+        and type = 2
+        and substr(code, 1, 4) = #{CODE}
+        and substr(code, 7, 8) = '04')
+        select b.zhid,b.bcid,b.code,c.*,to_char(c.RKSJ,'yyyy/MM/dd hh:mi:ss') UpdateTime,decode(lb,'SB','设备','主材') lbb
+        from app_sbzc_mlralation b, a ,APP_SBZC_BC c
+        where b.zhid = a.id and b.bbh=#{BBH} and b.bcid=c.id and b.bbh=c.bbh
+        <if test="OILIDS!=null and OILIDS!=''">
+            and b.oilid in (${OILIDS})
+        </if>
+    </select>
+    <select id="xtxmglLists" resultType="com.common.sys.entity.Office">
+        <![CDATA[
+        select a.*,(select count(1)
+          from app_pan_file
+         where type='6' and mlidm in (select id
+                          from sys_mypan
+                        connect by prior id = parent_id
+                         start with id = a.id)) anyone1
+              from (select a.*
+                      from (select id, parent_id, name,'' xmmc, del_flag, '1' typpe, '' typppe,'' path,'-' scsj,'-' xmid,remarks,'-' xmh,'-' xmlb,'' anyone2
+                              from SYS_MYPAN
+                            union all
+                            select id, mlidm,'' name, xmmc, isdel, '' typpe, '1' typppe,path,to_char(scsj,'yyyy-mm-dd') scsj,xmid,remarks,xmh,xmlb,case when trunc(sysdate)-trunc(scsj) <4 then '1' else '' end anyone2
+                              from APP_PAN_FILE where type='6') a
+                    connect by prior id = parent_id
+                     start with id = #{id}) a
+             where nvl(del_flag,'0') != '1'
+             order by typpe,scsj desc
+             ]]>
+    </select>
+    <select id="xtxmMlLists" resultType="com.common.sys.entity.Office">
+        <![CDATA[
+        select a.*
+              from (select a.*
+                      from  SYS_MYPAN a
+                   where nvl(type,'0')<6
+                    connect by prior id = parent_id
+                     start with id = #{id}
+                     ) a
+             where nvl(del_flag,'0') != '1'
+             order by CREATE_DATE
+             ]]>
+    </select>
+    <select id="xtxmMlLists2" resultType="com.common.sys.entity.Office">
+        <![CDATA[
+        select a.*
+              from (select a.*
+                      from  SYS_MYPAN a
+               where nvl(type,'0')>=5
+                    connect by prior id = parent_id
+                     start with id = #{id}
+
+                     ) a
+             where nvl(del_flag,'0') != '1'
+             order by CREATE_DATE
+             ]]>
+    </select>
+    <select id="bcelfMlLists" resultType="java.util.HashMap">
+        select level grade,a.*
+          from SYS_OFFICE a
+        connect by prior id = PARENT_ID
+         start with length(code) = 8
+                and type = 2
+                and substr(code,1,4)=#{CODE}
+                and substr(code, 7, 8) = '05'
+    </select>
+    <select id="getMlElfAList" resultType="java.util.HashMap">
+        with a as
+            (select a.id
+            from SYS_OFFICE a
+            connect by prior id = PARENT_ID
+            start with length(code) = 8
+            and type = 2
+            and substr(code, 1, 4) = #{CODE}
+            and substr(code, 7, 8) = '05')
+            select b.*,
+            b.bczbid bm,
+            (select ovalue
+            from APP_OPROPERTY_YHBCELF
+            where oid = b.bczbid
+            and okey = 'TypeDisplayTitle') title
+            from app_elf_mlralation b, a
+            where b.zhzbid = a.id
+
     </select>
 </mapper>

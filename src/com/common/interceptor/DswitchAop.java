@@ -25,12 +25,12 @@ public class DswitchAop {
 
     @Pointcut("@annotation(com.common.annotation.SqliteDao)")
     public void switc(){
-        System.out.println("--------------");
+        //System.out.println("--------------");
     }
 
     @Around("switc()")
     public Object aroundExec(ProceedingJoinPoint pjp) throws Throwable {
-        System.out.println("------------------------------------------");
+        //System.out.println("------------------------------------------");
         Class c=pjp.getTarget().getClass();
         Annotation a=c.getAnnotation(SqlServerDao.class);
         Annotation b=c.getAnnotation(SqliteDao.class);

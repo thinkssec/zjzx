@@ -8,6 +8,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.google.common.collect.Lists;
 import com.server.Entity.Menu;
 
+import java.util.HashMap;
 import java.util.List;
 
 /**
@@ -99,6 +100,16 @@ public class Office extends TreeEntity<Office> {
 	private String anyone2;
 	private String anyone3;
 	private String anyone4;
+	private HashMap otherproperty;
+
+	public HashMap getOtherproperty() {
+		if(otherproperty==null) otherproperty=new HashMap();
+		return otherproperty;
+	}
+
+	public void setOtherproperty(HashMap otherproperty) {
+		this.otherproperty = otherproperty;
+	}
 
 	private List<Menu> menuList = Lists.newArrayList();
 	public String getParentName() {

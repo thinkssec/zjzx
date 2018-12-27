@@ -29,6 +29,8 @@ public interface JqsqMapper {
 	List<HashMap> getJqsq(Condition condition);
 	List<HashMap> getRysq(Condition condition);
 	List<HashMap> getJqsqpz(Condition condition);
+	List<HashMap> getJqdept(Condition condition);
+	List<HashMap> getOurJq(Condition condition);
 	List<HashMap> getJqsqwpz(Condition condition);
 	List<HashMap> getRysqwpz(Condition condition);
 	void saveJqsqty(HashMap condition);
