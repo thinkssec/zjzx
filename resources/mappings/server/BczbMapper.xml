@@ -8,7 +8,7 @@
         insert (name,bz,userid,deptid,rkry,oilid,bbh) values (b.name,b.bz,b.userid,#{dwdm},#{userid},#{c5},#{c6})
         when matched then  update set a.name=b.name,a.bz=b.bz,a.userid=b.userid,oilid=#{c5},bbh=#{c6}
     </insert>
-    <insert id="addZb2Fz">
+    <insert id="addZb2Fz_bak">
         BEGIN
         <foreach collection="list" item="record" index="index">
             update APP_OBJECT_BCZBTREE set zt=1 where id=#{record.OID};
@@ -23,12 +23,29 @@
         commit;
         END;
     </insert>
+
+    <insert id="addZb2Fz">
+        BEGIN
+        <foreach collection="list" item="record" index="index">
+            update APP_OBJECT_BCZBTREE set zt=1 where id=#{record.ID};
+            update APP_OBJECT_BCZBTREE set zt=zt+1 where id=#{record.PID};
+            merge into APP_ZB_BCRALATION a using(select #{fzid} zhzbid,#{record.ID} bczbid from dual) b
+            on (a.zhzbid=b.zhzbid and a.bczbid=b.bczbid)
+            when not matched then
+            insert (zhzbid,bczbid) values (b.zhzbid,b.bczbid)
+            when matched then
+            update set rksj=sysdate;
+        </foreach>
+        commit;
+        END;
+    </insert>
+
     <insert id="delZb2Fz">
         BEGIN
         <foreach collection="list" item="record" index="index">
-            update APP_OBJECT_BCZBTREE set zt=0 where id=#{record.OID};
+            update APP_OBJECT_BCZBTREE set zt=0 where id=#{record.ID};
             update APP_OBJECT_BCZBTREE set zt=zt-1 where id=#{record.PID};
-            delete from APP_ZB_BCRALATION a where zhzbid=#{fzid} and bczbid=#{record.OID};
+            delete from APP_ZB_BCRALATION a where zhzbid=#{fzid} and bczbid=#{record.ID};
         </foreach>
         commit;
         END;
@@ -45,10 +62,10 @@
                 begin
                     select (max(code)+1) into v_code from sys_office where parent_id=#{fzid};
                     if v_code is null then select code||'001' into v_code from sys_office where id=#{fzid}; end if;
-                    update APP_OBJECT_DWCBBCZB set zt=1 where id=#{record.OID};
+                    update APP_OBJECT_DWCBBCZB set zt=1 where id=#{record.ID};
                     select sys_guid() into v_id from dual;
-                    insert into SYS_OFFICE(id,parent_id,name,code,type,USEABLE) values (v_id,#{fzid},#{record.MC},v_code,'9','1');
-                    merge into APP_ZB_MLRALATION a using(select v_id zhzbid,#{record.OID} bczbid from dual) b
+                    insert into SYS_OFFICE(id,parent_id,name,code,type,USEABLE) values (v_id,#{fzid},#{record.P_MC},v_code,'9','1');
+                    merge into APP_ZB_MLRALATION a using(select v_id zhzbid,#{record.ID} bczbid from dual) b
                     on (a.zhzbid=b.zhzbid and a.bczbid=b.bczbid)
                     when not matched then
                     insert (zhzbid,bczbid,code,oilid) values (b.zhzbid,b.bczbid,v_code,#{record.OILID})
@@ -66,8 +83,8 @@
         BEGIN
         <foreach collection="list" item="record" index="index">
             select code into v_code from sys_office where id=#{fzid};
-            update APP_OBJECT_DWCBBCZB set zt=1 where id=#{record.OID};
-            merge into APP_ZB_MLRALATION a using(select #{fzid} zhzbid,#{record.OID} bczbid from dual) b
+            update APP_OBJECT_DWCBBCZB set zt=1 where id=#{record.ID};
+            merge into APP_ZB_MLRALATION a using(select #{fzid} zhzbid,#{record.ID} bczbid from dual) b
             on (a.zhzbid=b.zhzbid and a.bczbid=b.bczbid)
             when not matched then
             insert (zhzbid,bczbid,code,oilid) values (b.zhzbid,b.bczbid,v_code,#{record.OILID})
@@ -245,12 +262,27 @@
         commit;
         END;
     </insert>
+    <insert id="insertBczb1">
+        insert into APP_OPROPERTY(OID,OKEY,OVALUE,ODEPTID) (
+        <foreach collection="list" item="item"  index="index" separator="UNION ALL">
+            select #{item.OID},#{item.OKEY},#{item.OVALUE},#{item.ODEPTID} from dual
+        </foreach>
+        )
+    </insert>
+    <insert id="insertBczb2">
+        insert into APP_OBJECT_BCZBTREE(ID,PID,OTYPE,LB,DEPTID,USERID,OILID) (
+        <foreach collection="list" item="item"  index="index" separator="UNION ALL">
+            select #{item.ID},#{item.PID},#{item.OTYPE},#{item.LB},#{item.DEPTID},#{item.USERID},#{item.OILID} from dual
+        </foreach>
+        )
+    </insert>
     <update id="mergeProject">
         DECLARE
         v_deptid number(4):=-1;
         v_count number(1):=0;
         v_infoid varchar2(50):='';
         v_cdxgc number(1):=0;
+        v_cc number(16):=0;
         BEGIN
         ${sql}
         commit;
@@ -310,6 +342,12 @@
         commit;
         END;
     </update>
+    <update id="xfElf">
+        insert into APP_XF (BBH,PATH,SUBMITTER,DEPTID,TYPE) values (SEQ_BCZBBB.nextval,#{path},#{userid},#{deptid},'2')
+    </update>
+    <update id="xfGcf">
+        insert into APP_XF (BBH,PATH,SUBMITTER,DEPTID,TYPE) values (SEQ_BCZBBB.nextval,#{path},#{userid},#{deptid},'4')
+    </update>
     <delete id="delFz">
         declare
           cursor cur_1 is
@@ -359,6 +397,12 @@
         END;
 
     </delete>
+    <delete id="delElf4Ml">
+        delete from APP_ELF_MLRALATION where bczbid=#{c4}
+    </delete>
+    <delete id="delGcf4Ml">
+        delete from APP_GCF_MLRALATION where bczbid=#{c4}
+    </delete>
     <select id="getBczbProperty" fetchSize="50000"  resultType="java.util.LinkedHashMap">
         with b as (select id
                  from APP_OBJECT_BCZBTREE
@@ -369,11 +413,16 @@
                    nvl(ovalue, '') ovalue
               from APP_OPROPERTY a,b where a.oid=b.id
     </select>
-    <select id="getBczbTreeById"  resultType="java.util.LinkedHashMap">
+    <select id="getBczbTreeById_bak"  resultType="java.util.LinkedHashMap">
         select * from (select a.*,b.ovalue oder from APP_OBJECT_BCZBTREE a left join
          (select * from APP_OPROPERTY where okey='ID') b on a.id=b.oid )
          connect by prior id=pid start with id=#{bczbid}
         order siblings by oder
+    </select>
+    <select id="getBczbTreeById"  resultType="java.util.LinkedHashMap">
+        select * from APP_OBJECT_BCZBTREE
+        connect by prior id=pid start with id=#{bczbid}
+        order siblings by ord
     </select>
     <!--<select id="getBczbTreeById"  resultType="java.util.LinkedHashMap">
         select * from APP_OBJECT_BCZBTREE connect by prior id=pid start with id=#{bczbid}
@@ -385,7 +434,26 @@
     <select id="getOtherTest2" fetchSize="50000" resultType="java.util.LinkedHashMap">
         select * from APP_OPROPERTY
     </select>
-    <select id="getYsBczb" fetchSize="50000" resultType="java.util.HashMap">
+    <select id="getYsBczb_bak" fetchSize="50000" resultType="java.util.HashMap">
+        <![CDATA[
+        with p as
+             (select t.*,(select username from APP_USER where userid=t.userid) username
+                from APP_OBJECT_BCZBTREE t
+               where level = 3
+                 and nvl(zt, 0) =0 ]]>
+        connect by prior id = pid
+        start with pid = '-1' <if test="DEPTID!=null and DEPTID!=''"> and deptid=#{DEPTID}</if> ),
+        d as
+        (select * from APP_OBJECTDIC)
+        select a.*,p.pid,to_char(p.rksj,'yyyymmdd hh24:mi:ss') rksj,username
+        from app_oproperty a, p, d
+        where a.oid = p.id
+        and p.otype = d.otype
+        and d.okey = a.okey
+        and display1 = '1'
+
+    </select>
+    <!--<select id="getYsBczb" fetchSize="50000" resultType="java.util.HashMap">
         <![CDATA[
         with p as
              (select t.*,(select username from APP_USER where userid=t.userid) username
@@ -393,18 +461,26 @@
                where level = 3
                  and nvl(zt, 0) =0 ]]>
               connect by prior id = pid
-               start with pid = '-1' <if test="DEPTID!=null and DEPTID!=''"> and deptid=#{DEPTID}</if> ),
-            d as
-             (select * from APP_OBJECTDIC)
-            select a.*,p.pid,to_char(p.rksj,'yyyymmdd hh24:mi:ss') rksj,username
-              from app_oproperty a, p, d
-             where a.oid = p.id
-               and p.otype = d.otype
-               and d.okey = a.okey
-               and display1 = '1'
-
+               start with pid = '-1' <if test="DEPTID!=null and DEPTID!=''"> and deptid=#{DEPTID}</if> )
+            select to_char(p.rksj,'yyyymmdd hh24:mi:ss') rksj,'' zt,p.*
+              from p
+    </select>-->
+    <select id="getYsBczb" fetchSize="50000" resultType="java.util.HashMap">
+        WITH C AS
+        (SELECT B.*
+        FROM APP_OBJECT_BCZBTREE B,
+        (SELECT * FROM APP_OBJECT_BCZBTREE WHERE PID = '-1') A
+        WHERE B.PID = A.ID)
+        SELECT to_char(D.rksj, 'yyyymmdd hh24:mi:ss') rksj,
+        '' zt,
+        D.*,
+        (select username from APP_USER where userid = D.userid) username
+        FROM APP_OBJECT_BCZBTREE D, C
+        WHERE D.PID = C.ID
+        AND nvl(D.zt, 0) = 0
+        <if test="DEPTID!=null and DEPTID!=''"> and D.deptid=#{DEPTID}</if>
     </select>
-    <select id="getProjectByScope" resultType="java.util.HashMap">
+    <select id="getProjectByScope_bak" resultType="java.util.HashMap">
       with p as
      (select *
         from app_object_bczbtree
@@ -415,7 +491,13 @@
            and oid = p.id) PRO_DXGC
     from app_oproperty a, p where a.oid = p.pid
     </select>
-
+    <select id="getProjectByScope" resultType="java.util.HashMap">
+        with p as
+        (select *
+        from app_object_bczbtree
+        where id in ( ${scope}))
+        select p.id id,a.*,p.p_projecttitle PRO_DXGC from app_object_bczbtree a,p where a.id = p.pid
+    </select>
     <select id="getZhzbList" resultType="java.util.HashMap">
         <include refid="com.base.baseMapper.pageStart"/>
         select (select username from app_user where userid=w.userid) ry,to_char(rksj,'yyyymmdd hh24:mi:ss') sj,(select name from APP_YQ where bzyqh=oilid) oilname,decode(status,'1','已下发','未下发') zt,w.* from APP_ZB_BCZH w where 1=1
@@ -441,7 +523,7 @@
            </if>
     </select>
 
-    <select id="getBczbByFz" fetchSize="50000" resultType="java.util.HashMap">
+    <select id="getBczbByFz_bak" fetchSize="50000" resultType="java.util.HashMap">
 
         with p as
              (select a.* from APP_OBJECT_BCZBTREE a,APP_ZB_BCRALATION t where a.id=t.bczbid <if test="c1!=null and c1!=''"> and t.zhzbid=#{c1}</if> ),
@@ -455,8 +537,15 @@
         and display1 = '1'
 
     </select>
+    <select id="getBczbByFz" fetchSize="50000" resultType="java.util.HashMap">
+        with p as
+        (select a.*,(select username from APP_USER where userid=a.userid) username from APP_OBJECT_BCZBTREE a,APP_ZB_BCRALATION t where a.id=t.bczbid <if test="c1!=null and c1!=''"> and t.zhzbid=#{c1}</if> )
+        select to_char(p.rksj,'yyyymmdd hh24:mi:ss') rksj,'' zt,p.*
+        from p
+    </select>
     <select id="getZbByFz" resultType="java.util.HashMap">
-        select a.*,(select pid from APP_OBJECT_BCZBTREE where id=(select pid from APP_OBJECT_BCZBTREE where id=a.bczbid)) info from APP_ZB_BCRALATION a where zhzbid=#{c1}
+        select a.*,(select pid from APP_OBJECT_BCZBTREE where
+        id=(select pid from APP_OBJECT_BCZBTREE where id=a.bczbid)) info from APP_ZB_BCRALATION a where zhzbid=#{c1}
     </select>
     <select id="getBczbTreeById2" resultType="java.util.LinkedHashMap">
         select *
@@ -515,7 +604,7 @@
         and d.okey = a.okey
         and display1 = '1'
     </select>
-    <select id="getDwBczb"  fetchSize="50000" resultType="java.util.HashMap">
+    <select id="getDwBczb_bak"  fetchSize="50000" resultType="java.util.HashMap">
         <![CDATA[
         with p as
              (select t.*
@@ -534,7 +623,20 @@
         and d.okey = a.okey
         and display1 = '1'
     </select>
-    <select id="getYhBczb" fetchSize="50000" resultType="java.util.HashMap">
+    <select id="getDwBczb"  fetchSize="50000" resultType="java.util.HashMap">
+        <![CDATA[
+        with p as
+             (select t.*
+                from APP_OBJECT_DWCBBCZB t
+               where level = 1
+                 and nvl(zt, 0) =0 ]]>
+        connect by prior id = pid
+        start with pid = '-1' <if test="DEPTID!=null and DEPTID!=''"> and deptid=#{DEPTID}</if> )
+        select to_char(p.rksj,'yyyymmdd hh24:mi:ss') rksj,p.oilid,
+        (select name from app_yq where bzyqh=p.OILID) yqname,'' zt,p.*
+        from p
+    </select>
+    <select id="getYhBczb_bak" fetchSize="50000" resultType="java.util.HashMap">
         <![CDATA[
         with p as
              (select t.*,(select username from APP_USER where userid=t.userid) username
@@ -552,11 +654,27 @@
         and d.okey = a.okey
         and display1 = '1'
     </select>
-    <select id="getYhBczbTreeById" resultType="java.util.LinkedHashMap">
+    <select id="getYhBczb" fetchSize="50000" resultType="java.util.HashMap">
+        <![CDATA[
+        with p as
+             (select t.*,(select username from APP_USER where userid=t.userid) username
+                from APP_OBJECT_YHBCZB t
+               where level = 1
+                 and nvl(zt, 0) =0 ]]>
+        connect by prior id = pid
+        start with pid = '-1' <if test="DEPTID!=null and DEPTID!=''"> and deptid=#{DEPTID}</if> )
+        select to_char(p.rksj,'yyyymmdd hh24:mi:ss') rksj,'' zt,p.*
+        from p
+    </select>
+    <select id="getYhBczbTreeById_bak" resultType="java.util.LinkedHashMap">
         select * from (select a.*,b.ovalue oder from APP_OBJECT_YHBCZB a left join
          (select * from APP_OPROPERTY_YHBCZB where okey='ID') b on a.id=b.oid )
          connect by prior id=pid start with id=#{bczbid}
         order siblings by oder
+    </select>
+    <select id="getYhBczbTreeById" resultType="java.util.LinkedHashMap">
+        select * from APP_OBJECT_YHBCZB connect by prior id=pid start with id=#{bczbid}
+        order siblings by p_id
     </select>
     <select id="getYhBczbProperty" resultType="java.util.LinkedHashMap">
         with b as (select id
@@ -568,15 +686,24 @@
                    nvl(ovalue, '') ovalue
               from APP_OPROPERTY_YHBCZB a,b where a.oid=b.id
     </select>
-    <select id="getZbByServerId" resultType="java.util.HashMap">
+    <select id="getZbByServerId_bak" resultType="java.util.HashMap">
         select * from APP_OPROPERTY_YHBCZB where okey='SERVERID' and ovalue in ${SCOPE}
     </select>
-    <select id="getDwBczbTreeById" resultType="java.util.LinkedHashMap">
+    <select id="getZbByServerId" resultType="java.util.HashMap">
+        select * from APP_OBJECT_YHBCZB where p_serverid in ${SCOPE}
+    </select>
+    <select id="getDwBczbTreeById_bak" resultType="java.util.LinkedHashMap">
         select * from (select a.*,b.ovalue oder from APP_OBJECT_DWCBBCZB a left join
          (select * from APP_OPROPERTY_DWCBBCZB where okey='ID') b on a.id=b.oid )
          connect by prior id=pid start with id=#{bczbid}
         order siblings by oder
     </select>
+    <select id="getDwBczbTreeById" resultType="java.util.LinkedHashMap">
+        select * from APP_OBJECT_DWCBBCZB
+        connect by prior id=pid start with id=#{bczbid}
+        order siblings by p_id
+    </select>
+
     <select id="getDwBczbProperty" resultType="java.util.LinkedHashMap">
         with b as (select id
                  from APP_OBJECT_DWCBBCZB
@@ -608,7 +735,7 @@
                 and length(code) = 8
                       and type = 2
     </select>
-    <select id="getDwBczbByDw" resultType="java.util.HashMap">
+    <select id="getDwBczbByDw_bak" resultType="java.util.HashMap">
         with ml as
          (select level grade, a.*
             from SYS_OFFICE a
@@ -625,6 +752,23 @@
           from APP_ZB_MLRALATION t, ml s
          where t.zhzbid = s.id
          order by rksj, bczbid, zhzbid
+    </select>
+    <select id="getDwBczbByDw" resultType="java.util.HashMap">
+        with ml as
+        (select level grade, a.*
+        from SYS_OFFICE a
+        connect by prior id = PARENT_ID
+        start with length(code) = 8
+        and type = 2
+        and substr(code, 1, 4) = #{CODE}
+        and substr(code, 7, 8) = '03')
+        select t.id,t.zhzbid,t.bczbid,t.code,t.rksj,
+        (select p_zhdj
+        from app_object_dwcbbczb
+        where id = t.bczbid) zhdj,oilid
+        from APP_ZB_MLRALATION t, ml s
+        where t.zhzbid = s.id
+        order by rksj, bczbid, zhzbid
     </select>
     <select id="getBcsbzcByDw" resultType="java.util.HashMap">
         with ml as
@@ -647,7 +791,7 @@
                       and type = 2
                       and bbh=#{BBH}
     </select>
-    <select id="getYsBczbXf" resultType="java.util.HashMap">
+    <select id="getYsBczbXf_bak" resultType="java.util.HashMap">
         <![CDATA[
         with p as
              (select t.*,(select username from APP_USER where userid=t.userid) username
@@ -667,6 +811,20 @@
         and y.status='1'
 
     </select>
+    <select id="getYsBczbXf" resultType="java.util.HashMap">
+        <![CDATA[
+        with p as
+             (select t.*,(select username from APP_USER where userid=t.userid) username
+                from APP_OBJECT_BCZBTREE t
+               where level = 3]]>
+        connect by prior id = pid
+        start with pid = '-1' <if test="DEPTID!=null and DEPTID!=''"> and deptid=#{DEPTID}</if> )
+        select to_char(p.rksj,'yyyymmdd hh24:mi:ss') rksj,'' zt,p.*,y.name fzmc,(select username from app_user where userid=y.userid) xfry
+        from p,APP_ZB_BCRALATION z,APP_ZB_BCZH y
+        where p.id=z.bczbid and z.zhzbid=y.id
+        and y.status='1'
+
+    </select>
     <select id="getDwElfByDw" resultType="java.util.HashMap">
         with ml as
          (select level grade, a.*
@@ -676,13 +834,98 @@
                   and type = 2
                   and substr(code, 1, 4) = #{CODE}
                   and substr(code, 7, 8) = '05')
-        select t.id,t.zhzbid,t.bczbid,t.code,t.rksj,
-               (select ovalue
-                  from APP_OPROPERTY_YHBCELF
-                 where oid = t.bczbid
-                   and okey = 'TypeDisplayTitle') title
+        select t.id,t.zhzbid,t.bczbid,t.code,t.rksj
           from APP_ELF_MLRALATION t, ml s
          where t.zhzbid = s.id
          order by rksj, bczbid, zhzbid
+    </select>
+    <select id="getDwBcelf" resultType="java.util.HashMap">
+        <![CDATA[
+        with p as
+             (select t.*
+                from APP_OBJECT_YHBCELF t
+               where level = 1
+                 and nvl(zt, 0) =0 ]]>
+        connect by prior id = pid
+        start with pid = '-1' <if test="DEPTID!=null and DEPTID!=''"> and deptid=#{DEPTID}</if> ),
+        d as
+        (select * from APP_OBJECTDIC)
+        select a.*,p.pid,to_char(p.rksj,'yyyymmdd hh24:mi:ss') rksj
+        from app_oproperty_yhbcelf a, p, d
+        where a.oid = p.id
+        and p.otype = d.otype
+        and d.okey = a.okey
+        and display1 = '1'
+    </select>
+    <select id="getDwQdByDw" resultType="java.util.HashMap">
+        with ml as
+         (select level grade, a.*
+            from SYS_OFFICE a
+          connect by prior id = PARENT_ID
+           start with length(code) = 8
+                  and type = 2
+                  and substr(code, 1, 4) = #{CODE}
+                  and substr(code, 7, 8) = '06')
+        select t.id,t.zhzbid,t.bczbid,t.code,t.rksj
+          from APP_QD_MLRALATION t, ml s
+         where t.zhzbid = s.id
+         order by rksj, bczbid, zhzbid
+    </select>
+    <select id="getDwBcgcf" resultType="java.util.HashMap">
+        <![CDATA[
+            with p as
+                 (select t.*
+                    from APP_OBJECT_GCF t
+                   where level = 1
+                     and nvl(zt, 0) =0 ]]>
+            connect by prior id = pid
+            start with pid = '-1' <if test="DEPTID!=null and DEPTID!=''"> and deptid=#{DEPTID}</if> )
+            select to_char(p.rksj,'yyyymmdd hh24:mi:ss') rksj,'' zt,p.*
+            from p
+    </select>
+    <select id="getDwGcfByDw" resultType="java.util.HashMap">
+        with ml as
+         (select level grade, a.*
+            from SYS_OFFICE a
+          connect by prior id = PARENT_ID
+           start with length(code) = 8
+                  and type = 2
+                  and substr(code, 1, 4) = #{CODE}
+                  and substr(code, 7, 8) = '07')
+        select t.id,t.zhzbid,t.bczbid,t.code,t.rksj
+          from APP_GCF_MLRALATION t, ml s
+         where t.zhzbid = s.id
+         order by rksj, bczbid, zhzbid
+    </select>
+    <select id="getDic" resultType="java.util.HashMap">
+        select * from APP_OBJECTDIC2
+    </select>
+    <select id="getYhBczbzx" resultType="java.util.HashMap">
+        <![CDATA[
+        with p as
+             (select t.*,(select username from APP_USER where userid=t.userid) username
+                from APP_OBJECT_YHBCZXZB t
+               where level = 1
+                 and nvl(zt, 0) =0 ]]>
+        connect by prior id = pid
+        start with pid = '-1' <if test="DEPTID!=null and DEPTID!=''"> and deptid=#{DEPTID}</if> )
+        select to_char(p.rksj,'yyyymmdd hh24:mi:ss') rksj,'' zt,p.*
+        from p
+    </select>
+    <select id="getZbzxByServerId" resultType="java.util.HashMap">
+        select * from APP_OBJECT_YHBCZXZB where p_serverid in ${SCOPE}
+    </select>
+    <select id="getZxBczb" resultType="java.util.HashMap">
+        <![CDATA[
+        with p as
+             (select t.*
+                from APP_OBJECT_ZXCBBCZB t
+               where level = 1
+                 and nvl(zt, 0) =0 ]]>
+        connect by prior id = pid
+        start with pid = '-1' <if test="DEPTID!=null and DEPTID!=''"> and deptid=#{DEPTID}</if> )
+        select to_char(p.rksj,'yyyymmdd hh24:mi:ss') rksj,p.oilid,
+        (select name from app_yq where bzyqh=p.OILID) yqname,'' zt,p.*
+        from p
     </select>
 </mapper>

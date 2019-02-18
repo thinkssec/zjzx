@@ -10,13 +10,13 @@
           FJRXM, SJRYHM, SJRXM,
           SFYJS, XMBH, XMMC,
           ZT, ZWNR, BZ,BCID,LB,FJRID,SJRID)
-        values (v_id, #{HFID,jdbcType=VARCHAR}, #{FJRYHM,jdbcType=VARCHAR},
+        values (#{ID}, #{HFID,jdbcType=VARCHAR}, #{FJRYHM,jdbcType=VARCHAR},
           #{FJRXM,jdbcType=VARCHAR}, #{SJRYHM,jdbcType=VARCHAR}, #{SJRXM,jdbcType=VARCHAR},
           #{SFYJS,jdbcType=VARCHAR}, #{XMBH,jdbcType=VARCHAR}, #{XMMC,jdbcType=VARCHAR},
           #{ZT,jdbcType=VARCHAR}, #{ZWNR,jdbcType=VARCHAR},
           #{BZ,jdbcType=VARCHAR},#{BCID,jdbcType=VARCHAR},#{LB,jdbcType=VARCHAR},#{FJRID,jdbcType=VARCHAR},#{SJRID,jdbcType=VARCHAR});
           insert into APP_EMAIL_ATTACH ( EID, PATH)
-        values ( v_id, #{PATH,jdbcType=VARCHAR});
+        values ( #{ID}, #{PATH,jdbcType=VARCHAR});
         commit;
           end;
     </insert>
@@ -63,6 +63,12 @@
     </select>
     <select id="getMailUList" resultType="java.util.HashMap">
         select * from APP_EMAIL where  isdel!=1 and SJRID=#{SJRID}
+    </select>
+    <select id="getMail1Attach" resultType="java.util.HashMap">
+        select * from APP_EMAIL_ATTACH where eid=#{ID}
+    </select>
+    <select id="getMailList2" resultType="java.lang.String">
+        select id from APP_EMAIL where (FJRID=#{USERID} or SJRID=#{USERID}) and isdel!=1
     </select>
 
 </mapper>

@@ -285,4 +285,80 @@
         END;
         ]]>
     </update>
+
+    <!-- 张-->
+    <select  id="getyqlist"  resultType="java.util.HashMap">
+        <include  refid="com.base.baseMapper.pageStart"/>
+        select  to_char(createtime,'yyyymmdd  hh24:mi:ss')  createsj,  t.*  from  APP_YQ  t  where  1=1
+        <if  test="c1  !=  null">
+            and  name  like  '%'||#{c1}||'%'
+        </if>
+        <include  refid="com.base.baseMapper.pageEnd"/>
+        order  by  BZYQH  desc
+        <if  test="sort  !=  null">
+            ${sort}
+        </if>
+    </select>
+    <select  id="getyqbblist"  resultType="java.util.HashMap">
+        <include  refid="com.base.baseMapper.pageStart"/>
+        select  to_char(createtime,'yyyymmdd  hh24:mi:ss')  createsj,  t.*  from  APP_JCKBB  t  where  1=1
+        <if  test="c1  !=  null">
+            and  mc  like  '%'||#{c1}||'%'
+        </if>
+        <include  refid="com.base.baseMapper.pageEnd"/>
+        order  by  BBH  desc
+        <if  test="sort  !=  null">
+            ${sort}
+        </if>
+    </select>
+    <update  id="saveYq">
+        BEGIN
+        <foreach  collection="list"  item="record"  index="index">
+            merge  into  zjzx.APP_YQ  a  using  (select  #{record.ID}  ID  from  dual)  b
+            on  (a.ID=b.ID)
+            when  matched  then
+            update  set  name=#{record.NAME},
+            bzyqh=#{record.BZYQH},
+            bz=#{record.BZ}
+            when  not  matched  then
+            insert  (a.name,a.bzyqh)
+            values(#{record.NAME},#{record.BZYQH});
+        </foreach>
+        COMMIT;
+        END;
+
+    </update>
+    <update  id="saveYqbb">
+        BEGIN
+        <foreach  collection="list"  item="record"  index="index">
+            merge  into  zjzx.APP_JCKBB  a  using  (select  #{record.ID}  ID  from  dual)  b
+            on  (a.ID=b.ID)
+            when  matched  then
+            update  set  MC=#{record.MC},
+            bbh=#{record.BBH},
+            sm=#{record.SM}
+            when  not  matched  then
+            insert  (a.bbh,a.mc,a.sm)
+            values(#{record.BBH},#{record.MC},#{record.SM});
+        </foreach>
+        COMMIT;
+        END;
+
+    </update>
+    <delete  id="delyq">
+        BEGIN
+        <foreach  collection="list"  item="record"  index="index">
+            delete  from    zjzx.APP_YQ  where  id=#{record.ID};
+        </foreach>
+        COMMIT;
+        END;
+    </delete>
+    <delete  id="delyqbb">
+        BEGIN
+        <foreach  collection="list"  item="record"  index="index">
+            delete  from    zjzx.APP_JCKBB  where  id=#{record.ID};
+        </foreach>
+        COMMIT;
+        END;
+    </delete>
 </mapper>

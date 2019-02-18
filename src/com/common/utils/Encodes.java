@@ -55,6 +55,17 @@ public class Encodes {
 		}
 		return encodedText;
 	}
+	public static String encode2Base64(String text) {
+		BASE64Encoder encoder = new BASE64Encoder();
+		String encodedText ="";
+		try {
+			byte[] textByte = text.getBytes("UTF-8");
+			encodedText = encoder.encode(textByte);
+		} catch (UnsupportedEncodingException e) {
+			return "";
+		}
+		return encodedText;
+	}
 	/**
 	 * Base64编码.
 	 */

@@ -26,19 +26,25 @@ import org.dom4j.Document;
 import org.dom4j.DocumentException;
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.FileCopyUtils;
 import org.springframework.web.context.ContextLoader;
 import org.springframework.web.context.WebApplicationContext;
 import sun.misc.BASE64Decoder;
+import sun.misc.BASE64Encoder;
 
 import javax.servlet.ServletContext;
 import java.io.File;
+import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.sql.Blob;
+import java.text.SimpleDateFormat;
 import java.util.*;
 
 /**
@@ -47,6 +53,7 @@ import java.util.*;
 @Service
 @Component
 public class SysService {
+    protected Logger logger = LoggerFactory.getLogger(getClass());
     @Autowired
     UserMapper userMapper;
     @Autowired
@@ -69,10 +76,13 @@ public class SysService {
     FrameMapper frameMapper;
     @Autowired
     BczbMapper bczbMapper;
+    @Autowired
+    FileService fileService;
     String bczbXfPath = Global.YSBCZBXF_BASE_URL;
     String yhbczbPath = Global.YHBCZBXF_BASE_URL;
     String dwbczbPath = Global.DWBCZBXF_BASE_URL;
-    String dwbcelfPath = Global.DWBCZBXF_BASE_URL;
+    String dwbcelfPath = Global.DWBCELFXF_BASE_URL;
+    String dwbcgcfPath = Global.DWBCGCFXF_BASE_URL;
     String dwbcsbzcPath = Global.DWBCSBZC_BASE_URL;
 
     //同步用户信息
@@ -127,12 +137,82 @@ public class SysService {
     public ResponseBody milSend(RequestBody rq, Map params, String id) {
         ResponseBody rp = new ResponseBody(params, "1", "邮件发送成功", id, rq.getTaskid());
         try {
-            params.put("PATH", rq.getAttach());
+            //params.put("PATH", rq.getAttach());
+            String yjid = UUID.randomUUID().toString();
+            params.put("ID", yjid);
             emailMapper.sendMail(params);
+            Map m = new HashMap();
+            m.put("ID", yjid);
+            rp.setDatas(JsonMapper.toJsonString(m));
         } catch (Exception e) {
             e.printStackTrace();
             rp.setIssuccess("0");
             rp.setMessage("邮件发送失败");
+        }
+        return rp;
+    }
+
+    public ResponseBody milSendAttach(RequestBody rq, Map params, String id) {
+        ResponseBody rp = new ResponseBody(params, "1", "邮件发送成功", id, rq.getTaskid());
+        try {
+            String mid = (String) params.get("ID");
+            String files = (String) params.get("FILES");
+            JavaType javaType = JsonMapper.getInstance().getTypeFactory().constructParametricType(List.class, String.class);
+            List<HashMap> h = JsonMapper.getInstance().fromJson(files, javaType);
+            for (HashMap f : h) {
+                byte[] b = ((String) f.get("BYTE")).getBytes();
+                String n = (String) f.get("NAME");
+                String filepath = fileService.upLoadAttatch(n, b);
+                Map m = new HashMap();
+                m.put("id", UUID.randomUUID().toString());
+                m.put("eid", mid);
+                m.put("path", filepath);
+                emailMapper.sendAttach(m);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            rp.setIssuccess("0");
+            rp.setMessage("邮件发送失败");
+        }
+        return rp;
+    }
+
+    public ResponseBody milGetAttach(RequestBody rq, Map params, String id) {
+        ResponseBody rp = new ResponseBody(params, "1", "获取邮件附件信息成功！", id, rq.getTaskid());
+        try {
+            List<HashMap> all = emailMapper.getMail1Attach(params);
+            List<Map> ls = new ArrayList();
+            for (HashMap el : all) {
+                System.out.println((String) params.get("ID"));
+                String apath = (String) el.get("PATH");
+                String lb = (String) params.get("LB");
+                String fullPath = "";
+                if ("2".equals(lb) || "9".equals(lb)) {
+                    fullPath = Global.getConfig("upLoadPath") + Global.YSBCZBXF_BASE_URL + apath;
+                } else if ("3".equals(lb) || "8".equals(lb)) {
+                    fullPath = Global.getConfig("upLoadPath") + Global.YHBCZBXF_BASE_URL + apath;
+                } else {
+                    fullPath = Global.getUserfilesBaseDir() + apath;
+                }
+                try {
+                    /*File file = new File(fullPath);
+                    String fileStr = FileCopyUtils.copyToString(new FileReader(file));*/
+                    String fileStr =new String (FileUtils.getBytes(fullPath),"UTF-8");
+                    Map mmmm=new HashMap();
+                    mmmm.put("YJID",(String) params.get("ID"));
+                    mmmm.put("FJMC",apath.replaceAll("/",""));
+                    mmmm.put("FJL",fileStr);
+                    ls.add(mmmm);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+                System.out.println(fullPath);
+            }
+            rp.setDatas(JsonMapper.toJsonString(ls));
+        } catch (Exception e) {
+            e.printStackTrace();
+            rp.setIssuccess("0");
+            rp.setMessage("获取邮件附件信息失败!");
         }
         return rp;
     }
@@ -152,9 +232,11 @@ public class SysService {
 
     public ResponseBody milGetMlist(RequestBody rq, Map params, String id) {
         ResponseBody rp = new ResponseBody(params, "1", "获取邮件列表成功", id, rq.getTaskid());
-        params.put("USERNAME", rq.getUsername());
+        User u = UserUtils.getUser();
+        params.put("USERID", u.getId());
         try {
-            List<HashMap> el = emailMapper.getMailList(params);
+            System.out.println(params);
+            List<String> el = emailMapper.getMailList2(params);
             rp.setDatas(JsonMapper.toJsonString(el));
         } catch (Exception e) {
             rp.setIssuccess("0");
@@ -178,7 +260,8 @@ public class SysService {
 
     public ResponseBody milGetDetail(RequestBody rq, Map params, String id) {
         ResponseBody rp = new ResponseBody(params, "1", "获取邮件内容成功！", id, rq.getTaskid());
-        params.put("USERNAME", rq.getUsername());
+        User user = UserUtils.getUser();
+        params.put("USERID", user.getId());
         try {
             List<HashMap> el = emailMapper.getMailList(params);
             if (el.size() > 0)
@@ -192,7 +275,7 @@ public class SysService {
         return rp;
     }
 
-    public ResponseBody milGetAttach(RequestBody rq, Map params, String id) {
+    public ResponseBody milGetAttachList(RequestBody rq, Map params, String id) {
         ResponseBody rp = new ResponseBody(params, "1", "获取邮件附件信息成功！", id, rq.getTaskid());
         try {
             List<HashMap> el = emailMapper.getMailAList(params);
@@ -884,6 +967,29 @@ public class SysService {
         return rp;
     }
 
+    public ResponseBody getDw4(RequestBody rq, Map params, String id) {
+        ResponseBody rp = new ResponseBody(params, "1", "获取数据列表成功！", id, rq.getTaskid());
+        try {
+            ObjectMapper objectMapper = new ObjectMapper();
+            Condition condition = objectMapper.readValue(rq.getParams(), Condition.class);
+            try {
+                //System.out.println("-------------" + condition.getDwdm());
+                List<HashMap> lsHt = jqsqMapper.getDw4(condition);
+                String jdata = JsonMapper.getInstance().toJson(lsHt);
+                rp.setDatas(jdata);
+            } catch (Exception e) {
+                e.printStackTrace();
+                rp.setIssuccess("0");
+                rp.setMessage("获取数据列表失败！" + e.getMessage());
+            }
+        } catch (Exception e) {
+            rp.setIssuccess("0");
+            rp.setMessage("获取数据列表失败！" + e.getMessage());
+            e.printStackTrace();
+        }
+        return rp;
+    }
+
     public ResponseBody getOfficeById(RequestBody rq, Map params, String id) {
         ResponseBody rp = new ResponseBody(params, "1", "获取数据列表成功！", id, rq.getTaskid());
         try {
@@ -1223,6 +1329,193 @@ public class SysService {
         return rp;
     }
 
+    //获取单位工程费目录
+    public ResponseBody bcgcfMlLists(RequestBody rq, Map params, String id) {
+        ResponseBody rp = new ResponseBody(params, "1", "获取数据列表", id, rq.getTaskid());
+        try {
+            ObjectMapper objectMapper = new ObjectMapper();
+            Condition condition = objectMapper.readValue(rq.getParams(), Condition.class);
+
+            User user = UserUtils.getUser();
+            Map pa = new HashMap();
+            pa.put("CODE", user.getDeptCode().substring(0, 4));
+
+            try {
+                HashMap<String, Office> lsHt = frameMapper.bcgcfMlLists(pa);
+                HashMap<String, List<Office>> children = new HashMap();
+                List<HashMap> bczbList = bczbMapper.getDwGcfByDw(pa);
+                for (HashMap hh : bczbList) {
+                    String mt = (String) hh.get("ZHZBID");
+                    Office ppp = lsHt.get(mt);
+                    ppp.setAnyone1((String) hh.get("TITLE"));
+                }
+                String rootId = "";
+                for (String key : lsHt.keySet()) {
+                    if (lsHt.get(key).getCode().length() == 8) rootId = key;
+                    List c = children.get(lsHt.get(key).getParentId());
+                    if (c == null) {
+                        c = new ArrayList<Office>();
+                        children.put((String) lsHt.get(key).getParentId(), c);
+                    }
+                    c.add(lsHt.get(key));
+                }
+                if (StringUtils.isBlank(rootId)) {
+                    frameMapper.insertGcfRoot(user.getDeptCode(), user.getDeptId());
+                    lsHt = frameMapper.bcgcfMlLists(pa);
+                    children = new HashMap();
+                    for (String key : lsHt.keySet()) {
+                        if (lsHt.get(key).getCode().length() == 8) rootId = key;
+                        List c = children.get(lsHt.get(key).getParentId());
+                        if (c == null) {
+                            c = new ArrayList<Office>();
+                            children.put((String) lsHt.get(key).getParentId(), c);
+                        }
+                        c.add(lsHt.get(key));
+                    }
+                }
+                //System.out.println("-------------"+children);
+                HashMap m = toTree(lsHt, children, rootId);
+                List mm = new ArrayList();
+                mm.add(m);
+                rp.setDatas(com.common.annotation.mapper.JsonMapper.toJsonString(mm));
+            } catch (Exception e) {
+                e.printStackTrace();
+                rp.setIssuccess("0");
+                rp.setMessage("获取数据列表失败！" + e.getMessage());
+            }
+        } catch (Exception e) {
+            rp.setIssuccess("0");
+            rp.setMessage("获取数据列表失败！" + e.getMessage());
+            e.printStackTrace();
+        }
+        return rp;
+    }
+
+    //获取单位清单目录
+    public ResponseBody bcqdMlLists(RequestBody rq, Map params, String id) {
+        ResponseBody rp = new ResponseBody(params, "1", "获取数据列表", id, rq.getTaskid());
+        try {
+            ObjectMapper objectMapper = new ObjectMapper();
+            Condition condition = objectMapper.readValue(rq.getParams(), Condition.class);
+
+            User user = UserUtils.getUser();
+            Map pa = new HashMap();
+            pa.put("CODE", user.getDeptCode().substring(0, 4));
+
+            try {
+                HashMap<String, Office> lsHt = frameMapper.bcqdMlLists(pa);
+                HashMap<String, List<Office>> children = new HashMap();
+                List<HashMap> bczbList = bczbMapper.getDwQdByDw(pa);
+                for (HashMap hh : bczbList) {
+                    String mt = (String) hh.get("ZHZBID");
+                    Office ppp = lsHt.get(mt);
+                    ppp.setAnyone1((String) hh.get("TITLE"));
+                }
+                String rootId = "";
+                for (String key : lsHt.keySet()) {
+                    if (lsHt.get(key).getCode().length() == 8) rootId = key;
+                    List c = children.get(lsHt.get(key).getParentId());
+                    if (c == null) {
+                        c = new ArrayList<Office>();
+                        children.put((String) lsHt.get(key).getParentId(), c);
+                    }
+                    c.add(lsHt.get(key));
+                }
+                if (StringUtils.isBlank(rootId)) {
+                    frameMapper.insertQdRoot(user.getDeptCode(), user.getDeptId());
+                    lsHt = frameMapper.bcqdMlLists(pa);
+                    children = new HashMap();
+                    for (String key : lsHt.keySet()) {
+                        if (lsHt.get(key).getCode().length() == 8) rootId = key;
+                        List c = children.get(lsHt.get(key).getParentId());
+                        if (c == null) {
+                            c = new ArrayList<Office>();
+                            children.put((String) lsHt.get(key).getParentId(), c);
+                        }
+                        c.add(lsHt.get(key));
+                    }
+                }
+                //System.out.println("-------------"+children);
+                HashMap m = toTree(lsHt, children, rootId);
+                List mm = new ArrayList();
+                mm.add(m);
+                rp.setDatas(com.common.annotation.mapper.JsonMapper.toJsonString(mm));
+            } catch (Exception e) {
+                e.printStackTrace();
+                rp.setIssuccess("0");
+                rp.setMessage("获取数据列表失败！" + e.getMessage());
+            }
+        } catch (Exception e) {
+            rp.setIssuccess("0");
+            rp.setMessage("获取数据列表失败！" + e.getMessage());
+            e.printStackTrace();
+        }
+        return rp;
+    }
+
+    //获取单位补充指标目录
+    public ResponseBody bczbMlLists_bak(RequestBody rq, Map params, String id) {
+        ResponseBody rp = new ResponseBody(params, "1", "获取数据列表", id, rq.getTaskid());
+        try {
+            ObjectMapper objectMapper = new ObjectMapper();
+            Condition condition = objectMapper.readValue(rq.getParams(), Condition.class);
+
+            User user = UserUtils.getUser();
+            Map pa = new HashMap();
+            pa.put("CODE", user.getDeptCode().substring(0, 4));
+
+            try {
+                HashMap<String, Office> lsHt = frameMapper.bczbMlLists(pa);
+                HashMap<String, List<Office>> children = new HashMap();
+                List<HashMap> bczbList = bczbMapper.getDwBczbByDw(pa);
+                for (HashMap hh : bczbList) {
+                    String mt = (String) hh.get("ZHZBID");
+                    Office ppp = lsHt.get(mt);
+                    if (ppp == null) continue;
+                    ppp.getOtherproperty().put("O" + (String) hh.get("OILID"), (String) hh.get("ZHDJ"));
+                }
+                String rootId = "";
+                //System.out.println("========"+lsHt);
+                for (String key : lsHt.keySet()) {
+                    if (lsHt.get(key).getCode().length() == 8) rootId = key;
+                    List c = children.get(lsHt.get(key).getParentId());
+                    if (c == null) {
+                        c = new ArrayList<Office>();
+                        children.put((String) lsHt.get(key).getParentId(), c);
+                    }
+                    c.add(lsHt.get(key));
+                }
+                if (StringUtils.isBlank(rootId)) {
+                    frameMapper.insertBczbRoot(user.getDeptCode(), user.getDeptId());
+                    lsHt = frameMapper.bczbMlLists(pa);
+                    children = new HashMap();
+                    for (String key : lsHt.keySet()) {
+                        if (lsHt.get(key).getCode().length() == 8) rootId = key;
+                        List c = children.get(lsHt.get(key).getParentId());
+                        if (c == null) {
+                            c = new ArrayList<Office>();
+                            children.put((String) lsHt.get(key).getParentId(), c);
+                        }
+                        c.add(lsHt.get(key));
+                    }
+                }
+                //System.out.println("-------------"+children);
+                HashMap m = toTree(lsHt, children, rootId);
+                List mm = new ArrayList();
+                mm.add(m);
+                rp.setDatas(com.common.annotation.mapper.JsonMapper.toJsonString(mm));
+            } catch (Exception e) {
+                e.printStackTrace();
+                rp.setIssuccess("0");
+                rp.setMessage("获取数据列表失败！" + e.getMessage());
+            }
+        } catch (Exception e) {
+            rp.setIssuccess("0");
+            rp.setMessage("获取数据列表失败！" + e.getMessage());
+            e.printStackTrace();
+        }
+        return rp;
+    }
     //获取单位补充指标目录
     public ResponseBody bczbMlLists(RequestBody rq, Map params, String id) {
         ResponseBody rp = new ResponseBody(params, "1", "获取数据列表", id, rq.getTaskid());
@@ -1286,7 +1579,6 @@ public class SysService {
         }
         return rp;
     }
-
     //获取单位补充指标目录
     public ResponseBody vsbzcMlLists(RequestBody rq, Map params, String id) {
         ResponseBody rp = new ResponseBody(params, "1", "获取数据列表", id, rq.getTaskid());
@@ -2865,7 +3157,7 @@ public class SysService {
     }
 
     //补充指标
-    public ResponseBody getBczbList(RequestBody rq, Map params, String id) {
+    public ResponseBody getBczbList_bak(RequestBody rq, Map params, String id) {
         ResponseBody rp = new ResponseBody(params, "1", "获取原始补充指标成功", id, rq.getTaskid());
         try {
             ObjectMapper objectMapper = new ObjectMapper();
@@ -2994,7 +3286,269 @@ public class SysService {
     }
 
     //补充指标
-    public ResponseBody getBczbListxf(RequestBody rq, Map params, String id) {
+    public ResponseBody getBczbList(RequestBody rq, Map params, String id) {
+        ResponseBody rp = new ResponseBody(params, "1", "获取原始补充指标成功", id, rq.getTaskid());
+        try {
+            ObjectMapper objectMapper = new ObjectMapper();
+            Condition condition = objectMapper.readValue(rq.getParams(), Condition.class);
+
+            User user = UserUtils.getUser();
+            Map pa = new HashMap();
+            pa.put("DEPTID", user.getDeptCode().substring(0, 4));
+            //System.out.println(pa);
+            //params.put("DEPTID", "1045");
+            try {
+                List<HashMap> bbls = bczbMapper.getYsBczb(pa);
+                //转换后的指标Map
+                HashMap<String, HashMap> objects = new HashMap();
+                HashMap<String, String> plist = new HashMap();
+                for (HashMap m : bbls) {
+                    plist.put((String) m.get("PID"), "project");
+                    HashMap zb = (HashMap) objects.get((String) m.get("ID"));
+                    if (zb == null) {
+                        zb = new HashMap();
+                        objects.put((String) m.get("ID"), zb);
+                    }
+                    zb.putAll(m);
+                }
+
+                //获取project 范围
+                String scope = "''";
+                for (String k : plist.keySet()) {
+                    scope += ",'" + k + "'";
+                }
+                List<HashMap> lsP = bczbMapper.getProjectByScope(scope);
+
+                //转换后的project
+                HashMap<String, HashMap> projects = new HashMap();
+                for (HashMap m : lsP) {
+                    HashMap pro = (HashMap) projects.get((String) m.get("ID"));
+                    if (pro == null) {
+                        pro = new HashMap();
+                        projects.put((String) m.get("ID"), pro);
+                    }
+                    pro.put("PRO_ProjectTitle", (String) m.get("P_PROJECTTITLE"));
+                    pro.put("PRO_OilTitle", (String) m.get("P_OILTITLE"));
+                    pro.put("PRO_BBHTitle", (String) m.get("P_BBHTITLE"));
+                    pro.put("PRO_ID", (String) m.get("ID"));
+                    pro.put("PRO_DXGC", (String) m.get("PRO_DXGC"));
+                }
+                //给指标绑定项目属性
+                for (String k : objects.keySet()) {
+                    HashMap o = objects.get(k);
+                    try {
+                        o.putAll(projects.get(o.get("PID")));
+                    } catch (Exception e) {
+                    }
+                }
+                List<HashMap> mdList = new ArrayList<HashMap>(objects.values());
+                LinkedHashMap<String, String> orderby = new LinkedHashMap<>();
+                if (StringUtils.isNotBlank(condition.getSort())) {
+                    String[] sort = condition.getSort().split(",");
+                    for (String s : sort) {
+                        if (StringUtils.isBlank(s)) continue;
+                        String[] ss = s.split(" ");
+                        orderby.put(ss[0], ss[1]);
+                    }
+                } else {
+                    orderby.put("RKSJ", "desc");
+                }
+                AppUtils.sort(mdList, orderby);
+                HashMap datas = new HashMap();
+                int pageNo = Integer.parseInt(condition.getStart());   //从1开始
+                int pageSize = Integer.parseInt(condition.getLimit());
+                int fromIndex = pageSize * (pageNo - 1);
+                int toIndex = pageSize * pageNo;
+                if (toIndex > mdList.size()) {
+                    toIndex = mdList.size();
+                }
+                if (fromIndex > toIndex) {
+                    fromIndex = toIndex;
+                }
+                //模糊查询
+                List<HashMap> myList = new ArrayList<HashMap>();
+                List<HashMap> tmpList = new ArrayList<HashMap>();
+                String key = condition.getC1();
+                String keyReturn = "";
+                if (StringUtils.isNotBlank(key)) {
+                    tmpList = mdList;
+                    String[] keys = key.split("\\s+");
+                    for (String a : keys) {
+                        keyReturn += a + "##%%&&**";
+                        myList = new ArrayList<HashMap>();
+                        for (HashMap m : tmpList) {
+                            for (Object k : m.keySet()) {
+                                String val = (String) m.get(k);
+                                if (StringUtils.isBlank(val)) continue;
+                                boolean f = false;
+                                if (val.contains(a)) {
+                                    f = true;
+                                }
+                                if (f) {
+                                    myList.add(m);
+                                    break;
+                                }
+                            }
+                        }
+                        tmpList = myList;
+                    }
+                } else {
+                    myList = mdList;
+                }
+                try {
+                    datas.put("rows", myList.subList(fromIndex, toIndex));
+                } catch (Exception e) {
+                    datas.put("rows", myList);
+                }
+                datas.put("total", myList.size());
+                datas.put("keyReturn", keyReturn);
+                rp.setDatas(com.common.annotation.mapper.JsonMapper.toJsonString(datas));
+            } catch (Exception e) {
+                e.printStackTrace();
+                rp.setIssuccess("0");
+                rp.setMessage("获取原始补充指标失败！" + e.getMessage());
+            }
+        } catch (Exception e) {
+            rp.setIssuccess("0");
+            rp.setMessage("获取原始补充指标失败！" + e.getMessage());
+            e.printStackTrace();
+        }
+        return rp;
+    }
+
+    //中心补充指标
+    public ResponseBody getBczbzxList(RequestBody rq, Map params, String id) {
+        ResponseBody rp = new ResponseBody(params, "1", "获取原始补充指标成功", id, rq.getTaskid());
+        try {
+            ObjectMapper objectMapper = new ObjectMapper();
+            Condition condition = objectMapper.readValue(rq.getParams(), Condition.class);
+
+            User user = UserUtils.getUser();
+            Map pa = new HashMap();
+            pa.put("DEPTID", condition.getDwdm());
+            //System.out.println(pa);
+            //params.put("DEPTID", "1045");
+            try {
+                List<HashMap> bbls = bczbMapper.getYsBczb(pa);
+                //转换后的指标Map
+                HashMap<String, HashMap> objects = new HashMap();
+                HashMap<String, String> plist = new HashMap();
+                for (HashMap m : bbls) {
+                    plist.put((String) m.get("PID"), "project");
+                    HashMap zb = (HashMap) objects.get((String) m.get("ID"));
+                    if (zb == null) {
+                        zb = new HashMap();
+                        objects.put((String) m.get("ID"), zb);
+                    }
+                    zb.putAll(m);
+                }
+
+                //获取project 范围
+                String scope = "''";
+                for (String k : plist.keySet()) {
+                    scope += ",'" + k + "'";
+                }
+                List<HashMap> lsP = bczbMapper.getProjectByScope(scope);
+
+                //转换后的project
+                HashMap<String, HashMap> projects = new HashMap();
+                for (HashMap m : lsP) {
+                    HashMap pro = (HashMap) projects.get((String) m.get("ID"));
+                    if (pro == null) {
+                        pro = new HashMap();
+                        projects.put((String) m.get("ID"), pro);
+                    }
+                    pro.put("PRO_ProjectTitle", (String) m.get("P_PROJECTTITLE"));
+                    pro.put("PRO_OilTitle", (String) m.get("P_OILTITLE"));
+                    pro.put("PRO_BBHTitle", (String) m.get("P_BBHTITLE"));
+                    pro.put("PRO_ID", (String) m.get("ID"));
+                    pro.put("PRO_DXGC", (String) m.get("PRO_DXGC"));
+                }
+                //给指标绑定项目属性
+                for (String k : objects.keySet()) {
+                    HashMap o = objects.get(k);
+                    try {
+                        o.putAll(projects.get(o.get("PID")));
+                    } catch (Exception e) {
+                    }
+                }
+                List<HashMap> mdList = new ArrayList<HashMap>(objects.values());
+                LinkedHashMap<String, String> orderby = new LinkedHashMap<>();
+                if (StringUtils.isNotBlank(condition.getSort())) {
+                    String[] sort = condition.getSort().split(",");
+                    for (String s : sort) {
+                        if (StringUtils.isBlank(s)) continue;
+                        String[] ss = s.split(" ");
+                        orderby.put(ss[0], ss[1]);
+                    }
+                } else {
+                    orderby.put("RKSJ", "desc");
+                }
+                AppUtils.sort(mdList, orderby);
+                HashMap datas = new HashMap();
+                int pageNo = Integer.parseInt(condition.getStart());   //从1开始
+                int pageSize = Integer.parseInt(condition.getLimit());
+                int fromIndex = pageSize * (pageNo - 1);
+                int toIndex = pageSize * pageNo;
+                if (toIndex > mdList.size()) {
+                    toIndex = mdList.size();
+                }
+                if (fromIndex > toIndex) {
+                    fromIndex = toIndex;
+                }
+                //模糊查询
+                List<HashMap> myList = new ArrayList<HashMap>();
+                List<HashMap> tmpList = new ArrayList<HashMap>();
+                String key = condition.getC1();
+                String keyReturn = "";
+                if (StringUtils.isNotBlank(key)) {
+                    tmpList = mdList;
+                    String[] keys = key.split("\\s+");
+                    for (String a : keys) {
+                        keyReturn += a + "##%%&&**";
+                        myList = new ArrayList<HashMap>();
+                        for (HashMap m : tmpList) {
+                            for (Object k : m.keySet()) {
+                                String val = (String) m.get(k);
+                                if (StringUtils.isBlank(val)) continue;
+                                boolean f = false;
+                                if (val.contains(a)) {
+                                    f = true;
+                                }
+                                if (f) {
+                                    myList.add(m);
+                                    break;
+                                }
+                            }
+                        }
+                        tmpList = myList;
+                    }
+                } else {
+                    myList = mdList;
+                }
+                try {
+                    datas.put("rows", myList.subList(fromIndex, toIndex));
+                } catch (Exception e) {
+                    datas.put("rows", myList);
+                }
+                datas.put("total", myList.size());
+                datas.put("keyReturn", keyReturn);
+                rp.setDatas(com.common.annotation.mapper.JsonMapper.toJsonString(datas));
+            } catch (Exception e) {
+                e.printStackTrace();
+                rp.setIssuccess("0");
+                rp.setMessage("获取原始补充指标失败！" + e.getMessage());
+            }
+        } catch (Exception e) {
+            rp.setIssuccess("0");
+            rp.setMessage("获取原始补充指标失败！" + e.getMessage());
+            e.printStackTrace();
+        }
+        return rp;
+    }
+
+    //补充指标
+    public ResponseBody getBczbListxf_bak(RequestBody rq, Map params, String id) {
         ResponseBody rp = new ResponseBody(params, "1", "获取原始补充指标成功", id, rq.getTaskid());
         try {
             ObjectMapper objectMapper = new ObjectMapper();
@@ -3123,7 +3677,7 @@ public class SysService {
         return rp;
     }
 
-    public ResponseBody getYhBczbList(RequestBody rq, Map params, String id) {
+    public ResponseBody getBczbListxf(RequestBody rq, Map params, String id) {
         ResponseBody rp = new ResponseBody(params, "1", "获取原始补充指标成功", id, rq.getTaskid());
         try {
             ObjectMapper objectMapper = new ObjectMapper();
@@ -3135,8 +3689,266 @@ public class SysService {
             //System.out.println(pa);
             //params.put("DEPTID", "1045");
             try {
-                List<HashMap> bbls = bczbMapper.getYhBczb(pa);
+                List<HashMap> bbls = bczbMapper.getYsBczbXf(pa);
+                //转换后的指标Map
+                HashMap<String, HashMap> objects = new HashMap();
+                HashMap<String, String> plist = new HashMap();
+                for (HashMap m : bbls) {
+                    plist.put((String) m.get("PID"), "project");
+                    HashMap zb = (HashMap) objects.get((String) m.get("ID"));
+                    if (zb == null) {
+                        zb = new HashMap();
+                        objects.put((String) m.get("ID"), zb);
+                    }
+                    zb.putAll(m);
+                }
 
+                //获取project 范围
+                String scope = "''";
+                for (String k : plist.keySet()) {
+                    scope += ",'" + k + "'";
+                }
+                List<HashMap> lsP = bczbMapper.getProjectByScope(scope);
+
+                //转换后的project
+                HashMap<String, HashMap> projects = new HashMap();
+                for (HashMap m : lsP) {
+                    HashMap pro = (HashMap) projects.get((String) m.get("ID"));
+                    if (pro == null) {
+                        pro = new HashMap();
+                        projects.put((String) m.get("ID"), pro);
+                    }
+                    pro.put("PRO_ProjectTitle", (String) m.get("P_PROJECTTITLE"));
+                    pro.put("PRO_OilTitle", (String) m.get("P_OILTITLE"));
+                    pro.put("PRO_BBHTitle", (String) m.get("P_BBHTITLE"));
+                    pro.put("PRO_ID", (String) m.get("ID"));
+                    pro.put("PRO_DXGC", (String) m.get("PRO_DXGC"));
+                }
+                //给指标绑定项目属性
+                for (String k : objects.keySet()) {
+                    HashMap o = objects.get(k);
+                    try {
+                        o.putAll(projects.get(o.get("PID")));
+                    } catch (Exception e) {
+                    }
+                }
+                List<HashMap> mdList = new ArrayList<HashMap>(objects.values());
+                LinkedHashMap<String, String> orderby = new LinkedHashMap<>();
+                if (StringUtils.isNotBlank(condition.getSort())) {
+                    String[] sort = condition.getSort().split(",");
+                    for (String s : sort) {
+                        if (StringUtils.isBlank(s)) continue;
+                        String[] ss = s.split(" ");
+                        orderby.put(ss[0], ss[1]);
+                    }
+                } else {
+                    orderby.put("RKSJ", "desc");
+                }
+                AppUtils.sort(mdList, orderby);
+                HashMap datas = new HashMap();
+                int pageNo = Integer.parseInt(condition.getStart());   //从1开始
+                int pageSize = Integer.parseInt(condition.getLimit());
+                int fromIndex = pageSize * (pageNo - 1);
+                int toIndex = pageSize * pageNo;
+                if (toIndex > mdList.size()) {
+                    toIndex = mdList.size();
+                }
+                if (fromIndex > toIndex) {
+                    fromIndex = toIndex;
+                }
+                //模糊查询
+                List<HashMap> myList = new ArrayList<HashMap>();
+                List<HashMap> tmpList = new ArrayList<HashMap>();
+                String key = condition.getC1();
+                String keyReturn = "";
+                if (StringUtils.isNotBlank(key)) {
+                    tmpList = mdList;
+                    String[] keys = key.split("\\s+");
+                    for (String a : keys) {
+                        keyReturn += a + "##%%&&**";
+                        myList = new ArrayList<HashMap>();
+                        for (HashMap m : tmpList) {
+                            for (Object k : m.keySet()) {
+                                String val = (String) m.get(k);
+                                if (StringUtils.isBlank(val)) continue;
+                                boolean f = false;
+                                if (val.contains(a)) {
+                                    f = true;
+                                }
+                                if (f) {
+                                    myList.add(m);
+                                    break;
+                                }
+                            }
+                        }
+                        tmpList = myList;
+                    }
+                } else {
+                    myList = mdList;
+                }
+                try {
+                    datas.put("rows", myList.subList(fromIndex, toIndex));
+                } catch (Exception e) {
+                    datas.put("rows", myList);
+                }
+                datas.put("total", myList.size());
+                datas.put("keyReturn", keyReturn);
+                rp.setDatas(com.common.annotation.mapper.JsonMapper.toJsonString(datas));
+            } catch (Exception e) {
+                e.printStackTrace();
+                rp.setIssuccess("0");
+                rp.setMessage("获取原始补充指标失败！" + e.getMessage());
+            }
+        } catch (Exception e) {
+            rp.setIssuccess("0");
+            rp.setMessage("获取原始补充指标失败！" + e.getMessage());
+            e.printStackTrace();
+        }
+        return rp;
+    }
+
+    public ResponseBody getBczbzxListxf(RequestBody rq, Map params, String id) {
+        ResponseBody rp = new ResponseBody(params, "1", "获取原始补充指标成功", id, rq.getTaskid());
+        try {
+            ObjectMapper objectMapper = new ObjectMapper();
+            Condition condition = objectMapper.readValue(rq.getParams(), Condition.class);
+
+            User user = UserUtils.getUser();
+            Map pa = new HashMap();
+            pa.put("DEPTID", condition.getDwdm());
+            //System.out.println(pa);
+            //params.put("DEPTID", "1045");
+            try {
+                List<HashMap> bbls = bczbMapper.getYsBczbXf(pa);
+                //转换后的指标Map
+                HashMap<String, HashMap> objects = new HashMap();
+                HashMap<String, String> plist = new HashMap();
+                for (HashMap m : bbls) {
+                    plist.put((String) m.get("PID"), "project");
+                    HashMap zb = (HashMap) objects.get((String) m.get("ID"));
+                    if (zb == null) {
+                        zb = new HashMap();
+                        objects.put((String) m.get("ID"), zb);
+                    }
+                    zb.putAll(m);
+                }
+
+                //获取project 范围
+                String scope = "''";
+                for (String k : plist.keySet()) {
+                    scope += ",'" + k + "'";
+                }
+                List<HashMap> lsP = bczbMapper.getProjectByScope(scope);
+
+                //转换后的project
+                HashMap<String, HashMap> projects = new HashMap();
+                for (HashMap m : lsP) {
+                    HashMap pro = (HashMap) projects.get((String) m.get("ID"));
+                    if (pro == null) {
+                        pro = new HashMap();
+                        projects.put((String) m.get("ID"), pro);
+                    }
+                    pro.put("PRO_ProjectTitle", (String) m.get("P_PROJECTTITLE"));
+                    pro.put("PRO_OilTitle", (String) m.get("P_OILTITLE"));
+                    pro.put("PRO_BBHTitle", (String) m.get("P_BBHTITLE"));
+                    pro.put("PRO_ID", (String) m.get("ID"));
+                    pro.put("PRO_DXGC", (String) m.get("PRO_DXGC"));
+                }
+                //给指标绑定项目属性
+                for (String k : objects.keySet()) {
+                    HashMap o = objects.get(k);
+                    try {
+                        o.putAll(projects.get(o.get("PID")));
+                    } catch (Exception e) {
+                    }
+                }
+                List<HashMap> mdList = new ArrayList<HashMap>(objects.values());
+                LinkedHashMap<String, String> orderby = new LinkedHashMap<>();
+                if (StringUtils.isNotBlank(condition.getSort())) {
+                    String[] sort = condition.getSort().split(",");
+                    for (String s : sort) {
+                        if (StringUtils.isBlank(s)) continue;
+                        String[] ss = s.split(" ");
+                        orderby.put(ss[0], ss[1]);
+                    }
+                } else {
+                    orderby.put("RKSJ", "desc");
+                }
+                AppUtils.sort(mdList, orderby);
+                HashMap datas = new HashMap();
+                int pageNo = Integer.parseInt(condition.getStart());   //从1开始
+                int pageSize = Integer.parseInt(condition.getLimit());
+                int fromIndex = pageSize * (pageNo - 1);
+                int toIndex = pageSize * pageNo;
+                if (toIndex > mdList.size()) {
+                    toIndex = mdList.size();
+                }
+                if (fromIndex > toIndex) {
+                    fromIndex = toIndex;
+                }
+                //模糊查询
+                List<HashMap> myList = new ArrayList<HashMap>();
+                List<HashMap> tmpList = new ArrayList<HashMap>();
+                String key = condition.getC1();
+                String keyReturn = "";
+                if (StringUtils.isNotBlank(key)) {
+                    tmpList = mdList;
+                    String[] keys = key.split("\\s+");
+                    for (String a : keys) {
+                        keyReturn += a + "##%%&&**";
+                        myList = new ArrayList<HashMap>();
+                        for (HashMap m : tmpList) {
+                            for (Object k : m.keySet()) {
+                                String val = (String) m.get(k);
+                                if (StringUtils.isBlank(val)) continue;
+                                boolean f = false;
+                                if (val.contains(a)) {
+                                    f = true;
+                                }
+                                if (f) {
+                                    myList.add(m);
+                                    break;
+                                }
+                            }
+                        }
+                        tmpList = myList;
+                    }
+                } else {
+                    myList = mdList;
+                }
+                try {
+                    datas.put("rows", myList.subList(fromIndex, toIndex));
+                } catch (Exception e) {
+                    datas.put("rows", myList);
+                }
+                datas.put("total", myList.size());
+                datas.put("keyReturn", keyReturn);
+                rp.setDatas(com.common.annotation.mapper.JsonMapper.toJsonString(datas));
+            } catch (Exception e) {
+                e.printStackTrace();
+                rp.setIssuccess("0");
+                rp.setMessage("获取原始补充指标失败！" + e.getMessage());
+            }
+        } catch (Exception e) {
+            rp.setIssuccess("0");
+            rp.setMessage("获取原始补充指标失败！" + e.getMessage());
+            e.printStackTrace();
+        }
+        return rp;
+    }
+
+    public ResponseBody getYhBczbList_bak(RequestBody rq, Map params, String id) {
+        ResponseBody rp = new ResponseBody(params, "1", "获取原始补充指标成功", id, rq.getTaskid());
+        try {
+            ObjectMapper objectMapper = new ObjectMapper();
+            Condition condition = objectMapper.readValue(rq.getParams(), Condition.class);
+            User user = UserUtils.getUser();
+            Map pa = new HashMap();
+            pa.put("DEPTID", user.getDeptCode().substring(0, 4));
+            //System.out.println(pa);
+            //params.put("DEPTID", "1045");
+            try {
+                List<HashMap> bbls = bczbMapper.getYhBczb(pa);
                 //转换后的指标Map
                 HashMap<String, HashMap> objects = new HashMap();
                 HashMap<String, String> plist = new HashMap();
@@ -3218,7 +4030,265 @@ public class SysService {
         return rp;
     }
 
-    public ResponseBody getDwBczbList(RequestBody rq, Map params, String id) {
+    public ResponseBody getYhBczbList(RequestBody rq, Map params, String id) {
+        ResponseBody rp = new ResponseBody(params, "1", "获取补充指标成功", id, rq.getTaskid());
+        try {
+            ObjectMapper objectMapper = new ObjectMapper();
+            Condition condition = objectMapper.readValue(rq.getParams(), Condition.class);
+            User user = UserUtils.getUser();
+            Map pa = new HashMap();
+            pa.put("DEPTID", user.getDeptCode().substring(0, 4));
+            //System.out.println(pa);
+            //params.put("DEPTID", "1045");
+            try {
+                List<HashMap> bbls = bczbMapper.getYhBczb(pa);
+                //转换后的指标Map
+                HashMap<String, HashMap> objects = new HashMap();
+                HashMap<String, String> plist = new HashMap();
+                for (HashMap m : bbls) {
+                    plist.put((String) m.get("PID"), "project");
+                    HashMap zb = (HashMap) objects.get((String) m.get("ID"));
+                    if (zb == null) {
+                        zb = new HashMap();
+                        objects.put((String) m.get("ID"), zb);
+                    }
+                    zb.putAll(m);
+                }
+
+                //获取project 范围
+                String scope = "''";
+                for (String k : plist.keySet()) {
+                    scope += ",'" + k + "'";
+                }
+                List<HashMap> lsP = new ArrayList();
+
+                //转换后的project
+                HashMap<String, HashMap> projects = new HashMap();
+                for (HashMap m : lsP) {
+                    HashMap pro = (HashMap) projects.get((String) m.get("ID"));
+                    if (pro == null) {
+                        pro = new HashMap();
+                        projects.put((String) m.get("ID"), pro);
+                    }
+                    pro.put("PRO_ProjectTitle", (String) m.get("P_PROJECTTITLE"));
+                    pro.put("PRO_OilTitle", (String) m.get("P_OILTITLE"));
+                    pro.put("PRO_BBHTitle", (String) m.get("P_BBHTITLE"));
+                    pro.put("PRO_ID", (String) m.get("ID"));
+                    pro.put("PRO_DXGC", (String) m.get("PRO_DXGC"));
+                }
+                //给指标绑定项目属性
+                for (String k : objects.keySet()) {
+                    HashMap o = objects.get(k);
+                    try {
+                        o.putAll(projects.get(o.get("PID")));
+                    } catch (Exception e) {
+                    }
+                }
+                List<HashMap> mdList = new ArrayList<HashMap>(objects.values());
+                LinkedHashMap<String, String> orderby = new LinkedHashMap<>();
+                if (StringUtils.isNotBlank(condition.getSort())) {
+                    String[] sort = condition.getSort().split(",");
+                    for (String s : sort) {
+                        if (StringUtils.isBlank(s)) continue;
+                        String[] ss = s.split(" ");
+                        orderby.put(ss[0], ss[1]);
+                    }
+                } else {
+                    orderby.put("RKSJ", "desc");
+                }
+                AppUtils.sort(mdList, orderby);
+                HashMap datas = new HashMap();
+                int pageNo = Integer.parseInt(condition.getStart());   //从1开始
+                int pageSize = Integer.parseInt(condition.getLimit());
+                int fromIndex = pageSize * (pageNo - 1);
+                int toIndex = pageSize * pageNo;
+                if (toIndex > mdList.size()) {
+                    toIndex = mdList.size();
+                }
+                if (fromIndex > toIndex) {
+                    fromIndex = toIndex;
+                }
+                //模糊查询
+                List<HashMap> myList = new ArrayList<HashMap>();
+                List<HashMap> tmpList = new ArrayList<HashMap>();
+                String key = condition.getC1();
+                String keyReturn = "";
+                if (StringUtils.isNotBlank(key)) {
+                    tmpList = mdList;
+                    String[] keys = key.split("\\s+");
+                    for (String a : keys) {
+                        keyReturn += a + "##%%&&**";
+                        myList = new ArrayList<HashMap>();
+                        for (HashMap m : tmpList) {
+                            for (Object k : m.keySet()) {
+                                String val = (String) m.get(k);
+                                if (StringUtils.isBlank(val)) continue;
+                                boolean f = false;
+                                if (val.contains(a)) {
+                                    f = true;
+                                }
+                                if (f) {
+                                    myList.add(m);
+                                    break;
+                                }
+                            }
+                        }
+                        tmpList = myList;
+                    }
+                } else {
+                    myList = mdList;
+                }
+                try {
+                    datas.put("rows", myList.subList(fromIndex, toIndex));
+                } catch (Exception e) {
+                    datas.put("rows", myList);
+                }
+                datas.put("total", myList.size());
+                datas.put("keyReturn", keyReturn);
+                rp.setDatas(com.common.annotation.mapper.JsonMapper.toJsonString(datas));
+            } catch (Exception e) {
+                e.printStackTrace();
+                rp.setIssuccess("0");
+                rp.setMessage("获取原始补充指标失败！" + e.getMessage());
+            }
+        } catch (Exception e) {
+            rp.setIssuccess("0");
+            rp.setMessage("获取原始补充指标失败！" + e.getMessage());
+            e.printStackTrace();
+        }
+        return rp;
+    }
+
+    public ResponseBody getYhBczbzxList(RequestBody rq, Map params, String id) {
+        ResponseBody rp = new ResponseBody(params, "1", "获取补充指标成功", id, rq.getTaskid());
+        try {
+            ObjectMapper objectMapper = new ObjectMapper();
+            Condition condition = objectMapper.readValue(rq.getParams(), Condition.class);
+            User user = UserUtils.getUser();
+            Map pa = new HashMap();
+            pa.put("DEPTID", condition.getDwdm());
+            //System.out.println(pa);
+            //params.put("DEPTID", "1045");
+            try {
+                List<HashMap> bbls = bczbMapper.getYhBczbzx(pa);
+                //转换后的指标Map
+                HashMap<String, HashMap> objects = new HashMap();
+                HashMap<String, String> plist = new HashMap();
+                for (HashMap m : bbls) {
+                    plist.put((String) m.get("PID"), "project");
+                    HashMap zb = (HashMap) objects.get((String) m.get("ID"));
+                    if (zb == null) {
+                        zb = new HashMap();
+                        objects.put((String) m.get("ID"), zb);
+                    }
+                    zb.putAll(m);
+                }
+
+                //获取project 范围
+                String scope = "''";
+                for (String k : plist.keySet()) {
+                    scope += ",'" + k + "'";
+                }
+                List<HashMap> lsP = new ArrayList();
+
+                //转换后的project
+                HashMap<String, HashMap> projects = new HashMap();
+                for (HashMap m : lsP) {
+                    HashMap pro = (HashMap) projects.get((String) m.get("ID"));
+                    if (pro == null) {
+                        pro = new HashMap();
+                        projects.put((String) m.get("ID"), pro);
+                    }
+                    pro.put("PRO_ProjectTitle", (String) m.get("P_PROJECTTITLE"));
+                    pro.put("PRO_OilTitle", (String) m.get("P_OILTITLE"));
+                    pro.put("PRO_BBHTitle", (String) m.get("P_BBHTITLE"));
+                    pro.put("PRO_ID", (String) m.get("ID"));
+                    pro.put("PRO_DXGC", (String) m.get("PRO_DXGC"));
+                }
+                //给指标绑定项目属性
+                for (String k : objects.keySet()) {
+                    HashMap o = objects.get(k);
+                    try {
+                        o.putAll(projects.get(o.get("PID")));
+                    } catch (Exception e) {
+                    }
+                }
+                List<HashMap> mdList = new ArrayList<HashMap>(objects.values());
+                LinkedHashMap<String, String> orderby = new LinkedHashMap<>();
+                if (StringUtils.isNotBlank(condition.getSort())) {
+                    String[] sort = condition.getSort().split(",");
+                    for (String s : sort) {
+                        if (StringUtils.isBlank(s)) continue;
+                        String[] ss = s.split(" ");
+                        orderby.put(ss[0], ss[1]);
+                    }
+                } else {
+                    orderby.put("RKSJ", "desc");
+                }
+                AppUtils.sort(mdList, orderby);
+                HashMap datas = new HashMap();
+                int pageNo = Integer.parseInt(condition.getStart());   //从1开始
+                int pageSize = Integer.parseInt(condition.getLimit());
+                int fromIndex = pageSize * (pageNo - 1);
+                int toIndex = pageSize * pageNo;
+                if (toIndex > mdList.size()) {
+                    toIndex = mdList.size();
+                }
+                if (fromIndex > toIndex) {
+                    fromIndex = toIndex;
+                }
+                //模糊查询
+                List<HashMap> myList = new ArrayList<HashMap>();
+                List<HashMap> tmpList = new ArrayList<HashMap>();
+                String key = condition.getC1();
+                String keyReturn = "";
+                if (StringUtils.isNotBlank(key)) {
+                    tmpList = mdList;
+                    String[] keys = key.split("\\s+");
+                    for (String a : keys) {
+                        keyReturn += a + "##%%&&**";
+                        myList = new ArrayList<HashMap>();
+                        for (HashMap m : tmpList) {
+                            for (Object k : m.keySet()) {
+                                String val = (String) m.get(k);
+                                if (StringUtils.isBlank(val)) continue;
+                                boolean f = false;
+                                if (val.contains(a)) {
+                                    f = true;
+                                }
+                                if (f) {
+                                    myList.add(m);
+                                    break;
+                                }
+                            }
+                        }
+                        tmpList = myList;
+                    }
+                } else {
+                    myList = mdList;
+                }
+                try {
+                    datas.put("rows", myList.subList(fromIndex, toIndex));
+                } catch (Exception e) {
+                    datas.put("rows", myList);
+                }
+                datas.put("total", myList.size());
+                datas.put("keyReturn", keyReturn);
+                rp.setDatas(com.common.annotation.mapper.JsonMapper.toJsonString(datas));
+            } catch (Exception e) {
+                e.printStackTrace();
+                rp.setIssuccess("0");
+                rp.setMessage("获取原始补充指标失败！" + e.getMessage());
+            }
+        } catch (Exception e) {
+            rp.setIssuccess("0");
+            rp.setMessage("获取原始补充指标失败！" + e.getMessage());
+            e.printStackTrace();
+        }
+        return rp;
+    }
+
+    public ResponseBody getDwBczbList_bak(RequestBody rq, Map params, String id) {
         ResponseBody rp = new ResponseBody(params, "1", "获取原始补充指标成功", id, rq.getTaskid());
         try {
             ObjectMapper objectMapper = new ObjectMapper();
@@ -3348,7 +4418,644 @@ public class SysService {
         return rp;
     }
 
-    public ResponseBody getBczbByFzList(RequestBody rq, Map params, String id) {
+    public ResponseBody getDwBczbList(RequestBody rq, Map params, String id) {
+        ResponseBody rp = new ResponseBody(params, "1", "获取补充指标成功", id, rq.getTaskid());
+        try {
+            ObjectMapper objectMapper = new ObjectMapper();
+            Condition condition = objectMapper.readValue(rq.getParams(), Condition.class);
+
+            User user = UserUtils.getUser();
+            Map pa = new HashMap();
+            pa.put("DEPTID", user.getDeptCode().substring(0, 4));
+            //System.out.println(pa);
+            //params.put("DEPTID", "1045");
+            try {
+                List<HashMap> bbls = bczbMapper.getDwBczb(pa);
+                //转换后的指标Map
+                HashMap<String, HashMap> objects = new HashMap();
+                HashMap<String, String> plist = new HashMap();
+                for (HashMap m : bbls) {
+                    plist.put((String) m.get("PID"), "project");
+                    HashMap zb = (HashMap) objects.get((String) m.get("ID"));
+                    if (zb == null) {
+                        zb = new HashMap();
+                        objects.put((String) m.get("ID"), zb);
+                    }
+                    zb.putAll(m);
+                }
+
+                //获取project 范围
+                String scope = "''";
+                for (String k : plist.keySet()) {
+                    scope += ",'" + k + "'";
+                }
+                List<HashMap> lsP = new ArrayList();
+
+                //转换后的project
+                HashMap<String, HashMap> projects = new HashMap();
+                for (HashMap m : lsP) {
+                    HashMap pro = (HashMap) projects.get((String) m.get("ID"));
+                    if (pro == null) {
+                        pro = new HashMap();
+                        projects.put((String) m.get("ID"), pro);
+                    }
+                    pro.put("PRO_ProjectTitle", (String) m.get("P_PROJECTTITLE"));
+                    pro.put("PRO_OilTitle", (String) m.get("P_OILTITLE"));
+                    pro.put("PRO_BBHTitle", (String) m.get("P_BBHTITLE"));
+                    pro.put("PRO_ID", (String) m.get("ID"));
+                    pro.put("PRO_DXGC", (String) m.get("PRO_DXGC"));
+                }
+                //给指标绑定项目属性
+                for (String k : objects.keySet()) {
+                    HashMap o = objects.get(k);
+                    try {
+                        o.putAll(projects.get(o.get("PID")));
+                    } catch (Exception e) {
+                    }
+                }
+                List<HashMap> mdList = new ArrayList<HashMap>(objects.values());
+                LinkedHashMap<String, String> orderby = new LinkedHashMap<>();
+                if (StringUtils.isNotBlank(condition.getSort())) {
+                    String[] sort = condition.getSort().split(",");
+                    for (String s : sort) {
+                        if (StringUtils.isBlank(s)) continue;
+                        String[] ss = s.split(" ");
+                        orderby.put(ss[0], ss[1]);
+                    }
+                } else {
+                    orderby.put("RKSJ", "desc");
+                }
+                AppUtils.sort(mdList, orderby);
+                HashMap datas = new HashMap();
+                int pageNo = Integer.parseInt(condition.getStart());   //从1开始
+                int pageSize = Integer.parseInt(condition.getLimit());
+                int fromIndex = pageSize * (pageNo - 1);
+                int toIndex = pageSize * pageNo;
+                if (toIndex > mdList.size()) {
+                    toIndex = mdList.size();
+                }
+                if (fromIndex > toIndex) {
+                    fromIndex = toIndex;
+                }
+                //模糊查询
+                List<HashMap> myList = new ArrayList<HashMap>();
+                List<HashMap> tmpList = new ArrayList<HashMap>();
+                String key = condition.getC1();
+                String keyReturn = "";
+                if (StringUtils.isNotBlank(key)) {
+                    tmpList = mdList;
+                    String[] keys = key.split("\\s+");
+                    for (String a : keys) {
+                        keyReturn += a + "##%%&&**";
+                        myList = new ArrayList<HashMap>();
+                        for (HashMap m : tmpList) {
+                            for (Object k : m.keySet()) {
+                                String val = (String) m.get(k);
+                                if (StringUtils.isBlank(val)) continue;
+                                boolean f = false;
+                                if (val.contains(a)) {
+                                    f = true;
+                                }
+                                if (f) {
+                                    myList.add(m);
+                                    break;
+                                }
+                            }
+                        }
+                        tmpList = myList;
+                    }
+                } else {
+                    myList = mdList;
+                }
+                try {
+                    datas.put("rows", myList.subList(fromIndex, toIndex));
+                } catch (Exception e) {
+                    datas.put("rows", myList);
+                }
+                datas.put("total", myList.size());
+                datas.put("keyReturn", keyReturn);
+                rp.setDatas(com.common.annotation.mapper.JsonMapper.toJsonString(datas));
+            } catch (Exception e) {
+                e.printStackTrace();
+                rp.setIssuccess("0");
+                rp.setMessage("获取原始补充指标失败！" + e.getMessage());
+            }
+        } catch (Exception e) {
+            rp.setIssuccess("0");
+            rp.setMessage("获取原始补充指标失败！" + e.getMessage());
+            e.printStackTrace();
+        }
+        return rp;
+    }
+
+    public ResponseBody getZxBczbList(RequestBody rq, Map params, String id) {
+        ResponseBody rp = new ResponseBody(params, "1", "获取补充指标成功", id, rq.getTaskid());
+        try {
+            ObjectMapper objectMapper = new ObjectMapper();
+            Condition condition = objectMapper.readValue(rq.getParams(), Condition.class);
+
+            User user = UserUtils.getUser();
+            Map pa = new HashMap();
+            pa.put("DEPTID", condition.getDwdm());
+            //System.out.println(pa);
+            //params.put("DEPTID", "1045");
+            try {
+                List<HashMap> bbls = bczbMapper.getZxBczb(pa);
+                //转换后的指标Map
+                HashMap<String, HashMap> objects = new HashMap();
+                HashMap<String, String> plist = new HashMap();
+                for (HashMap m : bbls) {
+                    plist.put((String) m.get("PID"), "project");
+                    HashMap zb = (HashMap) objects.get((String) m.get("ID"));
+                    if (zb == null) {
+                        zb = new HashMap();
+                        objects.put((String) m.get("ID"), zb);
+                    }
+                    zb.putAll(m);
+                }
+
+                //获取project 范围
+                String scope = "''";
+                for (String k : plist.keySet()) {
+                    scope += ",'" + k + "'";
+                }
+                List<HashMap> lsP = new ArrayList();
+
+                //转换后的project
+                HashMap<String, HashMap> projects = new HashMap();
+                for (HashMap m : lsP) {
+                    HashMap pro = (HashMap) projects.get((String) m.get("ID"));
+                    if (pro == null) {
+                        pro = new HashMap();
+                        projects.put((String) m.get("ID"), pro);
+                    }
+                    pro.put("PRO_ProjectTitle", (String) m.get("P_PROJECTTITLE"));
+                    pro.put("PRO_OilTitle", (String) m.get("P_OILTITLE"));
+                    pro.put("PRO_BBHTitle", (String) m.get("P_BBHTITLE"));
+                    pro.put("PRO_ID", (String) m.get("ID"));
+                    pro.put("PRO_DXGC", (String) m.get("PRO_DXGC"));
+                }
+                //给指标绑定项目属性
+                for (String k : objects.keySet()) {
+                    HashMap o = objects.get(k);
+                    try {
+                        o.putAll(projects.get(o.get("PID")));
+                    } catch (Exception e) {
+                    }
+                }
+                List<HashMap> mdList = new ArrayList<HashMap>(objects.values());
+                LinkedHashMap<String, String> orderby = new LinkedHashMap<>();
+                if (StringUtils.isNotBlank(condition.getSort())) {
+                    String[] sort = condition.getSort().split(",");
+                    for (String s : sort) {
+                        if (StringUtils.isBlank(s)) continue;
+                        String[] ss = s.split(" ");
+                        orderby.put(ss[0], ss[1]);
+                    }
+                } else {
+                    orderby.put("RKSJ", "desc");
+                }
+                AppUtils.sort(mdList, orderby);
+                HashMap datas = new HashMap();
+                int pageNo = Integer.parseInt(condition.getStart());   //从1开始
+                int pageSize = Integer.parseInt(condition.getLimit());
+                int fromIndex = pageSize * (pageNo - 1);
+                int toIndex = pageSize * pageNo;
+                if (toIndex > mdList.size()) {
+                    toIndex = mdList.size();
+                }
+                if (fromIndex > toIndex) {
+                    fromIndex = toIndex;
+                }
+                //模糊查询
+                List<HashMap> myList = new ArrayList<HashMap>();
+                List<HashMap> tmpList = new ArrayList<HashMap>();
+                String key = condition.getC1();
+                String keyReturn = "";
+                if (StringUtils.isNotBlank(key)) {
+                    tmpList = mdList;
+                    String[] keys = key.split("\\s+");
+                    for (String a : keys) {
+                        keyReturn += a + "##%%&&**";
+                        myList = new ArrayList<HashMap>();
+                        for (HashMap m : tmpList) {
+                            for (Object k : m.keySet()) {
+                                String val = (String) m.get(k);
+                                if (StringUtils.isBlank(val)) continue;
+                                boolean f = false;
+                                if (val.contains(a)) {
+                                    f = true;
+                                }
+                                if (f) {
+                                    myList.add(m);
+                                    break;
+                                }
+                            }
+                        }
+                        tmpList = myList;
+                    }
+                } else {
+                    myList = mdList;
+                }
+                try {
+                    datas.put("rows", myList.subList(fromIndex, toIndex));
+                } catch (Exception e) {
+                    datas.put("rows", myList);
+                }
+                datas.put("total", myList.size());
+                datas.put("keyReturn", keyReturn);
+                rp.setDatas(com.common.annotation.mapper.JsonMapper.toJsonString(datas));
+            } catch (Exception e) {
+                e.printStackTrace();
+                rp.setIssuccess("0");
+                rp.setMessage("获取原始补充指标失败！" + e.getMessage());
+            }
+        } catch (Exception e) {
+            rp.setIssuccess("0");
+            rp.setMessage("获取原始补充指标失败！" + e.getMessage());
+            e.printStackTrace();
+        }
+        return rp;
+    }
+
+    public ResponseBody getDwBcElfList(RequestBody rq, Map params, String id) {
+        ResponseBody rp = new ResponseBody(params, "1", "获取数据成功", id, rq.getTaskid());
+        try {
+            ObjectMapper objectMapper = new ObjectMapper();
+            Condition condition = objectMapper.readValue(rq.getParams(), Condition.class);
+
+            User user = UserUtils.getUser();
+            Map pa = new HashMap();
+            pa.put("DEPTID", user.getDeptCode().substring(0, 4));
+            //System.out.println(pa);
+            //params.put("DEPTID", "1045");
+            try {
+                List<HashMap> bbls = bczbMapper.getDwBcelf(pa);
+                //转换后的指标Map
+                HashMap<String, HashMap> objects = new HashMap();
+                HashMap<String, String> plist = new HashMap();
+                for (HashMap m : bbls) {
+                    plist.put((String) m.get("PID"), "project");
+                    HashMap zb = (HashMap) objects.get((String) m.get("OID"));
+                    if (zb == null) {
+                        zb = new HashMap();
+                        objects.put((String) m.get("OID"), zb);
+                    }
+                    zb.put((String) m.get("OKEY"), (String) m.get("OVALUE"));
+                    zb.put("PID", (String) m.get("PID"));
+                    zb.put("OID", (String) m.get("OID"));
+                    zb.put("RKSJ", (String) m.get("RKSJ"));
+                }
+                //获取project 范围
+                String scope = "''";
+                for (String k : plist.keySet()) {
+                    scope += ",'" + k + "'";
+                }
+                List<HashMap> lsP = new ArrayList();
+
+                //转换后的project
+                HashMap<String, HashMap> projects = new HashMap();
+                for (HashMap m : lsP) {
+                    HashMap pro = (HashMap) projects.get((String) m.get("ID"));
+                    if (pro == null) {
+                        pro = new HashMap();
+                        projects.put((String) m.get("ID"), pro);
+                    }
+                    pro.put((String) m.get("OKEY"), (String) m.get("OVALUE"));
+                    pro.put("PRO_ID", (String) m.get("ID"));
+                }
+                //给指标绑定项目属性
+                for (String k : objects.keySet()) {
+                    HashMap o = objects.get(k);
+                    if (projects.get(o.get("PID")) != null)
+                        o.putAll(projects.get(o.get("PID")));
+                }
+                List<HashMap> mdList = new ArrayList<HashMap>(objects.values());
+                LinkedHashMap<String, String> orderby = new LinkedHashMap<>();
+                if (StringUtils.isNotBlank(condition.getSort())) {
+                    String[] sort = condition.getSort().split(",");
+                    for (String s : sort) {
+                        if (StringUtils.isBlank(s)) continue;
+                        String[] ss = s.split(" ");
+                        orderby.put(ss[0], ss[1]);
+                    }
+                } else {
+                    orderby.put("RKSJ", "desc");
+                }
+                AppUtils.sort(mdList, orderby);
+                HashMap datas = new HashMap();
+                int pageNo = Integer.parseInt(condition.getStart());   //从1开始
+                int pageSize = Integer.parseInt(condition.getLimit());
+                int fromIndex = pageSize * (pageNo - 1);
+                int toIndex = pageSize * pageNo;
+                if (toIndex > mdList.size()) {
+                    toIndex = mdList.size();
+                }
+                if (fromIndex > toIndex) {
+                    fromIndex = toIndex;
+                }
+                List<HashMap> myList = new ArrayList<HashMap>();
+                List<HashMap> tmpList = new ArrayList<HashMap>();
+                String key = condition.getC1();
+                String keyreturn = "";
+                if (StringUtils.isNotBlank(key)) {
+                    tmpList = mdList;
+                    String[] keys = key.split("\\s+");
+                    for (String a : keys) {
+                        keyreturn += a + "##%%&&**";
+                        myList = new ArrayList<HashMap>();
+                        for (HashMap m : tmpList) {
+                            for (Object k : m.keySet()) {
+                                String val = (String) m.get(k);
+                                if (StringUtils.isBlank(val)) continue;
+                                boolean f = false;
+                                if (val.contains(a)) {
+                                    f = true;
+                                }
+                                if (f) {
+                                    myList.add(m);
+                                    break;
+                                }
+                            }
+                        }
+                        tmpList = myList;
+                    }
+                } else {
+                    myList = mdList;
+                }
+                try {
+                    datas.put("rows", myList.subList(fromIndex, toIndex));
+                } catch (Exception e) {
+                    datas.put("rows", myList);
+                }
+                ;
+                datas.put("total", myList.size());
+
+                rp.setDatas(com.common.annotation.mapper.JsonMapper.toJsonString(datas));
+            } catch (Exception e) {
+                e.printStackTrace();
+                rp.setIssuccess("0");
+                rp.setMessage("获取原始补充指标失败！" + e.getMessage());
+            }
+        } catch (Exception e) {
+            rp.setIssuccess("0");
+            rp.setMessage("获取原始补充指标失败！" + e.getMessage());
+            e.printStackTrace();
+        }
+        return rp;
+    }
+
+    public ResponseBody getDwBcGcfList_bak(RequestBody rq, Map params, String id) {
+        ResponseBody rp = new ResponseBody(params, "1", "获取成功", id, rq.getTaskid());
+        try {
+            ObjectMapper objectMapper = new ObjectMapper();
+            Condition condition = objectMapper.readValue(rq.getParams(), Condition.class);
+
+            User user = UserUtils.getUser();
+            Map pa = new HashMap();
+            pa.put("DEPTID", user.getDeptCode().substring(0, 4));
+            //System.out.println(pa);
+            //params.put("DEPTID", "1045");
+            try {
+                List<HashMap> bbls = bczbMapper.getDwBcgcf(pa);
+                //转换后的指标Map
+                HashMap<String, HashMap> objects = new HashMap();
+                HashMap<String, String> plist = new HashMap();
+                for (HashMap m : bbls) {
+                    plist.put((String) m.get("PID"), "project");
+                    HashMap zb = (HashMap) objects.get((String) m.get("OID"));
+                    if (zb == null) {
+                        zb = new HashMap();
+                        objects.put((String) m.get("OID"), zb);
+                    }
+                    zb.put((String) m.get("OKEY"), (String) m.get("OVALUE"));
+                    zb.put("PID", (String) m.get("PID"));
+                    zb.put("OID", (String) m.get("OID"));
+                    zb.put("RKSJ", (String) m.get("RKSJ"));
+                }
+                //获取project 范围
+                String scope = "''";
+                for (String k : plist.keySet()) {
+                    scope += ",'" + k + "'";
+                }
+                List<HashMap> lsP = new ArrayList();
+
+                //转换后的project
+                HashMap<String, HashMap> projects = new HashMap();
+                for (HashMap m : lsP) {
+                    HashMap pro = (HashMap) projects.get((String) m.get("ID"));
+                    if (pro == null) {
+                        pro = new HashMap();
+                        projects.put((String) m.get("ID"), pro);
+                    }
+                    pro.put((String) m.get("OKEY"), (String) m.get("OVALUE"));
+                    pro.put("PRO_ID", (String) m.get("ID"));
+                }
+                //给指标绑定项目属性
+                for (String k : objects.keySet()) {
+                    HashMap o = objects.get(k);
+                    if (projects.get(o.get("PID")) != null)
+                        o.putAll(projects.get(o.get("PID")));
+                }
+                List<HashMap> mdList = new ArrayList<HashMap>(objects.values());
+                LinkedHashMap<String, String> orderby = new LinkedHashMap<>();
+                if (StringUtils.isNotBlank(condition.getSort())) {
+                    String[] sort = condition.getSort().split(",");
+                    for (String s : sort) {
+                        if (StringUtils.isBlank(s)) continue;
+                        String[] ss = s.split(" ");
+                        orderby.put(ss[0], ss[1]);
+                    }
+                } else {
+                    orderby.put("RKSJ", "desc");
+                }
+                AppUtils.sort(mdList, orderby);
+                HashMap datas = new HashMap();
+                int pageNo = Integer.parseInt(condition.getStart());   //从1开始
+                int pageSize = Integer.parseInt(condition.getLimit());
+                int fromIndex = pageSize * (pageNo - 1);
+                int toIndex = pageSize * pageNo;
+                if (toIndex > mdList.size()) {
+                    toIndex = mdList.size();
+                }
+                if (fromIndex > toIndex) {
+                    fromIndex = toIndex;
+                }
+                List<HashMap> myList = new ArrayList<HashMap>();
+                List<HashMap> tmpList = new ArrayList<HashMap>();
+                String key = condition.getC1();
+                String keyreturn = "";
+                if (StringUtils.isNotBlank(key)) {
+                    tmpList = mdList;
+                    String[] keys = key.split("\\s+");
+                    for (String a : keys) {
+                        keyreturn += a + "##%%&&**";
+                        myList = new ArrayList<HashMap>();
+                        for (HashMap m : tmpList) {
+                            for (Object k : m.keySet()) {
+                                String val = (String) m.get(k);
+                                if (StringUtils.isBlank(val)) continue;
+                                boolean f = false;
+                                if (val.contains(a)) {
+                                    f = true;
+                                }
+                                if (f) {
+                                    myList.add(m);
+                                    break;
+                                }
+                            }
+                        }
+                        tmpList = myList;
+                    }
+                } else {
+                    myList = mdList;
+                }
+                try {
+                    datas.put("rows", myList.subList(fromIndex, toIndex));
+                } catch (Exception e) {
+                    datas.put("rows", myList);
+                }
+                datas.put("total", myList.size());
+                rp.setDatas(com.common.annotation.mapper.JsonMapper.toJsonString(datas));
+            } catch (Exception e) {
+                e.printStackTrace();
+                rp.setIssuccess("0");
+                rp.setMessage("获取原始补充指标失败！" + e.getMessage());
+            }
+        } catch (Exception e) {
+            rp.setIssuccess("0");
+            rp.setMessage("获取原始补充指标失败！" + e.getMessage());
+            e.printStackTrace();
+        }
+        return rp;
+    }
+
+    public ResponseBody getDwBcGcfList(RequestBody rq, Map params, String id) {
+        ResponseBody rp = new ResponseBody(params, "1", "获取成功", id, rq.getTaskid());
+        try {
+            ObjectMapper objectMapper = new ObjectMapper();
+            Condition condition = objectMapper.readValue(rq.getParams(), Condition.class);
+
+            User user = UserUtils.getUser();
+            Map pa = new HashMap();
+            pa.put("DEPTID", user.getDeptCode().substring(0, 4));
+            //System.out.println(pa);
+            //params.put("DEPTID", "1045");
+            try {
+                List<HashMap> bbls = bczbMapper.getDwBcgcf(pa);
+                //转换后的指标Map
+                HashMap<String, HashMap> objects = new HashMap();
+                HashMap<String, String> plist = new HashMap();
+                for (HashMap m : bbls) {
+                    plist.put((String) m.get("PID"), "project");
+                    HashMap zb = (HashMap) objects.get((String) m.get("OID"));
+                    if (zb == null) {
+                        zb = new HashMap();
+                        objects.put((String) m.get("OID"), zb);
+                    }
+                    zb.put((String) m.get("OKEY"), (String) m.get("OVALUE"));
+                    zb.put("PID", (String) m.get("PID"));
+                    zb.put("OID", (String) m.get("OID"));
+                    zb.put("RKSJ", (String) m.get("RKSJ"));
+                }
+                //获取project 范围
+                String scope = "''";
+                for (String k : plist.keySet()) {
+                    scope += ",'" + k + "'";
+                }
+                List<HashMap> lsP = new ArrayList();
+
+                //转换后的project
+                HashMap<String, HashMap> projects = new HashMap();
+                for (HashMap m : lsP) {
+                    HashMap pro = (HashMap) projects.get((String) m.get("ID"));
+                    if (pro == null) {
+                        pro = new HashMap();
+                        projects.put((String) m.get("ID"), pro);
+                    }
+                    pro.put((String) m.get("OKEY"), (String) m.get("OVALUE"));
+                    pro.put("PRO_ID", (String) m.get("ID"));
+                }
+                //给指标绑定项目属性
+                for (String k : objects.keySet()) {
+                    HashMap o = objects.get(k);
+                    if (projects.get(o.get("PID")) != null)
+                        o.putAll(projects.get(o.get("PID")));
+                }
+                List<HashMap> mdList = new ArrayList<HashMap>(objects.values());
+                LinkedHashMap<String, String> orderby = new LinkedHashMap<>();
+                if (StringUtils.isNotBlank(condition.getSort())) {
+                    String[] sort = condition.getSort().split(",");
+                    for (String s : sort) {
+                        if (StringUtils.isBlank(s)) continue;
+                        String[] ss = s.split(" ");
+                        orderby.put(ss[0], ss[1]);
+                    }
+                } else {
+                    orderby.put("RKSJ", "desc");
+                }
+                AppUtils.sort(mdList, orderby);
+                HashMap datas = new HashMap();
+                int pageNo = Integer.parseInt(condition.getStart());   //从1开始
+                int pageSize = Integer.parseInt(condition.getLimit());
+                int fromIndex = pageSize * (pageNo - 1);
+                int toIndex = pageSize * pageNo;
+                if (toIndex > mdList.size()) {
+                    toIndex = mdList.size();
+                }
+                if (fromIndex > toIndex) {
+                    fromIndex = toIndex;
+                }
+                List<HashMap> myList = new ArrayList<HashMap>();
+                List<HashMap> tmpList = new ArrayList<HashMap>();
+                String key = condition.getC1();
+                String keyreturn = "";
+                if (StringUtils.isNotBlank(key)) {
+                    tmpList = mdList;
+                    String[] keys = key.split("\\s+");
+                    for (String a : keys) {
+                        keyreturn += a + "##%%&&**";
+                        myList = new ArrayList<HashMap>();
+                        for (HashMap m : tmpList) {
+                            for (Object k : m.keySet()) {
+                                String val = (String) m.get(k);
+                                if (StringUtils.isBlank(val)) continue;
+                                boolean f = false;
+                                if (val.contains(a)) {
+                                    f = true;
+                                }
+                                if (f) {
+                                    myList.add(m);
+                                    break;
+                                }
+                            }
+                        }
+                        tmpList = myList;
+                    }
+                } else {
+                    myList = mdList;
+                }
+                try {
+                    datas.put("rows", myList.subList(fromIndex, toIndex));
+                } catch (Exception e) {
+                    datas.put("rows", myList);
+                }
+                datas.put("total", myList.size());
+                rp.setDatas(com.common.annotation.mapper.JsonMapper.toJsonString(datas));
+            } catch (Exception e) {
+                e.printStackTrace();
+                rp.setIssuccess("0");
+                rp.setMessage("获取原始补充指标失败！" + e.getMessage());
+            }
+        } catch (Exception e) {
+            rp.setIssuccess("0");
+            rp.setMessage("获取原始补充指标失败！" + e.getMessage());
+            e.printStackTrace();
+        }
+        return rp;
+    }
+
+    public ResponseBody getBczbByFzList_bak(RequestBody rq, Map params, String id) {
         ResponseBody rp = new ResponseBody(params, "1", "获取原始补充指标成功", id, rq.getTaskid());
         try {
             ObjectMapper objectMapper = new ObjectMapper();
@@ -3397,6 +5104,100 @@ public class SysService {
                 for (String k : objects.keySet()) {
                     HashMap o = objects.get(k);
                     o.putAll(projects.get(o.get("PID")));
+                }
+                List<HashMap> mdList = new ArrayList<HashMap>(objects.values());
+                LinkedHashMap<String, String> orderby = new LinkedHashMap<>();
+                if (StringUtils.isNotBlank(condition.getSort())) {
+                    String[] sort = condition.getSort().split(",");
+                    for (String s : sort) {
+                        if (StringUtils.isBlank(s)) continue;
+                        String[] ss = s.split(" ");
+                        orderby.put(ss[0], ss[1]);
+                    }
+                } else {
+                    orderby.put("RKSJ", "desc");
+                }
+                AppUtils.sort(mdList, orderby);
+                HashMap datas = new HashMap();
+                int pageNo = Integer.parseInt(condition.getStart());   //从1开始
+                int pageSize = Integer.parseInt(condition.getLimit());
+                int fromIndex = pageSize * (pageNo - 1);
+                int toIndex = pageSize * pageNo;
+                if (toIndex > mdList.size()) {
+                    toIndex = mdList.size();
+                }
+                if (fromIndex > toIndex) {
+                    fromIndex = toIndex;
+                }
+                datas.put("rows", mdList.subList(fromIndex, toIndex));
+                datas.put("total", mdList.size());
+                rp.setDatas(com.common.annotation.mapper.JsonMapper.toJsonString(datas));
+            } catch (Exception e) {
+                e.printStackTrace();
+                rp.setIssuccess("0");
+                rp.setMessage("获取原始补充指标失败！" + e.getMessage());
+            }
+        } catch (Exception e) {
+            rp.setIssuccess("0");
+            rp.setMessage("获取原始补充指标失败！" + e.getMessage());
+            e.printStackTrace();
+        }
+        return rp;
+    }
+
+    public ResponseBody getBczbByFzList(RequestBody rq, Map params, String id) {
+        ResponseBody rp = new ResponseBody(params, "1", "获取原始补充指标成功", id, rq.getTaskid());
+        try {
+            ObjectMapper objectMapper = new ObjectMapper();
+            Condition condition = objectMapper.readValue(rq.getParams(), Condition.class);
+
+            Map pa = new HashMap();
+            pa.put("c1", condition.getC1());
+            //params.put("DEPTID", "1045");
+            System.out.println(pa);
+            try {
+                List<HashMap> bbls = bczbMapper.getBczbByFz(pa);
+                //转换后的指标Map
+                HashMap<String, HashMap> objects = new HashMap();
+                HashMap<String, String> plist = new HashMap();
+                for (HashMap m : bbls) {
+                    plist.put((String) m.get("PID"), "project");
+                    HashMap zb = (HashMap) objects.get((String) m.get("ID"));
+                    if (zb == null) {
+                        zb = new HashMap();
+                        objects.put((String) m.get("ID"), zb);
+                    }
+                    zb.putAll(m);
+                }
+
+                //获取project 范围
+                String scope = "''";
+                for (String k : plist.keySet()) {
+                    scope += ",'" + k + "'";
+                }
+                List<HashMap> lsP = bczbMapper.getProjectByScope(scope);
+
+                //转换后的project
+                HashMap<String, HashMap> projects = new HashMap();
+                for (HashMap m : lsP) {
+                    HashMap pro = (HashMap) projects.get((String) m.get("ID"));
+                    if (pro == null) {
+                        pro = new HashMap();
+                        projects.put((String) m.get("ID"), pro);
+                    }
+                    pro.put("PRO_ProjectTitle", (String) m.get("P_PROJECTTITLE"));
+                    pro.put("PRO_OilTitle", (String) m.get("P_OILTITLE"));
+                    pro.put("PRO_BBHTitle", (String) m.get("P_BBHTITLE"));
+                    pro.put("PRO_ID", (String) m.get("ID"));
+                    pro.put("PRO_DXGC", (String) m.get("PRO_DXGC"));
+                }
+                //给指标绑定项目属性
+                for (String k : objects.keySet()) {
+                    HashMap o = objects.get(k);
+                    try {
+                        o.putAll(projects.get(o.get("PID")));
+                    } catch (Exception e) {
+                    }
                 }
                 List<HashMap> mdList = new ArrayList<HashMap>(objects.values());
                 LinkedHashMap<String, String> orderby = new LinkedHashMap<>();
@@ -3573,6 +5374,7 @@ public class SysService {
                 mail.put("ZT", condition.getC3());
                 mail.put("LB", "2");
                 mail.put("PATH", "/" + condition.getC1());
+                mail.put("ID", UUID.randomUUID().toString());
                 emailMapper.sendMail(mail);
             } catch (Exception e) {
                 e.printStackTrace();
@@ -3622,6 +5424,57 @@ public class SysService {
                 mail.put("ZT", condition.getC3());
                 mail.put("LB", "2");
                 mail.put("PATH", "/" + condition.getC1());
+                mail.put("ID", UUID.randomUUID().toString());
+                emailMapper.sendMail(mail);
+            } catch (Exception e) {
+                e.printStackTrace();
+                rp.setIssuccess("0");
+                rp.setMessage("操作失败！" + e.getMessage());
+            }
+        } catch (Exception e) {
+            rp.setIssuccess("0");
+            rp.setMessage("操作失败！" + e.getMessage());
+            e.printStackTrace();
+        }
+        return rp;
+    }
+
+    public ResponseBody fzxfzx(RequestBody rq, Map params, String id) {
+        ResponseBody rp = new ResponseBody(params, "1", "操作成功！", id, rq.getTaskid());
+        try {
+            ObjectMapper objectMapper = new ObjectMapper();
+            Condition condition = objectMapper.readValue(rq.getParams(), Condition.class);
+            User user = UserUtils.getUser();
+            try {
+                List<HashMap> lszb = bczbMapper.getZbByFz(condition);
+                String xml = "";
+                Document doc = DocumentHelper.createDocument();
+                Element ls = DocumentHelper.createElement("bcList");
+                ls.addAttribute("OilCode", condition.getC5());
+                ls.addAttribute("BBH", condition.getC6());
+                doc.add(ls);
+                for (HashMap m : lszb) {
+                    String root = (String) m.get("BCZBID");
+                    //xml+=getMapFromDb(root);
+                    Document n = getMapFromDb(root);
+                    /*if(doc==null) doc=n;
+                    else doc.add(n.getRootElement());*/
+                    ls.add(n.getRootElement());
+                }
+                //bczbXfPath
+                String saveDirectoryPath = Global.getConfig("upLoadPath") + "/" + bczbXfPath + "/" + condition.getC1();
+                xml = XmlUtils.FormatXml(doc);
+                FileUtils.writeToFile(saveDirectoryPath, xml, false);
+                bczbMapper.updateFzPath(condition.getC1(), saveDirectoryPath);
+                Map mail = new HashMap();
+                mail.put("FJRID", user.getId());
+                mail.put("FJRYHM", user.getLoginName());
+                mail.put("FJRXM", user.getUsername());
+                mail.put("SJRID", condition.getC2());
+                mail.put("ZT", condition.getC3());
+                mail.put("LB", "9");
+                mail.put("PATH", "/" + condition.getC1());
+                mail.put("ID", UUID.randomUUID().toString());
                 emailMapper.sendMail(mail);
             } catch (Exception e) {
                 e.printStackTrace();
@@ -3637,6 +5490,63 @@ public class SysService {
     }
 
     public Document getMapFromDb(String root) {
+        LinkedHashMap<String, LinkedHashMap> treeM = new LinkedHashMap<>();
+        List<LinkedHashMap> treeMm = bczbMapper.getBczbTreeById(root);
+        for (LinkedHashMap t : treeMm) {
+            treeM.put((String) t.get("ID"), t);
+        }
+        List<HashMap> propertyL = bczbMapper.getDic();
+        Map<String, List<String>> propertyM = new HashMap<String, List<String>>();
+        for (HashMap p : propertyL) {
+            List<String> m = propertyM.get(p.get("OTYPE") + "");
+            if (m == null) {
+                m = new ArrayList();
+                propertyM.put(p.get("OTYPE") + "", m);
+            }
+            m.add(p.get("OKEY") + "");
+        }
+        Map<String, Map> propertys = new HashMap<String, Map>();
+        for (LinkedHashMap m : treeMm) {
+            List<String> pl = propertyM.get(m.get("OTYPE"));
+            Map mm = propertys.get(m.get("ID"));
+            if (mm == null) {
+                mm = new LinkedHashMap();
+                propertys.put(m.get("ID") + "", mm);
+            }
+            if (pl != null)
+                for (String mmm : pl) {
+                    mm.put("@" + mmm, m.get("P_" + mmm.toUpperCase()) == null ? "" : m.get("P_" + mmm.toUpperCase()));
+                }
+            else {
+                System.out.println(m.get("OTYPE"));
+            }
+            //mm.put("#text",m.get("P_TEXT")==null?"":m.get("P_TEXT"));
+
+        }
+        //System.out.println("33 "+new SimpleDateFormat("hh:mm:ss.SSS").format(System.currentTimeMillis()));
+        Map<String, List> tree = new LinkedHashMap<String, List>();
+        for (String key : treeM.keySet()) {
+            LinkedHashMap m = treeM.get(key);
+            List children = tree.get(m.get("PID"));
+            if (children == null) {
+                children = new ArrayList();
+                tree.put((String) m.get("PID"), children);
+            }
+            children.add(treeM.get(key));
+        }
+        Map<String, Object> docStr = AppUtils.readSql22Map(treeM, tree, root, propertys);
+        Document doc = null;
+        String xmlstr = "";
+        try {
+            doc = XmlUtils.Map2Xml(docStr);
+            xmlstr = XmlUtils.FormatXml(doc);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return doc;
+    }
+
+    public Document getMapFromDb_bak(String root) {
         LinkedHashMap<String, LinkedHashMap> treeM = new LinkedHashMap<>();
         List<LinkedHashMap> treeMm = bczbMapper.getBczbTreeById(root);
         for (LinkedHashMap t : treeMm) {
@@ -3680,7 +5590,7 @@ public class SysService {
         return doc;
     }
 
-    public Document getMapFromDb3(String root) {
+    public Document getMapFromDb3_bak(String root) {
         LinkedHashMap<String, LinkedHashMap> treeM = new LinkedHashMap<>();
         List<LinkedHashMap> treeMm = bczbMapper.getYhBczbTreeById(root);
         for (LinkedHashMap t : treeMm) {
@@ -3714,6 +5624,63 @@ public class SysService {
         }
         //System.out.println("44 "+new SimpleDateFormat("hh:mm:ss.SSS").format(System.currentTimeMillis()));
         Map<String, Object> docStr = AppUtils.readSql2Map(treeM, tree, root, propertyM);
+        Document doc = null;
+        String xmlstr = "";
+        try {
+            doc = XmlUtils.Map2Xml(docStr);
+            xmlstr = XmlUtils.FormatXml(doc);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return doc;
+    }
+
+    public Document getMapFromDb3(String root) {
+        LinkedHashMap<String, LinkedHashMap> treeM = new LinkedHashMap<>();
+        List<LinkedHashMap> treeMm = bczbMapper.getYhBczbTreeById(root);
+        for (LinkedHashMap t : treeMm) {
+            treeM.put((String) t.get("ID"), t);
+        }
+        List<HashMap> propertyL = bczbMapper.getDic();
+        Map<String, List<String>> propertyM = new HashMap<String, List<String>>();
+        for (HashMap p : propertyL) {
+            List<String> m = propertyM.get(p.get("OTYPE") + "");
+            if (m == null) {
+                m = new ArrayList();
+                propertyM.put(p.get("OTYPE") + "", m);
+            }
+            m.add(p.get("OKEY") + "");
+        }
+        Map<String, Map> propertys = new HashMap<String, Map>();
+        for (LinkedHashMap m : treeMm) {
+            List<String> pl = propertyM.get(m.get("OTYPE"));
+            Map mm = propertys.get(m.get("ID"));
+            if (mm == null) {
+                mm = new LinkedHashMap();
+                propertys.put(m.get("ID") + "", mm);
+            }
+            if (pl != null)
+                for (String mmm : pl) {
+                    mm.put("@" + mmm, m.get("P_" + mmm.toUpperCase()) == null ? "" : m.get("P_" + mmm.toUpperCase()));
+                }
+            else {
+                System.out.println(m.get("OTYPE"));
+            }
+            //mm.put("#text",m.get("P_TEXT")==null?"":m.get("P_TEXT"));
+
+        }
+        //System.out.println("33 "+new SimpleDateFormat("hh:mm:ss.SSS").format(System.currentTimeMillis()));
+        Map<String, List> tree = new LinkedHashMap<String, List>();
+        for (String key : treeM.keySet()) {
+            LinkedHashMap m = treeM.get(key);
+            List children = tree.get(m.get("PID"));
+            if (children == null) {
+                children = new ArrayList();
+                tree.put((String) m.get("PID"), children);
+            }
+            children.add(treeM.get(key));
+        }
+        Map<String, Object> docStr = AppUtils.readSql22Map(treeM, tree, root, propertys);
         Document doc = null;
         String xmlstr = "";
         try {
@@ -3883,7 +5850,7 @@ public class SysService {
 
     public ResponseBody bczbRk2(RequestBody rq, Map params, String id) {
         ResponseBody rp = new ResponseBody(params, "1", "获取成功", id, rq.getTaskid());
-        String textFromFile = "";
+       /* String textFromFile = "";
         User user = UserUtils.getUser();
         try {
             textFromFile = FileUtils.readFileToString(new File("c:/bczb.xml"), "UTF-8");
@@ -3899,7 +5866,7 @@ public class SysService {
             bczbMapper.mergeProject(h);
         } catch (DocumentException e) {
             e.printStackTrace();
-        }
+        }*/
         return rp;
     }
 
@@ -3913,31 +5880,47 @@ public class SysService {
             BASE64Decoder decoder = new BASE64Decoder();
             try {
                 textFromFile = new String(decoder.decodeBuffer((String) params.get("BCZBDATA")), "UTF-8");
-
-                //textFromFile = StringEscapeUtils.unescapeHtml((String) textFromFile);
+                //System.out.println(textFromFile);
                 if (StringUtils.isBlank(textFromFile)) return rp;
-            /*System.out.println("------------------------");
-            String saveDirectoryPath = Global.getConfig("upLoadPath") +"/"+ bczbXfPath+"/55555555";
-            FileUtils.writeToFile(saveDirectoryPath,textFromFile,false);*/
             } catch (Exception e) {
-                //e.printStackTrace();
+                e.printStackTrace();
             }
             Map<String, Object> map = null;
             try {
                 map = XmlUtils.Xml2MapWithAttr(textFromFile, true);
-                //System.out.println("------------------------"+user.getDeptCode()+"  "+(String)rq.getCpu()+"  "+user.getId());
                 String dw = "1093";
                 if (StringUtils.isNotBlank(user.getDeptCode())) dw = user.getDeptCode().substring(0, 4);
-                String sql = AppUtils.readMap2Sql2(map, "-1", "", dw, (String) rq.getCpu(), user.getId(), "");
-                //System.out.println("sql----------------------1111111"+sql);
+                //String sql = AppUtils.readMap2Sql2(map, "-1", "", dw, (String) rq.getCpu(), user.getId(), "");
+                HashMap<String, List> sqlHt = AppUtils.readMap2Sql22(map, "-1", "", dw, (String) rq.getCpu(), user.getId(), "");
+                List aList = sqlHt.get("a");
+                List bList = sqlHt.get("b");
                 HashMap h = new HashMap();
-                h.put("sql", sql);
-                //System.out.println("sql----------------------"+sql);
-                bczbMapper.mergeProject(h);
+                if (aList != null) {
+                    String sql = " null;";
+                    for (int i = 0; i < aList.size(); i++) {
+                        sql += aList.get(i);
+                    }
+                    h.put("sql", sql);
+                    bczbMapper.mergeProject(h);
+                }
+                if (bList != null) {
+                    String sql = " null;";
+                    for (int i = 0; i < bList.size(); i++) {
+                        sql += bList.get(i);
+                        if (i % 400 == 0) {
+                            h.put("sql", sql);
+                            bczbMapper.mergeProject(h);
+                            sql = " null;";
+                        }
+                    }
+                    h.put("sql", sql);
+                    bczbMapper.mergeProject(h);
+                }
             } catch (Exception e) {
                 rp.setIssuccess("0");
                 rp.setMessage("获取失败");
-                //e.printStackTrace();
+                e.printStackTrace();
+                logger.error(e.toString());
             }
         } catch (Exception e) {
             //e.printStackTrace();
@@ -3946,7 +5929,7 @@ public class SysService {
     }
 
     //提交到补充指标库
-    public ResponseBody yhbczbRk(RequestBody rq, Map params, String id) {
+    public ResponseBody yhbczbRk_bak(RequestBody rq, Map params, String id) {
         ResponseBody rp = new ResponseBody(params, "1", "获取成功", id, rq.getTaskid());
         User user = UserUtils.getUser();
         int c = frameMapper.isAdmin(user.getId());
@@ -4058,6 +6041,239 @@ public class SysService {
                     mail.put("ZT", "用户提交补充指标");
                     mail.put("LB", "3");
                     mail.put("PATH", "/" + ii);
+                    mail.put("ID", UUID.randomUUID().toString());
+                    emailMapper.sendMail(mail);
+                }
+
+            } catch (Exception e) {
+                rp.setIssuccess("0");
+                rp.setMessage("操作失败！");
+                e.printStackTrace();
+            }
+        }
+        return rp;
+    }
+
+    //提交到补充指标库
+    public ResponseBody yhbczxzbRk(RequestBody rq, Map params, String id) {
+        ResponseBody rp = new ResponseBody(params, "1", "获取成功", id, rq.getTaskid());
+        User user = UserUtils.getUser();
+        int c = frameMapper.isZx(user.getId());
+        if (c > 0) {
+            String textFromFile = "";
+            BASE64Decoder decoder = new BASE64Decoder();
+            try {
+                textFromFile = new String(decoder.decodeBuffer((String) params.get("BCZBDATA")), "UTF-8");
+                if (StringUtils.isBlank(textFromFile)) return rp;
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            Map<String, Object> map = null;
+            try {
+                String dw = "1093";
+                if (StringUtils.isNotBlank(user.getDeptCode())) dw = user.getDeptCode().substring(0, 4);
+                map = XmlUtils.Xml2MapWithAttr(textFromFile, true);
+                String sql = AppUtils.readMap2Sql4zx(map, "-1", "", dw, (String) rq.getCpu(), user.getId(), "");
+                HashMap h = new HashMap();
+                h.put("sql", sql);
+                bczbMapper.mergeProject4(h);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        } else {
+            try {
+                String textFromFile = "";
+                BASE64Decoder decoder = new BASE64Decoder();
+                try {
+                    textFromFile = new String(decoder.decodeBuffer((String) params.get("BCZBDATA")), "UTF-8");
+
+                    //textFromFile = StringEscapeUtils.unescapeHtml((String) textFromFile);
+                    if (StringUtils.isBlank(textFromFile)) return rp;
+            /*System.out.println("------------------------");
+            String saveDirectoryPath = Global.getConfig("upLoadPath") +"/"+ bczbXfPath+"/55555555";
+            FileUtils.writeToFile(saveDirectoryPath,textFromFile,false);*/
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+
+                Map<String, Object> map = null;
+                List<HashMap> adm = new ArrayList<HashMap>();
+                try {
+                    String dw = "1093";//默认临时组
+                    if (StringUtils.isNotBlank(user.getDeptCode())) dw = user.getDeptCode().substring(0, 4);
+                    adm = frameMapper.getZx();
+                    if (adm.size() == 0) {
+                        rp.setIssuccess("0");
+                        rp.setMessage("获取单位管理员列表失败！");
+                        return rp;
+                    }
+                    map = XmlUtils.Xml2MapWithAttr(textFromFile, true);
+                    String sql = AppUtils.readMap2Sql3zx(map, "-1", "", dw, (String) rq.getCpu(), user.getId(), "");
+                    HashMap h = new HashMap();
+                    h.put("sql", sql);
+                    bczbMapper.mergeProject3(h);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+                if (map.get("GeneralInformation") == null) return rp;
+                String[] bczbids = ((String) ((Map) map.get("GeneralInformation")).get("@BCZBIDS")).split(",");
+                Document doc = DocumentHelper.createDocument();
+                Element ls = DocumentHelper.createElement("bcList");
+                ls.addAttribute("OilCode", (String) ((Map) map.get("GeneralInformation")).get("@OilCode"));
+                //ls.addAttribute("OilCode", "8100");
+                //ls.addAttribute("BBH", "3");
+                doc.add(ls);
+                String sss = "'" + UUID.randomUUID().toString() + "'";
+                for (String dd : bczbids) {
+                    sss += ",'" + dd + "'";
+
+                }
+                sss = "(" + sss + ")";
+                List<HashMap> llll = bczbMapper.getZbzxByServerId(sss);
+                for (HashMap dd : llll) {
+                    Document n = getMapFromDb3((String) dd.get("ID"));
+                    ls.add(n.getRootElement());
+                }
+                //bczbXfPath
+                String ii = UUID.randomUUID().toString();
+                String saveDirectoryPath = Global.getConfig("upLoadPath") + "/" + yhbczbPath + "/" + ii;
+                String xml = "";
+                try {
+                    xml = XmlUtils.FormatXml(doc);
+                } catch (DocumentException e) {
+                    e.printStackTrace();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+                FileUtils.writeToFile(saveDirectoryPath, xml, false);
+                for (HashMap tm : adm) {
+                    Map mail = new HashMap();
+                    mail.put("FJRID", user.getId());
+                    mail.put("FJRYHM", user.getLoginName());
+                    mail.put("FJRXM", user.getUsername());
+                    //mail.put("SJRID", "2BD695B466C2435BA3F6B6258AFBA49E");
+                    mail.put("SJRID", tm.get("USERID"));
+                    mail.put("ZT", "用户提交补充指标");
+                    mail.put("LB", "8");
+                    mail.put("PATH", "/" + ii);
+                    mail.put("ID", UUID.randomUUID().toString());
+                    emailMapper.sendMail(mail);
+                }
+
+            } catch (Exception e) {
+                rp.setIssuccess("0");
+                rp.setMessage("操作失败！");
+                e.printStackTrace();
+            }
+        }
+        return rp;
+    }
+
+    public ResponseBody yhbczbRk(RequestBody rq, Map params, String id) {
+        ResponseBody rp = new ResponseBody(params, "1", "获取成功", id, rq.getTaskid());
+        User user = UserUtils.getUser();
+        int c = frameMapper.isAdmin(user.getId());
+        System.out.println("管理员提交-------------"+user.getId());
+        if (c > 0) {
+            String textFromFile = "";
+            BASE64Decoder decoder = new BASE64Decoder();
+            try {
+                textFromFile = new String(decoder.decodeBuffer((String) params.get("BCZBDATA")), "UTF-8");
+                if (StringUtils.isBlank(textFromFile)) return rp;
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            Map<String, Object> map = null;
+            try {
+                String dw = "1093";
+                if (StringUtils.isNotBlank(user.getDeptCode())) dw = user.getDeptCode().substring(0, 4);
+                map = XmlUtils.Xml2MapWithAttr(textFromFile, true);
+                String sql = AppUtils.readMap2Sql4(map, "-1", "", dw, (String) rq.getCpu(), user.getId(), "");
+                HashMap h = new HashMap();
+
+                h.put("sql", sql);
+
+                bczbMapper.mergeProject4(h);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        } else {
+            try {
+                String textFromFile = "";
+                BASE64Decoder decoder = new BASE64Decoder();
+                try {
+                    textFromFile = new String(decoder.decodeBuffer((String) params.get("BCZBDATA")), "UTF-8");
+
+                    //textFromFile = StringEscapeUtils.unescapeHtml((String) textFromFile);
+                    if (StringUtils.isBlank(textFromFile)) return rp;
+            /*System.out.println("------------------------");
+            String saveDirectoryPath = Global.getConfig("upLoadPath") +"/"+ bczbXfPath+"/55555555";
+            FileUtils.writeToFile(saveDirectoryPath,textFromFile,false);*/
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+
+                Map<String, Object> map = null;
+                List<HashMap> adm = new ArrayList<HashMap>();
+                try {
+                    String dw = "1093";//默认临时组
+                    if (StringUtils.isNotBlank(user.getDeptCode())) dw = user.getDeptCode().substring(0, 4);
+                    adm = frameMapper.getAdminByCode(dw);
+                    if (adm.size() == 0) {
+                        rp.setIssuccess("0");
+                        rp.setMessage("获取单位管理员列表失败！");
+                        return rp;
+                    }
+                    map = XmlUtils.Xml2MapWithAttr(textFromFile, true);
+                    String sql = AppUtils.readMap2Sql3(map, "-1", "", dw, (String) rq.getCpu(), user.getId(), "");
+                    HashMap h = new HashMap();
+                    h.put("sql", sql);
+                    bczbMapper.mergeProject3(h);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+                if (map.get("GeneralInformation") == null) return rp;
+                String[] bczbids = ((String) ((Map) map.get("GeneralInformation")).get("@BCZBIDS")).split(",");
+                Document doc = DocumentHelper.createDocument();
+                Element ls = DocumentHelper.createElement("bcList");
+                ls.addAttribute("OilCode", (String) ((Map) map.get("GeneralInformation")).get("@OilCode"));
+                //ls.addAttribute("OilCode", "8100");
+                //ls.addAttribute("BBH", "3");
+                doc.add(ls);
+                String sss = "'" + UUID.randomUUID().toString() + "'";
+                for (String dd : bczbids) {
+                    sss += ",'" + dd + "'";
+
+                }
+                sss = "(" + sss + ")";
+                List<HashMap> llll = bczbMapper.getZbByServerId(sss);
+                for (HashMap dd : llll) {
+                    Document n = getMapFromDb3((String) dd.get("ID"));
+                    ls.add(n.getRootElement());
+                }
+                //bczbXfPath
+                String ii = UUID.randomUUID().toString();
+                String saveDirectoryPath = Global.getConfig("upLoadPath") + "/" + yhbczbPath + "/" + ii;
+                String xml = "";
+                try {
+                    xml = XmlUtils.FormatXml(doc);
+                } catch (DocumentException e) {
+                    e.printStackTrace();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+                FileUtils.writeToFile(saveDirectoryPath, xml, false);
+                for (HashMap tm : adm) {
+                    Map mail = new HashMap();
+                    mail.put("FJRID", user.getId());
+                    mail.put("FJRYHM", user.getLoginName());
+                    mail.put("FJRXM", user.getUsername());
+                    //mail.put("SJRID", "2BD695B466C2435BA3F6B6258AFBA49E");
+                    mail.put("SJRID", tm.get("USERID"));
+                    mail.put("ZT", "用户提交补充指标");
+                    mail.put("LB", "3");
+                    mail.put("PATH", "/" + ii);
+                    mail.put("ID", UUID.randomUUID().toString());
                     emailMapper.sendMail(mail);
                 }
 
@@ -4103,7 +6319,7 @@ public class SysService {
     }
 
     //提交到单位补充指标储备库
-    public ResponseBody dwbccbRk(RequestBody rq, Map params, String id) {
+    public ResponseBody dwbccbRk_bak(RequestBody rq, Map params, String id) {
         ResponseBody rp = new ResponseBody(params, "1", "获取成功", id, rq.getTaskid());
         try {
             User user = UserUtils.getUser();
@@ -4178,7 +6394,99 @@ public class SysService {
         return rp;
     }
 
+    public ResponseBody dwbccbRk(RequestBody rq, Map params, String id) {
+        ResponseBody rp = new ResponseBody(params, "1", "获取成功", id, rq.getTaskid());
+        try {
+            User user = UserUtils.getUser();
+            String textFromFile = "";
+            BASE64Decoder decoder = new BASE64Decoder();
+
+            try {
+                textFromFile = new String(decoder.decodeBuffer((String) params.get("BCZBDATA")), "UTF-8");
+                if (StringUtils.isBlank(textFromFile)) return rp;
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            Map<String, Object> map = null;
+            try {
+                String dw = "1093";
+                if (StringUtils.isNotBlank(user.getDeptCode())) dw = user.getDeptCode().substring(0, 4);
+                map = XmlUtils.Xml2MapWithAttr(textFromFile, true);
+                String sql = AppUtils.readMap2Sql4(map, "-1", "", dw, (String) rq.getCpu(), user.getId(), "");
+                HashMap h = new HashMap();
+                h.put("sql", sql);
+                bczbMapper.mergeProject4(h);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return rp;
+    }
+
+    //提交到中心补充指标库
+    public ResponseBody zxbccbRk(RequestBody rq, Map params, String id) {
+        ResponseBody rp = new ResponseBody(params, "1", "获取成功", id, rq.getTaskid());
+        try {
+            User user = UserUtils.getUser();
+            String textFromFile = "";
+            BASE64Decoder decoder = new BASE64Decoder();
+
+            try {
+                textFromFile = new String(decoder.decodeBuffer((String) params.get("BCZBDATA")), "UTF-8");
+                if (StringUtils.isBlank(textFromFile)) return rp;
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            Map<String, Object> map = null;
+            try {
+                String dw = "1093";
+                if (StringUtils.isNotBlank(user.getDeptCode())) dw = user.getDeptCode().substring(0, 4);
+                map = XmlUtils.Xml2MapWithAttr(textFromFile, true);
+                String sql = AppUtils.readMap2Sql4zx(map, "-1", "", dw, (String) rq.getCpu(), user.getId(), "");
+                HashMap h = new HashMap();
+                h.put("sql", sql);
+                bczbMapper.mergeProject4(h);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return rp;
+    }
+
     public ResponseBody getZhzbList(RequestBody rq, Map params, String id) {
+        ResponseBody rp = new ResponseBody(params, "1", "获取指标组合列表", id, rq.getTaskid());
+        try {
+            ObjectMapper objectMapper = new ObjectMapper();
+            Condition condition = objectMapper.readValue(rq.getParams(), Condition.class);
+            //System.out.println(rq.getParams());
+            User user = UserUtils.getUser();
+            System.out.println("user.getDeptCode()====" + user.getDeptCode());
+            condition.setDwdm(user.getDeptCode().substring(0, 4));
+            try {
+                List<HashMap> lsHt = bczbMapper.getZhzbList(condition);
+                HashMap r = new HashMap();
+                condition.setStart(null);
+                r.put("total", bczbMapper.getZhzbList(condition).size());
+                r.put("rows", lsHt);
+                rp.setDatas(com.common.annotation.mapper.JsonMapper.toJsonString(r));
+            } catch (Exception e) {
+                e.printStackTrace();
+                rp.setIssuccess("0");
+                rp.setMessage("获取指标组合失败！" + e.getMessage());
+            }
+        } catch (Exception e) {
+            rp.setIssuccess("0");
+            rp.setMessage("获取指标组合失败！" + e.getMessage());
+            e.printStackTrace();
+        }
+        return rp;
+    }
+
+    public ResponseBody getZhzbzxList(RequestBody rq, Map params, String id) {
         ResponseBody rp = new ResponseBody(params, "1", "获取指标组合列表", id, rq.getTaskid());
         try {
             ObjectMapper objectMapper = new ObjectMapper();
@@ -4214,6 +6522,7 @@ public class SysService {
             User user = UserUtils.getUser();
             condition.setDwdm(user.getDeptCode().substring(0, 4));
             try {
+                System.out.println("dwdm====" + condition);
                 List<HashMap> lsHt = bczbMapper.getJsrList(condition);
                 rp.setDatas(com.common.annotation.mapper.JsonMapper.toJsonString(lsHt));
             } catch (Exception e) {
@@ -4364,6 +6673,62 @@ public class SysService {
         return rp;
     }
 
+    public ResponseBody bcgcfmlsave(RequestBody rq, Map params, String id) {
+        ResponseBody rp = new ResponseBody(params, "1", "保存成功！", id, rq.getTaskid());
+        try {
+            try {
+                ObjectMapper objectMapper = new ObjectMapper();
+                Condition condition = objectMapper.readValue(rq.getParams(), Condition.class);
+                try {
+                    User user = UserUtils.getUser();
+                    condition.setUserid(user.getId());
+                    condition.setDwdm(user.getDeptCode().substring(0, 4));
+                    frameMapper.bczbmlsave(condition);
+                    Map m = new HashMap();
+                    m.put("CODE", condition.getDwdm());
+                    HashMap<String, Office> lsHt = frameMapper.bcgcfMlLists(m);
+                    List<HashMap> zbdic = frameMapper.getMlGcfAList(m);
+                    LinkedHashMap<String, LinkedHashMap<String, Object>> rs = new LinkedHashMap();
+                    HashMap<String, List<Office>> children = new HashMap();
+                    Map<String, List<Map>> zbchildren = new HashMap();
+                    String rootId = "";
+                    for (String key : lsHt.keySet()) {
+                        if (lsHt.get(key).getCode().length() == 8) rootId = key;
+                        List c = children.get(lsHt.get(key).getParentId());
+                        zbchildren.put(lsHt.get(key).getId(), new ArrayList());
+                        if (c == null) {
+                            c = new ArrayList<Office>();
+                            children.put((String) lsHt.get(key).getParentId(), c);
+                        }
+                        c.add(lsHt.get(key));
+                    }
+                    for (HashMap z : zbdic) {
+                        String mlid = (String) z.get("ZHZBID");
+                        List c = zbchildren.get(mlid);
+                        c.add(z);
+                    }
+                    Map<String, Object> docStr = AppUtils.getMlMap(lsHt, children, rootId, zbchildren);
+                    String xml = "";
+                    Document doc = XmlUtils.Map2Xml(docStr);
+                    String saveDirectoryPath = Global.getConfig("upLoadPath") + "/" + dwbcgcfPath + "/" + rootId;
+                    xml = XmlUtils.FormatXml(doc);
+                    FileUtils.writeToFile(saveDirectoryPath, xml, false);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    rp.setIssuccess("0");
+                    rp.setMessage("操作失败！" + e.getMessage());
+                }
+            } catch (Exception e) {
+                rp.setIssuccess("0");
+                rp.setMessage("操作失败！" + e.getMessage());
+                e.printStackTrace();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return rp;
+    }
+
     public ResponseBody addZb2Fz(RequestBody rq, Map params, String id) {
         ResponseBody rp = new ResponseBody(params, "1", "保存成功！", id, rq.getTaskid());
         try {
@@ -4398,6 +6763,8 @@ public class SysService {
             ObjectMapper objectMapper = new ObjectMapper();
             Condition condition = objectMapper.readValue(rq.getParams(), Condition.class);
             try {
+                User user = UserUtils.getUser();
+                condition.setDwdm(user.getDeptCode().substring(0, 4));
                 String updL = StringEscapeUtils.unescapeHtml(condition.getC1());
                 String c2 = condition.getC2();
                 JavaType javaType = JsonMapper.getInstance().getTypeFactory().constructParametricType(List.class, HashMap.class);
@@ -4451,6 +6818,232 @@ public class SysService {
         return rp;
     }
 
+    public ResponseBody delElf4Ml(RequestBody rq, Map params, String id) {
+        ResponseBody rp = new ResponseBody(params, "1", "保存成功！", id, rq.getTaskid());
+        try {
+            ObjectMapper objectMapper = new ObjectMapper();
+            Condition condition = objectMapper.readValue(rq.getParams(), Condition.class);
+            try {
+                User user = UserUtils.getUser();
+                condition.setDwdm(user.getDeptCode().substring(0, 4));
+                Map m = new HashMap();
+                bczbMapper.delElf4Ml(condition);
+                {
+                    m = new HashMap();
+                    m.put("CODE", condition.getDwdm());
+                    HashMap<String, Office> lsHt = frameMapper.bcelfMlLists(m);
+                    List<HashMap> zbdic = frameMapper.getMlElfAList(m);
+                    LinkedHashMap<String, LinkedHashMap<String, Object>> rs = new LinkedHashMap();
+                    HashMap<String, List<Office>> children = new HashMap();
+                    Map<String, List<Map>> zbchildren = new HashMap();
+                    String rootId = "";
+                    for (String key : lsHt.keySet()) {
+                        if (lsHt.get(key).getCode().length() == 8) rootId = key;
+                        List c = children.get(lsHt.get(key).getParentId());
+                        zbchildren.put(lsHt.get(key).getId(), new ArrayList());
+                        if (c == null) {
+                            c = new ArrayList<Office>();
+                            children.put((String) lsHt.get(key).getParentId(), c);
+                        }
+                        c.add(lsHt.get(key));
+                    }
+                    for (HashMap z : zbdic) {
+                        String mlid = (String) z.get("ZHZBID");
+                        List c = zbchildren.get(mlid);
+                        c.add(z);
+                    }
+                    Map<String, Object> docStr = AppUtils.getMlMap(lsHt, children, rootId, zbchildren);
+                    String xml = "";
+                    Document doc = XmlUtils.Map2Xml(docStr);
+                    String saveDirectoryPath = Global.getConfig("upLoadPath") + "/" + dwbcelfPath + "/" + rootId;
+                    xml = XmlUtils.FormatXml(doc);
+                    FileUtils.writeToFile(saveDirectoryPath, xml, false);
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+                rp.setIssuccess("0");
+                rp.setMessage("操作失败！" + e.getMessage());
+            }
+        } catch (Exception e) {
+            rp.setIssuccess("0");
+            rp.setMessage("操作失败！" + e.getMessage());
+            e.printStackTrace();
+        }
+        return rp;
+    }
+
+    public ResponseBody delGcf4Ml(RequestBody rq, Map params, String id) {
+        ResponseBody rp = new ResponseBody(params, "1", "保存成功！", id, rq.getTaskid());
+        try {
+            ObjectMapper objectMapper = new ObjectMapper();
+            Condition condition = objectMapper.readValue(rq.getParams(), Condition.class);
+            try {
+                User user = UserUtils.getUser();
+                condition.setDwdm(user.getDeptCode().substring(0, 4));
+                Map m = new HashMap();
+                bczbMapper.delGcf4Ml(condition);
+                {
+                    m = new HashMap();
+                    m.put("CODE", condition.getDwdm());
+                    HashMap<String, Office> lsHt = frameMapper.bcgcfMlLists(m);
+                    List<HashMap> zbdic = frameMapper.getMlGcfAList(m);
+                    LinkedHashMap<String, LinkedHashMap<String, Object>> rs = new LinkedHashMap();
+                    HashMap<String, List<Office>> children = new HashMap();
+                    Map<String, List<Map>> zbchildren = new HashMap();
+                    String rootId = "";
+                    for (String key : lsHt.keySet()) {
+                        if (lsHt.get(key).getCode().length() == 8) rootId = key;
+                        List c = children.get(lsHt.get(key).getParentId());
+                        zbchildren.put(lsHt.get(key).getId(), new ArrayList());
+                        if (c == null) {
+                            c = new ArrayList<Office>();
+                            children.put((String) lsHt.get(key).getParentId(), c);
+                        }
+                        c.add(lsHt.get(key));
+                    }
+                    for (HashMap z : zbdic) {
+                        String mlid = (String) z.get("ZHZBID");
+                        List c = zbchildren.get(mlid);
+                        c.add(z);
+                    }
+                    Map<String, Object> docStr = AppUtils.getMlMap(lsHt, children, rootId, zbchildren);
+                    String xml = "";
+                    Document doc = XmlUtils.Map2Xml(docStr);
+                    String saveDirectoryPath = Global.getConfig("upLoadPath") + "/" + dwbcgcfPath + "/" + rootId;
+                    xml = XmlUtils.FormatXml(doc);
+                    FileUtils.writeToFile(saveDirectoryPath, xml, false);
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+                rp.setIssuccess("0");
+                rp.setMessage("操作失败！" + e.getMessage());
+            }
+        } catch (Exception e) {
+            rp.setIssuccess("0");
+            rp.setMessage("操作失败！" + e.getMessage());
+            e.printStackTrace();
+        }
+        return rp;
+    }
+
+    public ResponseBody xfElf(RequestBody rq, Map params, String id) {
+        ResponseBody rp = new ResponseBody(params, "1", "保存成功！", id, rq.getTaskid());
+        try {
+            ObjectMapper objectMapper = new ObjectMapper();
+            Condition condition = objectMapper.readValue(rq.getParams(), Condition.class);
+            try {
+                User user = UserUtils.getUser();
+                condition.setDwdm(user.getDeptCode().substring(0, 4));
+                Map m = new HashMap();
+                //System.out.println("6666666666666666"+m);
+                {
+                    m = new HashMap();
+                    m.put("CODE", condition.getDwdm());
+                    HashMap<String, Office> lsHt = frameMapper.bcelfMlLists(m);
+                    List<HashMap> zbdic = frameMapper.getMlElfAList(m);
+                    LinkedHashMap<String, LinkedHashMap<String, Object>> rs = new LinkedHashMap();
+                    HashMap<String, List<Office>> children = new HashMap();
+                    Map<String, List<Map>> zbchildren = new HashMap();
+                    String rootId = "";
+                    for (String key : lsHt.keySet()) {
+                        if (lsHt.get(key).getCode().length() == 8) rootId = key;
+                        List c = children.get(lsHt.get(key).getParentId());
+                        zbchildren.put(lsHt.get(key).getId(), new ArrayList());
+                        if (c == null) {
+                            c = new ArrayList<Office>();
+                            children.put((String) lsHt.get(key).getParentId(), c);
+                        }
+                        c.add(lsHt.get(key));
+                    }
+                    for (HashMap z : zbdic) {
+                        String mlid = (String) z.get("ZHZBID");
+                        List c = zbchildren.get(mlid);
+                        c.add(z);
+                    }
+                    Map<String, Object> docStr = AppUtils.getMlMap(lsHt, children, rootId, zbchildren);
+                    String xml = "";
+                    Document doc = XmlUtils.Map2Xml(docStr);
+                    //String saveDirectoryPath = Global.getConfig("upLoadPath") + "/" + dwbcelfPath + "/" + rootId;
+                    String saveDirectoryPath = Global.getConfig("upLoadPath") + "/" + dwbcelfPath + "/" + user.getDeptId();
+                    xml = XmlUtils.FormatXml(doc);
+                    FileUtils.writeToFile(saveDirectoryPath, xml, false);
+                    m.put("path", "/" + dwbcelfPath + "/" + user.getDeptId());
+                    m.put("userid", user.getUserid());
+                    m.put("deptid", condition.getDwdm());
+                    bczbMapper.xfElf(m);
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+                rp.setIssuccess("0");
+                rp.setMessage("操作失败！" + e.getMessage());
+            }
+        } catch (Exception e) {
+            rp.setIssuccess("0");
+            rp.setMessage("操作失败！" + e.getMessage());
+            e.printStackTrace();
+        }
+        return rp;
+    }
+
+    public ResponseBody xfGcf(RequestBody rq, Map params, String id) {
+        ResponseBody rp = new ResponseBody(params, "1", "保存成功！", id, rq.getTaskid());
+        try {
+            ObjectMapper objectMapper = new ObjectMapper();
+            Condition condition = objectMapper.readValue(rq.getParams(), Condition.class);
+            try {
+                User user = UserUtils.getUser();
+                condition.setDwdm(user.getDeptCode().substring(0, 4));
+                Map m = new HashMap();
+                //System.out.println("6666666666666666"+m);
+                {
+                    m = new HashMap();
+                    m.put("CODE", condition.getDwdm());
+                    HashMap<String, Office> lsHt = frameMapper.bcgcfMlLists(m);
+                    List<HashMap> zbdic = frameMapper.getMlGcfAList(m);
+                    LinkedHashMap<String, LinkedHashMap<String, Object>> rs = new LinkedHashMap();
+                    HashMap<String, List<Office>> children = new HashMap();
+                    Map<String, List<Map>> zbchildren = new HashMap();
+                    String rootId = "";
+                    for (String key : lsHt.keySet()) {
+                        if (lsHt.get(key).getCode().length() == 8) rootId = key;
+                        List c = children.get(lsHt.get(key).getParentId());
+                        zbchildren.put(lsHt.get(key).getId(), new ArrayList());
+                        if (c == null) {
+                            c = new ArrayList<Office>();
+                            children.put((String) lsHt.get(key).getParentId(), c);
+                        }
+                        c.add(lsHt.get(key));
+                    }
+                    for (HashMap z : zbdic) {
+                        String mlid = (String) z.get("ZHZBID");
+                        List c = zbchildren.get(mlid);
+                        c.add(z);
+                    }
+                    Map<String, Object> docStr = AppUtils.getMlMap(lsHt, children, rootId, zbchildren);
+                    String xml = "";
+                    Document doc = XmlUtils.Map2Xml(docStr);
+                    //String saveDirectoryPath = Global.getConfig("upLoadPath") + "/" + dwbcelfPath + "/" + rootId;
+                    String saveDirectoryPath = Global.getConfig("upLoadPath") + "/" + dwbcgcfPath + "/" + user.getDeptId();
+                    xml = XmlUtils.FormatXml(doc);
+                    FileUtils.writeToFile(saveDirectoryPath, xml, false);
+                    m.put("path", "/" + dwbcgcfPath + "/" + user.getDeptId());
+                    m.put("userid", user.getUserid());
+                    m.put("deptid", condition.getDwdm());
+                    bczbMapper.xfElf(m);
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+                rp.setIssuccess("0");
+                rp.setMessage("操作失败！" + e.getMessage());
+            }
+        } catch (Exception e) {
+            rp.setIssuccess("0");
+            rp.setMessage("操作失败！" + e.getMessage());
+            e.printStackTrace();
+        }
+        return rp;
+    }
+
     public ResponseBody addZb2Ml(RequestBody rq, Map params, String id) {
         ResponseBody rp = new ResponseBody(params, "1", "保存成功！", id, rq.getTaskid());
         try {
@@ -4461,39 +7054,57 @@ public class SysService {
                 String c2 = condition.getC2();
                 JavaType javaType = JsonMapper.getInstance().getTypeFactory().constructParametricType(List.class, HashMap.class);
                 List<HashMap> h = JsonMapper.getInstance().fromJson(updL, javaType);
-                Map m = new HashMap();
-                m.put("list", h);
-                m.put("fzid", c2);
+                Map mw = new HashMap();
+                mw.put("list", h);
+                mw.put("fzid", c2);
                 //System.out.println("6666666666666666"+m);
                 {
                     for (HashMap mmm : h) {
-                        String root = (String) mmm.get("OID");
+                        String root = (String) mmm.get("ID");
                         LinkedHashMap<String, LinkedHashMap> treeM = new LinkedHashMap<>();
                         List<LinkedHashMap> treeMm = bczbMapper.getDwBczbTreeById(root);
                         for (LinkedHashMap t : treeMm) {
                             treeM.put((String) t.get("ID"), t);
                         }
-                        List<LinkedHashMap> propertyL = bczbMapper.getDwBczbProperty(root);
-                        Map<String, Map> propertyM = new HashMap<String, Map>();
-                        for (LinkedHashMap mnn : propertyL) {
-                            Map<String, Object> p = propertyM.get((String) mnn.get("OID"));
-                            if (p == null) {
-                                p = new LinkedHashMap<String, Object>();
-                                propertyM.put((String) mnn.get("OID"), p);
+                        List<HashMap> propertyL = bczbMapper.getDic();
+                        Map<String, List<String>> propertyM = new HashMap<String, List<String>>();
+                        for (HashMap p : propertyL) {
+                            List<String> m = propertyM.get(p.get("OTYPE") + "");
+                            if (m == null) {
+                                m = new ArrayList();
+                                propertyM.put(p.get("OTYPE") + "", m);
                             }
-                            p.put((String) mnn.get("OKEY"), (String) mnn.get("OVALUE") == null ? "" : (String) mnn.get("OVALUE"));
+                            m.add(p.get("OKEY") + "");
                         }
+                        Map<String, Map> propertys = new HashMap<String, Map>();
+                        for (LinkedHashMap m : treeMm) {
+                            List<String> pl = propertyM.get(m.get("OTYPE"));
+                            Map mm = propertys.get(m.get("ID"));
+                            if (mm == null) {
+                                mm = new LinkedHashMap();
+                                propertys.put(m.get("ID") + "", mm);
+                            }
+                            if (pl != null)
+                                for (String mmmn : pl) {
+                                    mm.put("@" + mmmn, m.get("P_" + mmmn.toUpperCase()) == null ? "" : m.get("P_" + mmmn.toUpperCase()));
+                                }
+                            else {
+                                //System.out.println(m.get("OTYPE"));
+                            }
+                            //mm.put("#text",m.get("P_TEXT")==null?"":m.get("P_TEXT"));
+                        }
+                        //System.out.println("33 "+new SimpleDateFormat("hh:mm:ss.SSS").format(System.currentTimeMillis()));
                         Map<String, List> tree = new LinkedHashMap<String, List>();
                         for (String key : treeM.keySet()) {
-                            LinkedHashMap mtt = treeM.get(key);
-                            List children = tree.get(mtt.get("PID"));
+                            LinkedHashMap m = treeM.get(key);
+                            List children = tree.get(m.get("PID"));
                             if (children == null) {
                                 children = new ArrayList();
-                                tree.put((String) mtt.get("PID"), children);
+                                tree.put((String) m.get("PID"), children);
                             }
                             children.add(treeM.get(key));
                         }
-                        Map<String, Object> docStr = AppUtils.readSql2Map(treeM, tree, root, propertyM);
+                        Map<String, Object> docStr = AppUtils.readSql22Map(treeM, tree, root, propertys);
                         Document doc = DocumentHelper.createDocument();
                         Element ls = DocumentHelper.createElement("DocumentElement");
                         doc.add(ls);
@@ -4512,7 +7123,7 @@ public class SysService {
                         }
                     }
                 }
-                bczbMapper.addZb2Ml(m);
+                bczbMapper.addZb2Ml(mw);
             } catch (Exception e) {
                 e.printStackTrace();
                 rp.setIssuccess("0");
@@ -4596,14 +7207,79 @@ public class SysService {
                 String c2 = condition.getC2();
                 JavaType javaType = JsonMapper.getInstance().getTypeFactory().constructParametricType(List.class, HashMap.class);
                 List<HashMap> h = JsonMapper.getInstance().fromJson(updL, javaType);
-                Map m = new HashMap();
-                m.put("list", h);
-                m.put("fzid", c2);
+                Map mw = new HashMap();
+                mw.put("list", h);
+                mw.put("fzid", c2);
                 //System.out.println("6666666666666666"+m);
                 {
                     for (HashMap mmm : h) {
+                        String root = (String) mmm.get("ID");
+                        LinkedHashMap<String, LinkedHashMap> treeM = new LinkedHashMap<>();
+                        List<LinkedHashMap> treeMm = bczbMapper.getDwBczbTreeById(root);
+                        for (LinkedHashMap t : treeMm) {
+                            treeM.put((String) t.get("ID"), t);
+                        }
+                        List<HashMap> propertyL = bczbMapper.getDic();
+                        Map<String, List<String>> propertyM = new HashMap<String, List<String>>();
+                        for (HashMap p : propertyL) {
+                            List<String> m = propertyM.get(p.get("OTYPE") + "");
+                            if (m == null) {
+                                m = new ArrayList();
+                                propertyM.put(p.get("OTYPE") + "", m);
+                            }
+                            m.add(p.get("OKEY") + "");
+                        }
+                        Map<String, Map> propertys = new HashMap<String, Map>();
+                        for (LinkedHashMap m : treeMm) {
+                            List<String> pl = propertyM.get(m.get("OTYPE"));
+                            Map mm = propertys.get(m.get("ID"));
+                            if (mm == null) {
+                                mm = new LinkedHashMap();
+                                propertys.put(m.get("ID") + "", mm);
+                            }
+                            if (pl != null)
+                                for (String mmmn : pl) {
+                                    mm.put("@" + mmmn, m.get("P_" + mmmn.toUpperCase()) == null ? "" : m.get("P_" + mmmn.toUpperCase()));
+                                }
+                            else {
+                                //System.out.println(m.get("OTYPE"));
+                            }
+                            //mm.put("#text",m.get("P_TEXT")==null?"":m.get("P_TEXT"));
+                        }
+                        //System.out.println("33 "+new SimpleDateFormat("hh:mm:ss.SSS").format(System.currentTimeMillis()));
+                        Map<String, List> tree = new LinkedHashMap<String, List>();
+                        for (String key : treeM.keySet()) {
+                            LinkedHashMap m = treeM.get(key);
+                            List children = tree.get(m.get("PID"));
+                            if (children == null) {
+                                children = new ArrayList();
+                                tree.put((String) m.get("PID"), children);
+                            }
+                            children.add(treeM.get(key));
+                        }
+                        Map<String, Object> docStr = AppUtils.readSql22Map(treeM, tree, root, propertys);
+                        Document doc = DocumentHelper.createDocument();
+                        Element ls = DocumentHelper.createElement("DocumentElement");
+                        doc.add(ls);
+                        //String rootId = (String) propertyM.get(root).get("SERVERID");
+                        String rootId = "";
+                        if (StringUtils.isBlank(rootId))
+                            rootId = root;
+                        try {
+                            Document zb = XmlUtils.Map2Xml(docStr);
+                            ls.add(zb.getRootElement());
+                            String saveDirectoryPath = Global.getConfig("upLoadPath") + "/" + dwbczbPath + "/" + rootId;
+                            String xml = XmlUtils.FormatXml(doc);
+                            FileUtils.writeToFile(saveDirectoryPath, xml, false);
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                    }
+                }
+                /*{
+                    for (HashMap mmm : h) {
 
-                        String root = (String) mmm.get("OID");
+                        String root = (String) mmm.get("ID");
                         LinkedHashMap<String, LinkedHashMap> treeM = new LinkedHashMap<>();
                         List<LinkedHashMap> treeMm = bczbMapper.getDwBczbTreeById(root);
                         for (LinkedHashMap t : treeMm) {
@@ -4646,8 +7322,8 @@ public class SysService {
                             e.printStackTrace();
                         }
                     }
-                }
-                bczbMapper.addZb2Zb(m);
+                }*/
+                bczbMapper.addZb2Zb(mw);
                 //原来的设计
                 //region
                 /*{
@@ -5331,6 +8007,160 @@ public class SysService {
 
         return r;
     }
+
+    /*张*/
+    //region
+    public  ResponseBody  yqList(RequestBody  rq,  Map  params,  String  id)  {
+        ResponseBody  rp  =  new  ResponseBody(params,  "1",  "获取数据列表",  id,  rq.getTaskid());
+        try  {
+            ObjectMapper  objectMapper  =  new  ObjectMapper();
+            Condition  condition  =  objectMapper.readValue(rq.getParams(),  Condition.class);
+            try  {
+                List<HashMap>  lsHt  =  bbglMapper.getyqlist(condition);
+                HashMap  r  =  new  HashMap();
+                condition.setStart(null);
+                r.put("total",  bbglMapper.getyqlist(condition).size());
+                r.put("rows",  lsHt);
+                rp.setDatas(com.common.annotation.mapper.JsonMapper.toJsonString(r));
+            }  catch  (Exception  e)  {
+                e.printStackTrace();
+                rp.setIssuccess("0");
+                rp.setMessage("获取数据列表失败！"  +  e.getMessage());
+            }
+        }  catch  (Exception  e)  {
+            rp.setIssuccess("0");
+            rp.setMessage("获取数据列表失败！"  +  e.getMessage());
+            e.printStackTrace();
+        }
+        return  rp;
+    }
+
+    public  ResponseBody  yqbbList(RequestBody  rq,  Map  params,  String  id)  {
+        ResponseBody  rp  =  new  ResponseBody(params,  "1",  "获取数据列表",  id,  rq.getTaskid());
+        try  {
+            ObjectMapper  objectMapper  =  new  ObjectMapper();
+            Condition  condition  =  objectMapper.readValue(rq.getParams(),  Condition.class);
+            try  {
+                List<HashMap>  lsHt  =  bbglMapper.getyqbblist(condition);
+                HashMap  r  =  new  HashMap();
+                condition.setStart(null);
+                r.put("total",  bbglMapper.getyqbblist(condition).size());
+                r.put("rows",  lsHt);
+                rp.setDatas(com.common.annotation.mapper.JsonMapper.toJsonString(r));
+            }  catch  (Exception  e)  {
+                e.printStackTrace();
+                rp.setIssuccess("0");
+                rp.setMessage("获取数据列表失败！"  +  e.getMessage());
+            }
+        }  catch  (Exception  e)  {
+            rp.setIssuccess("0");
+            rp.setMessage("获取数据列表失败！"  +  e.getMessage());
+            e.printStackTrace();
+        }
+        return  rp;
+    }
+    public  ResponseBody  yqsave(RequestBody  rq,  Map  params,  String  id)  {
+        ResponseBody  rp  =  new  ResponseBody(params,  "1",  "保存成功！",  id,  rq.getTaskid());
+        try  {
+            ObjectMapper  objectMapper  =  new  ObjectMapper();
+            Condition  condition  =  objectMapper.readValue(rq.getParams(),  Condition.class);
+            try  {
+                String  updL  =  StringEscapeUtils.unescapeHtml(condition.getC6());
+                JavaType  javaType  =  JsonMapper.getInstance().getTypeFactory().constructParametricType(List.class,  HashMap.class);
+                List<HashMap>  h  =  JsonMapper.getInstance().fromJson(updL,  javaType);
+                HashMap  m  =  new  HashMap();
+                m.put("list",  h);
+                m.put("submitter",  UserUtils.getUser().getId());
+                bbglMapper.saveYq(m);
+            } catch (Exception e) {
+                e.printStackTrace();
+                rp.setIssuccess("0");
+                rp.setMessage("操作失败！" + e.getMessage());
+            }
+        } catch (Exception e) {
+            rp.setIssuccess("0");
+            rp.setMessage("操作失败！" + e.getMessage());
+            e.printStackTrace();
+        }
+        return rp;
+    }
+
+    public ResponseBody yqbbsave(RequestBody rq, Map params, String id) {
+        ResponseBody rp = new ResponseBody(params, "1", "保存成功！", id, rq.getTaskid());
+        try {
+            ObjectMapper objectMapper = new ObjectMapper();
+            Condition condition = objectMapper.readValue(rq.getParams(), Condition.class);
+            try {
+                String updL = StringEscapeUtils.unescapeHtml(condition.getC6());
+                JavaType javaType = JsonMapper.getInstance().getTypeFactory().constructParametricType(List.class, HashMap.class);
+                List<HashMap> h = JsonMapper.getInstance().fromJson(updL, javaType);
+                HashMap m = new HashMap();
+                m.put("list", h);
+                m.put("submitter", UserUtils.getUser().getId());
+                bbglMapper.saveYqbb(m);
+            } catch (Exception e) {
+                e.printStackTrace();
+                rp.setIssuccess("0");
+                rp.setMessage("操作失败！" + e.getMessage());
+            }
+        } catch (Exception e) {
+            rp.setIssuccess("0");
+            rp.setMessage("操作失败！" + e.getMessage());
+            e.printStackTrace();
+        }
+        return rp;
+    }
+    public ResponseBody yqdel(RequestBody rq, Map params, String id) {
+        ResponseBody rp = new ResponseBody(params, "1", "删除成功！", id, rq.getTaskid());
+        try {
+            ObjectMapper objectMapper = new ObjectMapper();
+            Condition condition = objectMapper.readValue(rq.getParams(), Condition.class);
+            try {
+                String updL = StringEscapeUtils.unescapeHtml(condition.getC2());
+                JavaType javaType = JsonMapper.getInstance().getTypeFactory().constructParametricType(List.class, HashMap.class);
+                List<HashMap> h = JsonMapper.getInstance().fromJson(updL, javaType);
+                HashMap m = new HashMap();
+                m.put("list", h);
+                bbglMapper.delyq(m);
+            } catch (Exception e) {
+                e.printStackTrace();
+                rp.setIssuccess("0");
+                rp.setMessage("操作失败！" + e.getMessage());
+            }
+        } catch (Exception e) {
+            rp.setIssuccess("0");
+            rp.setMessage("操作失败！" + e.getMessage());
+            e.printStackTrace();
+        }
+        return rp;
+    }
+
+    public ResponseBody yqbbdel(RequestBody rq, Map params, String id) {
+        ResponseBody rp = new ResponseBody(params, "1", "删除成功！", id, rq.getTaskid());
+        try {
+            ObjectMapper objectMapper = new ObjectMapper();
+            Condition condition = objectMapper.readValue(rq.getParams(), Condition.class);
+            try {
+                String updL = StringEscapeUtils.unescapeHtml(condition.getC2());
+                JavaType javaType = JsonMapper.getInstance().getTypeFactory().constructParametricType(List.class, HashMap.class);
+                List<HashMap> h = JsonMapper.getInstance().fromJson(updL, javaType);
+                HashMap m = new HashMap();
+                m.put("list", h);
+                bbglMapper.delyqbb(m);
+            } catch (Exception e) {
+                e.printStackTrace();
+                rp.setIssuccess("0");
+                rp.setMessage("操作失败！" + e.getMessage());
+            }
+        } catch (Exception e) {
+            rp.setIssuccess("0");
+            rp.setMessage("操作失败！" + e.getMessage());
+            e.printStackTrace();
+        }
+        return rp;
+    }
+    //endregion
+
 
     public static void main(String[] args) {
         try {

@@ -17,8 +17,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.FileCopyUtils;
 
 import java.io.File;
+import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.math.BigDecimal;
@@ -46,6 +48,8 @@ public class AnonService {
     BbglMapper bbglMapper;
     @Autowired
     BczbMapper bczbMapper;
+    @Autowired
+    EmailMapper emailMapper;
     String bczbXfPath = Global.YSBCZBXF_BASE_URL;
     String yhbczbPath = Global.YHBCZBXF_BASE_URL;
     String dwbczbPath = Global.DWBCZBXF_BASE_URL;
@@ -196,7 +200,7 @@ public class AnonService {
         ResponseBody r = new ResponseBody(params, "1", "登录成功", id, rq.getTaskid());
         try {
             HashMap info = userMapper.validRegst(rq.getCpu());
-            //System.out.println(rq.getCpu());
+            System.out.println("-------------------"+rq.getCpu());
             if (userMapper.validRegst(rq.getCpu()) == null) {
                 r.setIssuccess("03");
                 r.setMessage("登录机器未注册！");
@@ -354,6 +358,35 @@ public class AnonService {
         rp.setIp(Global.getConfig("server.ip.port"));
         return rp;
     }
+    public ResponseBody bczbRk(RequestBody rq, Map params, String id) {
+        ResponseBody rp = new ResponseBody(params, "1", "获取成功", id, rq.getTaskid());
+        String textFromFile = "";
+        User user = UserUtils.getUser();
+        try {
+            textFromFile = FileUtils.readFileToString(new File("c:/55555555.xml"), "UTF-8");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        Map<String, Object> map = null;
+        HashMap h=new HashMap();
+        String sql="";
+        try {
+            map = XmlUtils.Xml2MapWithAttr(textFromFile, true);
+            //String sql = AppUtils.readMap2Sql22(map, "-1","","1045","askdf;allasdj;kf","12313121312","");
+            //System.out.println(sql);
+            /*HashMap h = new HashMap();
+            h.put("sql", sql);*/
+            System.out.println("------入库开始时间"+DateUtils.getDateTime());
+            //bczbMapper.mergeProject(h);
+            sql=AppUtils.readMap222Sql2(map, "-1", "", "1093", (String) rq.getCpu(), user.getId(), "");
+            map.put("sql",sql);
+            bczbMapper.mergeProject(h);
+            System.out.println("------入库结束时间"+DateUtils.getDateTime());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return rp;
+    }
     public ResponseBody bczbRk2(RequestBody rq, Map params, String id) {
         ResponseBody rp = new ResponseBody(params, "1", "获取成功", id, rq.getTaskid());
         String textFromFile = "";
@@ -366,11 +399,135 @@ public class AnonService {
         Map<String, Object> map = null;
         try {
             map = XmlUtils.Xml2MapWithAttr(textFromFile, true);
-            String sql = AppUtils.readMap2Sql3(map, "-1","","1045","askdf;allasdj;kf","12313121312","");
+            //String sql = AppUtils.readMap2Sql22(map, "-1","","1045","askdf;allasdj;kf","12313121312","");
             //System.out.println(sql);
+            /*HashMap h = new HashMap();
+            h.put("sql", sql);*/
+            System.out.println("------入库开始时间"+DateUtils.getDateTime());
+            //bczbMapper.mergeProject(h);
+            HashMap<String,List> sqlHt=AppUtils.readMap2Sql2(map, "-1", "", "1093", (String) rq.getCpu(), user.getId(), "");
+            List aList=sqlHt.get("a");
+            List bList=sqlHt.get("b");
             HashMap h = new HashMap();
-            h.put("sql", sql);
-            bczbMapper.mergeProject3(h);
+            if(aList!=null){
+                String sql=" null;";
+                for(int i=0;i<aList.size();i++){
+                    sql+=aList.get(i);
+                }
+                h.put("sql", sql);
+                bczbMapper.mergeProject(h);
+            }
+            if(bList!=null){
+                String sql=" null;";
+                for(int i=0;i<bList.size();i++){
+                    sql+=bList.get(i);
+                    if(i%3000==0){
+                        h.put("sql", sql);
+                        bczbMapper.mergeProject(h);
+                        sql=" null;";
+                    }
+                }
+                h.put("sql", sql);
+                bczbMapper.mergeProject(h);
+            }
+            System.out.println("------入库结束时间"+DateUtils.getDateTime());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return rp;
+    }
+    public ResponseBody bczbRk22(RequestBody rq, Map params, String id) {
+        ResponseBody rp = new ResponseBody(params, "1", "获取成功", id, rq.getTaskid());
+        String textFromFile = "";
+        User user = UserUtils.getUser();
+        try {
+            textFromFile = FileUtils.readFileToString(new File("c:/55555555.xml"), "UTF-8");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        Map<String, Object> map = null;
+        try {
+            map = XmlUtils.Xml2MapWithAttr(textFromFile, true);
+            System.out.println("------入库开始时间"+DateUtils.getDateTime());
+            HashMap<String,List> sqlHt=AppUtils.readMap2222Sql2(map, "-1", "", "1093", (String) rq.getCpu(), user.getId(), "");
+            List aList=sqlHt.get("a");
+            List bList1=sqlHt.get("b1");
+            List bList2=sqlHt.get("b2");
+            HashMap h = new HashMap();
+            if(aList!=null){
+                String sql=" null;";
+                for(int i=0;i<aList.size();i++){
+                    sql+=aList.get(i);
+                }
+                h.put("sql", sql);
+                bczbMapper.mergeProject(h);
+            }
+            HashMap m=new HashMap();
+            if(bList1!=null){
+                m.put("list",bList1);
+                bczbMapper.insertBczb1(m);
+            }
+            if(bList2!=null){
+                m.put("list",bList2);
+                bczbMapper.insertBczb2(m);
+            }
+            System.out.println("------入库结束时间"+DateUtils.getDateTime());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return rp;
+    }
+    public ResponseBody bczbRk3(RequestBody rq, Map params, String id) {
+        ResponseBody rp = new ResponseBody(params, "1", "获取成功", id, rq.getTaskid());
+        String textFromFile = "";
+        User user = UserUtils.getUser();
+        try {
+            textFromFile = FileUtils.readFileToString(new File("c:/55555555.xml"), "UTF-8");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        Map<String, Object> map = null;
+        try {
+            map = XmlUtils.Xml2MapWithAttr(textFromFile, true);
+            String dw = "1093";
+            if (StringUtils.isNotBlank(user.getDeptCode())) dw = user.getDeptCode().substring(0, 4);
+            //String sql = AppUtils.readMap2Sql2(map, "-1", "", dw, (String) rq.getCpu(), user.getId(), "");
+            System.out.println("------解析开始时间"+DateUtils.getDateTime());
+            HashMap<String,List> sqlHt=AppUtils.readMap2Sql22(map, "-1", "", dw, (String) rq.getCpu(), user.getId(), "");
+            System.out.println("------解析完成时间"+DateUtils.getDateTime());
+            System.out.println("------入库开始时间"+DateUtils.getDateTime());
+            List aList=sqlHt.get("a");
+            List bList=sqlHt.get("b");
+            HashMap h = new HashMap();
+            if(aList!=null){
+                String sql=" null;";
+                for(int i=0;i<aList.size();i++){
+                    sql+=aList.get(i);
+                }
+                h.put("sql", sql);
+                bczbMapper.mergeProject(h);
+            }
+            if(bList!=null){
+                String sql=" null;";
+                for(int i=0;i<bList.size();i++){
+                    sql+=bList.get(i);
+                    if(i%400==0){
+                        final String ttt=sql;
+                        /*Thread t = new Thread(new Runnable(){
+                            public void run(){
+
+                            }});
+                        t.start();*/
+                        HashMap wowo=new HashMap();
+                        wowo.put("sql", ttt);
+                        bczbMapper.mergeProject(wowo);
+                        sql=" null;";
+                    }
+                }
+                h.put("sql", sql);
+                bczbMapper.mergeProject(h);
+            }
+            System.out.println("------入库结束时间"+DateUtils.getDateTime());
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -378,7 +535,7 @@ public class AnonService {
     }
     public ResponseBody bczbCk2(RequestBody rq, Map params, String id) {
         ResponseBody rp = new ResponseBody(params, "1", "获取成功", id, rq.getTaskid());
-        String root="8b7f5824833143a18045b9e620521eb2";
+        String root="f73f6d30a37341be88c22beeb1219d2e";
         LinkedHashMap<String,LinkedHashMap> treeM=new LinkedHashMap<>();
         List<LinkedHashMap> treeMm=bczbMapper.getBczbTreeById(root);
         for(LinkedHashMap t:treeMm){
@@ -416,6 +573,70 @@ public class AnonService {
             doc = XmlUtils.Map2Xml(docStr);
             //System.out.println("66 "+new SimpleDateFormat("hh:mm:ss.SSS").format(System.currentTimeMillis()));
             //System.out.println(XmlUtils.FormatXml(doc));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return rp;
+    }
+    public ResponseBody bczbCk3(RequestBody rq, Map params, String id) {
+        ResponseBody rp = new ResponseBody(params, "1", "获取成功", id, rq.getTaskid());
+        String root="cbfeb5a54e0d4ec69b55640c29b9a3cd";
+        LinkedHashMap<String,LinkedHashMap> treeM=new LinkedHashMap<>();
+        List<LinkedHashMap> treeMm=bczbMapper.getBczbTreeById(root);
+        for(LinkedHashMap t:treeMm){
+            treeM.put((String)t.get("ID"),t);
+        }
+
+        List<HashMap> propertyL=bczbMapper.getDic();
+        Map<String,List<String>> propertyM=new HashMap<String,List<String>>();
+        for(HashMap p:propertyL){
+            List<String> m=propertyM.get(p.get("OTYPE")+"");
+            if(m==null) {
+                m=new ArrayList();
+                propertyM.put(p.get("OTYPE")+"",m);
+            }
+            m.add(p.get("OKEY")+"");
+        }
+        Map<String,Map> propertys=new HashMap<String,Map>();
+        for(LinkedHashMap m:treeMm){
+            List<String> pl=propertyM.get(m.get("OTYPE"));
+            Map mm=propertys.get(m.get("ID"));
+            if(mm==null) {
+                mm=new LinkedHashMap();
+                propertys.put(m.get("ID")+"",mm);
+            }
+            if(pl!=null)
+                for(String mmm:pl){
+                    mm.put("@"+mmm,m.get("P_"+mmm.toUpperCase())==null?"":m.get("P_"+mmm.toUpperCase()));
+                }
+            else{
+                System.out.println(m.get("OTYPE"));
+            }
+            //mm.put("#text",m.get("P_TEXT")==null?"":m.get("P_TEXT"));
+
+        }
+        //System.out.println("33 "+new SimpleDateFormat("hh:mm:ss.SSS").format(System.currentTimeMillis()));
+        Map<String,List> tree=new LinkedHashMap<String,List>();
+        for (String key : treeM.keySet()) {
+            LinkedHashMap m=treeM.get(key);
+            List children=tree.get(m.get("PID"));
+            if(children==null){
+                children=new ArrayList();
+                tree.put((String)m.get("PID"),children);
+            }
+            children.add(treeM.get(key));
+        }
+        //System.out.println("44 "+new SimpleDateFormat("hh:mm:ss.SSS").format(System.currentTimeMillis()));
+        Map<String,Object> docStr=AppUtils.readSql22Map(treeM,tree,root,propertys);
+        //System.out.println("55 "+new SimpleDateFormat("hh:mm:ss.SSS").format(System.currentTimeMillis()));
+        Document doc = null;
+        try {
+            //System.out.println(docStr);
+            doc = XmlUtils.Map2Xml(docStr);
+            rp.setMessage(docStr.toString());
+            //System.out.println("66 "+new SimpleDateFormat("hh:mm:ss.SSS").format(System.currentTimeMillis()));
+            System.out.println(XmlUtils.FormatXml(doc));
+
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -632,6 +853,30 @@ public class AnonService {
             rp.setMessage("获取补充设备主材更新信息失败！" + e.getMessage());
             e.printStackTrace();
         }
+        return rp;
+    }
+    public ResponseBody milGet1Attach(RequestBody rq, Map params, String id) {
+        ResponseBody rp = new ResponseBody(params, "1", "获取邮件附件信息成功！", id, rq.getTaskid());
+        /*try {
+            HashMap el = emailMapper.getMail1Attach(params);
+            String apath=(String)el.get("PATH");
+            String lb=(String)params.get("LB");
+            String fullPath="";
+            if("2".equals(lb)||"9".equals(lb)){
+                fullPath=Global.YSBCZBXF_BASE_URL+ apath;
+            }else if("3".equals(lb)||"8".equals(lb)){
+                fullPath=Global.YHBCZBXF_BASE_URL+ apath;
+            }else {
+                fullPath=Global.getUserfilesBaseDir() + apath;
+            }
+            File file = new File(Global.getUserfilesBaseDir() + apath);
+            String fileStr = FileCopyUtils.copyToString(new FileReader(file));
+            rp.setDatas(Encodes.encode2Base64(fileStr));
+        } catch (Exception e) {
+            e.printStackTrace();
+            rp.setIssuccess("0");
+            rp.setMessage("获取邮件附件信息失败!");
+        }*/
         return rp;
     }
     public void traverseFolder2(List<String> l, String path, String doc) {

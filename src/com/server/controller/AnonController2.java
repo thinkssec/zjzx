@@ -30,9 +30,10 @@ public class AnonController2 {
     public String request(String requestBody, String id) throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
         ResponseBody res = new ResponseBody();
         //System.out.println("requestBody="+requestBody);
-        //System.out.println("requestBody=============================================="+requestBody);
+        System.out.println("requestBody=============================================="+requestBody);
         RequestBody r = (RequestBody) JsonMapper.fromJsonString(requestBody, RequestBody.class);
         Map<String, String> params = (Map<String, String>) JsonMapper.fromJsonString(r.getParams(), Map.class);
+        System.out.println("requestBody=============================================="+params);
         String call = r.getCall();
         Method m = AnonService.class.getMethod(call, new Class[]{RequestBody.class,Map.class, String.class});
         res = (ResponseBody) m.invoke(anonService, r,params, id);

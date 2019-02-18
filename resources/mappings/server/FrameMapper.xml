@@ -202,6 +202,20 @@
     <insert id="insertElfRoot">
         insert into SYS_OFFICE(parent_id,name,code,type) values(#{DEPTID},'单位补充二类费',#{CODE}||'05','2')
     </insert>
+    <insert id="insertQdRoot">
+        declare
+        v_id varchar2(50):='';
+        begin
+        v_id:=sys_guid();
+        insert into SYS_OFFICE(id,parent_id,name,code,type) values(v_id,#{DEPTID},'单位补充清单',#{CODE}||'06','2');
+        insert into SYS_OFFICE(parent_id,name,code,type) values(v_id,'估算清单',#{CODE}||'0601','2');
+        insert into SYS_OFFICE(parent_id,name,code,type) values(v_id,'概算清单',#{CODE}||'0602','2');
+      commit;
+        end;
+</insert>
+    <insert id="insertGcfRoot">
+        insert into SYS_OFFICE(parent_id,name,code,type) values(#{DEPTID},'单位工程费模版',#{CODE}||'07','2')
+    </insert>
     <update id="updateMenu">
         UPDATE sys_menu SET
         parent_id = #{parentId},
@@ -844,14 +858,12 @@ END;
                       and substr(code, 7, 8) = '03')
             select b.*,
                    b.bczbid bm,
-                   (select ovalue
-                      from app_oproperty_dwcbbczb
-                     where oid = b.bczbid
-                       and okey = 'MC') title,
-                       (select ovalue
-                      from app_oproperty_dwcbbczb
-                     where oid = b.bczbid
-                       and okey = 'BM') ysbm
+                   (select p_mc
+                      from app_object_dwcbbczb
+                     where id = b.bczbid) title,
+                       (select p_bm
+                      from app_object_dwcbbczb
+                     where id = b.bczbid) ysbm
               from app_zb_mlralation b, a
              where b.zhzbid = a.id
              <if test="OILIDS!=null and OILIDS!=''">
@@ -987,7 +999,7 @@ END;
              order by CREATE_DATE
              ]]>
     </select>
-    <select id="bcelfMlLists" resultType="java.util.HashMap">
+    <select id="bcelfMlLists" resultType="com.common.sys.entity.Office">
         select level grade,a.*
           from SYS_OFFICE a
         connect by prior id = PARENT_ID
@@ -1014,5 +1026,54 @@ END;
             from app_elf_mlralation b, a
             where b.zhzbid = a.id
 
+    </select>
+    <select id="bcqdMlLists" resultType="com.common.sys.entity.Office">
+        select level grade,a.*
+          from SYS_OFFICE a
+        connect by prior id = PARENT_ID
+         start with length(code) = 8
+                and type = 2
+                and substr(code,1,4)=#{CODE}
+                and substr(code, 7, 8) = '06'
+    </select>
+    <select id="bcgcfMlLists" resultType="com.common.sys.entity.Office">
+        select level grade,a.*
+          from SYS_OFFICE a
+        connect by prior id = PARENT_ID
+         start with length(code) = 8
+                and type = 2
+                and substr(code,1,4)=#{CODE}
+                and substr(code, 7, 8) = '07'
+    </select>
+    <select id="getMlGcfAList" resultType="java.util.HashMap">
+        with a as
+            (select a.id
+            from SYS_OFFICE a
+            connect by prior id = PARENT_ID
+            start with length(code) = 8
+            and type = 2
+            and substr(code, 1, 4) = #{CODE}
+            and substr(code, 7, 8) = '07')
+            select b.*,
+            b.bczbid bm,
+            (select ovalue
+            from APP_OPROPERTY_GCF
+            where oid = b.bczbid
+            and okey = 'TypeDisplayTitle') title
+            from app_gcf_mlralation b, a
+            where b.zhzbid = a.id
+    </select>
+    <select id="isZx" resultType="java.lang.Integer">
+        select count(1)
+          from SYS_USERROLE t, sys_office s
+         where t.roleid = s.id
+           and length(code) = 6
+           and code = '999913'
+           and t.userid=#{USERID}
+    </select>
+    <select id="getZx" resultType="java.util.HashMap">
+        select *
+          from SYS_USERROLE t
+         where roleid = '999913'
     </select>
 </mapper>

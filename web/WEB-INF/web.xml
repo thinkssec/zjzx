@@ -100,6 +100,7 @@
         <url-pattern>/dwbczb/*</url-pattern>
         <url-pattern>/dwbcelf/*</url-pattern>
         <url-pattern>/dwbcsbzc/*</url-pattern>
+        <url-pattern>/dwgcf/*</url-pattern>
     </servlet-mapping>
     <servlet>
         <servlet-name>CKFinderConnectorServlet</servlet-name>

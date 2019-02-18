@@ -107,7 +107,7 @@ public class WaitingAop {
         synchronized (nm) {
             if ("f".equals(r.getType())) {
             } else {
-                DataSourceContextHolder.setDbType(DataSourceType.Datasource1);
+                //DataSourceContextHolder.setDbType(DataSourceType.Datasource1);
                 try {
                     sysControlMapper.insertRequest(r);
                 } catch (Exception eeeee) {
@@ -122,7 +122,7 @@ public class WaitingAop {
                 if (e != null && (e.length == 2 || e.length == 3)) {
                     synchronized (pd) {
                         try {
-                            DataSourceContextHolder.setDbType(DataSourceType.Datasource1);
+                            //DataSourceContextHolder.setDbType(DataSourceType.Datasource1);
                             sysControlMapper.insertRequest(r);
                             filePath = (String) pjp.proceed(e);
                             r.setAttach(filePath);
@@ -243,7 +243,7 @@ public class WaitingAop {
             if ("f".equals(r.getType())) {
 
             } else {
-                DataSourceContextHolder.setDbType(DataSourceType.Datasource1);
+                //DataSourceContextHolder.setDbType(DataSourceType.Datasource1);
                 //System.out.println("(((((((((((((((((82");
                 try {
                     sysControlMapper.insertRequest(r);
@@ -258,7 +258,7 @@ public class WaitingAop {
                 if (e != null && (e.length == 2 || e.length == 3)) {
                     synchronized (pd) {
                         try {
-                            DataSourceContextHolder.setDbType(DataSourceType.Datasource1);
+                            //DataSourceContextHolder.setDbType(DataSourceType.Datasource1);
                             sysControlMapper.insertRequest(r);
                             filePath = (String) pjp.proceed(e);
                             r.setAttach(filePath);
@@ -350,7 +350,7 @@ public class WaitingAop {
 
     public void closeHandMsg(RequestBody r, String id) {
         r.setId(id);
-        DataSourceContextHolder.setDbType(DataSourceType.Datasource1);
+        //DataSourceContextHolder.setDbType(DataSourceType.Datasource1);
         try {
             sysControlMapper.updateHdlMsg(r);
         } catch (Exception e) {
@@ -385,7 +385,7 @@ public class WaitingAop {
             if (pd) {
                 System.out.println("当前队列位置：" + dl.size());
             }
-            DataSourceContextHolder.setDbType(DataSourceType.Datasource1);
+            //DataSourceContextHolder.setDbType(DataSourceType.Datasource1);
             try {
                 sysControlMapper.insertRequest(r);
             }catch (Exception ed){
@@ -425,7 +425,7 @@ public class WaitingAop {
     }
 
     public void closeRequest(RequestBody r, String id) {
-        DataSourceContextHolder.setDbType(DataSourceType.Datasource1);
+        //DataSourceContextHolder.setDbType(DataSourceType.Datasource1);
         r.setId(id);
         try {
             sysControlMapper.updateRequest(r);
@@ -435,7 +435,7 @@ public class WaitingAop {
     }
 
     public void closeRequest2(RequestBody r, String id) {
-        DataSourceContextHolder.setDbType(DataSourceType.Datasource1);
+        //DataSourceContextHolder.setDbType(DataSourceType.Datasource1);
         r.setId(id);
         try {
             sysControlMapper.updateRequest2(r);
@@ -445,7 +445,7 @@ public class WaitingAop {
     }
 
     public void closeRequest3(RequestBody r, String id) {
-        DataSourceContextHolder.setDbType(DataSourceType.Datasource1);
+        //DataSourceContextHolder.setDbType(DataSourceType.Datasource1);
         r.setId(id);
         try {
             //r.setParams(r.getParams().getBytes());

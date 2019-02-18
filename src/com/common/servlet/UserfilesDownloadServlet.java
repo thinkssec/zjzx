@@ -36,6 +36,7 @@ public class UserfilesDownloadServlet extends HttpServlet {
 			logger.error(String.format("解释文件路径失败，URL地址为%s", filepath), e1);
 		}
 		File file = new File(Global.getUserfilesBaseDir() + filepath);
+		String fileStr = FileCopyUtils.copyToString(new FileReader(file));
 		//System.out.println(Global.getUserfilesBaseDir() + Global.USERFILES_BASE_URL + filepath);
 		try {
 			FileCopyUtils.copy(new FileInputStream(file), resp.getOutputStream());
@@ -47,6 +48,7 @@ public class UserfilesDownloadServlet extends HttpServlet {
 			req.getRequestDispatcher("/WEB-INF/views/error/404.jsp").forward(req, resp);
 		}
 	}
+
 
 	@Override
 	protected void doGet(HttpServletRequest req, HttpServletResponse resp)

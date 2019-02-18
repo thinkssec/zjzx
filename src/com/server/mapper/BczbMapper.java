@@ -24,6 +24,8 @@ import java.util.Map;
 @MyBatisDao
 public interface BczbMapper {
 	void mergeProject(HashMap map);
+	void insertBczb1(HashMap map);
+	void insertBczb2(HashMap map);
 	void mergeProject3(HashMap map);
 	void mergeProject4(HashMap map);
 	List<LinkedHashMap> getBczbProperty(String bczbid);
@@ -39,11 +41,18 @@ public interface BczbMapper {
 	List<HashMap> getYsBczbXf(Map c);
 	List<HashMap> getDwBczbByDw(Map c);
 	List<HashMap> getDwElfByDw(Map c);
+	List<HashMap> getDwGcfByDw(Map c);
+	List<HashMap> getDwQdByDw(Map c);
 	List<HashMap> getBcsbzcByDw(Map c);
 	List<HashMap> getZbByServerId(@Param("SCOPE") String scope);
+	List<HashMap> getZbzxByServerId(@Param("SCOPE") String scope);
 	List<HashMap> getDwZbByServerId(@Param("SCOPE") String scope);
 	List<HashMap> getYhBczb(Map c);
+	List<HashMap> getYhBczbzx(Map c);
 	List<HashMap> getDwBczb(Map c);
+	List<HashMap> getZxBczb(Map c);
+	List<HashMap> getDwBcelf(Map c);
+	List<HashMap> getDwBcgcf(Map c);
     List<HashMap> getBczbByFz(Map c);
 	List<HashMap> getBczbByMl(Map c);
 	List<HashMap> getBcsbzcByMl(Map c);
@@ -55,6 +64,8 @@ public interface BczbMapper {
 	void saveBczbZh(Condition params);
 	void addZb2Fz(Map params);
 	void addElf2Fz(Map params);
+	void delElf4Ml(Condition params);
+	void delGcf4Ml(Condition params);
 	void addZb2Ml(Map params);
 	void addZb2MlSbzc(Condition params);
     void updSbzc(Condition params);
@@ -72,4 +83,8 @@ public interface BczbMapper {
     List<HashMap> getBcsbzcList(Condition params);
     String getBczbRootByCode(@Param("CODE") String code);
 	String getBcSbzcRootByCode(@Param("CODE") String code,@Param("BBH") String bbh);
+
+	void xfElf(Map m);
+	void xfGcf(Map m);
+    List<HashMap> getDic();
 }

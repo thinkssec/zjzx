@@ -44,4 +44,12 @@ public interface BbglMapper {
     void delBbsbzc(HashMap params);
 	List<HashMap> getSbzcBbList(Map params);
 	void jcBbsbzc(HashMap params);
+//region
+List<HashMap>  getyqlist(Condition  condition);
+	List<HashMap>  getyqbblist(Condition  condition);
+	void  saveYq(HashMap  map);
+	void  delyq(HashMap  params);
+	void  saveYqbb(HashMap  map);
+	void  delyqbb(HashMap  params);
+	//endregion
 }

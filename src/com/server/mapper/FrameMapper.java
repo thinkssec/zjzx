@@ -73,6 +73,10 @@ public interface FrameMapper extends MainMapper {
     @MapKey("id")
     HashMap<String,Office> bcelfMlLists(Map office);
     @MapKey("id")
+    HashMap<String,Office> bcgcfMlLists(Map office);
+    @MapKey("id")
+    HashMap<String,Office> bcqdMlLists(Map office);
+    @MapKey("id")
     HashMap<String,Office> bcsbzcAMlLists(Map office);
     @MapKey("id")
     HashMap<String,Office> bczbMlListsDt(Map office);
@@ -96,15 +100,20 @@ public interface FrameMapper extends MainMapper {
     void insertBczbRoot(@Param("CODE") String deptCode,@Param("DEPTID")String deptid);
     void insertBcsbzcRoot(@Param("CODE") String deptCode,@Param("DEPTID")String deptid,@Param("BBH")String bbh);
     void insertElfRoot(@Param("CODE") String deptCode,@Param("DEPTID")String deptid);
+    void insertGcfRoot(@Param("CODE") String deptCode,@Param("DEPTID")String deptid);
+    void insertQdRoot(@Param("CODE") String deptCode,@Param("DEPTID")String deptid);
     void bczbmlsave(Condition condition);
     void bcsbzcmlsave(Condition condition);
     List<HashMap> getMlZbAList(Map m);
     List<HashMap> getMlElfAList(Map m);
+    List<HashMap> getMlGcfAList(Map m);
     List<HashMap> getMlSbzcAList(Map m);
     List<HashMap> getMlSbzcAList2(Map m);
     List<HashMap> getAdminByCode(@Param("CODE") String code);
+    List<HashMap> getZx();
     String getCodeByCpu(@Param("CPU") String CPU);
     String getOilByCpu(@Param("CPU") String CPU);
 
     int isAdmin(@Param("USERID") String userid);
+    int isZx(@Param("USERID") String userid);
 }

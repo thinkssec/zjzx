@@ -39,9 +39,9 @@
           left join (select t.*, s.userid
                        from v_office t, sys_userrole s
                       where t.id = s.roleid
-                        and type between 1 and 3) c
+                        and type between 1 and 4) c
             on a.userid = c.userid
-         where LOGINNAME=#{username} or a.userid=#{username} and rownum=1
+         where (LOGINNAME=#{username} or a.userid=#{username}) and rownum=1
     </select>
     <select id="getUserList" resultType="java.util.HashMap">
         select * from APP_USER

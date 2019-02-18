@@ -4,6 +4,7 @@ import com.common.config.Global;
 import com.common.utils.DateUtils;
 import com.common.utils.FileUtils;
 import com.common.utils.IdGen;
+import com.common.utils.StringUtils;
 import com.server.Entity.RequestBody;
 import com.server.Entity.ResponseBody;
 import com.server.mapper.SysControlMapper;
@@ -36,7 +37,6 @@ public class FileService {
         String saveDirectoryPath = curProjectPath +"/"+ Global.USERFILES_BASE_URL+filepath;
         FileUtils.createDirectory(saveDirectoryPath);
         File saveDirectory = new File(saveDirectoryPath);
-
         System.out.println("开始接受 "+new Date());
         String fileName="";
         if (!file.isEmpty()) {
@@ -44,6 +44,26 @@ public class FileService {
             String fileExtension = FilenameUtils.getExtension(fileName);
             try {
                 file.transferTo(new File(saveDirectory, fileName));
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        System.out.println("接受完毕  "+new Date()+"  "+saveDirectoryPath+"//"+fileName);
+        return "/"+filepath+"//"+fileName;
+    }
+
+    public String upLoadAttatch(String fileName,byte[] b) {
+        //String saveDirectoryPath = curProjectPath + "/" + uploadFolderName;
+        String filepath="/"+ DateUtils.getDate("yyyy-MM-dd")+"//"+ IdGen.uuid();
+        String saveDirectoryPath = curProjectPath +"/"+ Global.USERFILES_BASE_URL+filepath;
+        FileUtils.createDirectory(saveDirectoryPath);
+        File saveDirectory = new File(saveDirectoryPath);
+        File desFile=new File(saveDirectoryPath+"//"+fileName);
+        System.out.println("开始接受 "+new Date());
+        if (b.length>0) {
+
+            try {
+                FileUtils.writeByteArrayToFile(desFile,b);
             } catch (IOException e) {
                 e.printStackTrace();
             }

@@ -4,11 +4,14 @@ import com.common.annotation.Queuen;
 import com.common.annotation.mapper.JsonMapper;
 import com.common.sys.entity.User;
 import com.common.utils.CacheManage;
+import com.common.utils.Encodes;
 import com.common.utils.UserUtils;
 import com.server.Entity.RequestBody;
 import com.server.Entity.ResponseBody;
+import com.server.mapper.SysControlMapper;
 import com.server.service.FileService;
 import com.server.service.SysService;
+import org.apache.commons.lang.StringEscapeUtils;
 import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -16,7 +19,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.commons.CommonsMultipartFile;
+import sun.misc.BASE64Decoder;
 
+import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.HashMap;
@@ -32,9 +37,12 @@ import java.util.Map;
 public class ServiceController {
     @Autowired
     SysService sysService;
+    @Autowired
+    SysControlMapper sysControlMapper;
     public static Logger log = Logger.getLogger(ServiceController.class);
     @Autowired
     FileService fileService;
+
     /*@Autowired
     CacheManage cacheManage;*/
     /*
@@ -48,8 +56,8 @@ public class ServiceController {
         Map<String, String> params = null;
         try {
             params = (Map<String, String>) JsonMapper.fromJsonString(r.getParams(), Map.class);
-        }catch(Exception e){
-            params=new HashMap<String,String>();
+        } catch (Exception e) {
+            params = new HashMap<String, String>();
             //e.printStackTrace();
         }
         String call = r.getCall();
@@ -70,8 +78,8 @@ public class ServiceController {
             res.setMessage("权限不足，请联系管理员！");
             return JsonMapper.toJsonString(res);
         }*/
-        Method m = SysService.class.getMethod(call, new Class[]{RequestBody.class,Map.class, String.class});
-        res = (ResponseBody) m.invoke(sysService,r, params, id);
+        Method m = SysService.class.getMethod(call, new Class[]{RequestBody.class, Map.class, String.class});
+        res = (ResponseBody) m.invoke(sysService, r, params, id);
         return JsonMapper.toJsonString(res);
     }
 
@@ -84,11 +92,11 @@ public class ServiceController {
         Map<String, String> params = null;
         try {
             params = (Map<String, String>) JsonMapper.fromJsonString(r.getParams(), Map.class);
-        }catch(Exception e){
+        } catch (Exception e) {
             e.printStackTrace();
         }
-        if(params==null)params=new HashMap<String,String>();
-        String filepath=fileService.upLoad(r,params, id, file);
+        if (params == null) params = new HashMap<String, String>();
+        String filepath = fileService.upLoad(r, params, id, file);
         return filepath;
     }
 
@@ -101,14 +109,52 @@ public class ServiceController {
         Map<String, String> params = null;
         try {
             params = (Map<String, String>) JsonMapper.fromJsonString(r.getParams(), Map.class);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        if (params == null) params = new HashMap<String, String>();
+        String call = r.getCall();
+        Method m = SysService.class.getMethod(call, new Class[]{RequestBody.class, Map.class, String.class});
+        res = (ResponseBody) m.invoke(sysService, r, params, id);
+        return JsonMapper.toJsonString(res);
+    }
+
+    @RequestMapping("requestc")
+    public String requestc(String requestBody, String id) throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+        ResponseBody res = new ResponseBody();
+        //System.out.println("requestBody=============================================="+requestBody);
+        BASE64Decoder decoder = new BASE64Decoder();
+        try {
+            requestBody = new String(decoder.decodeBuffer((String) requestBody), "UTF-8");
+            requestBody = StringEscapeUtils.unescapeHtml((String) requestBody);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        RequestBody r = (RequestBody) JsonMapper.fromJsonString(requestBody, RequestBody.class);
+        sysControlMapper.insertRequest(r);
+        try {
+            Map<String, String> params = null;
+            try {
+                params = (Map<String, String>) JsonMapper.fromJsonString(r.getParams(), Map.class);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            if (params == null) params = new HashMap<String, String>();
+            String call = r.getCall();
+            Method m = SysService.class.getMethod(call, new Class[]{RequestBody.class, Map.class, String.class});
+            res = (ResponseBody) m.invoke(sysService, r, params, id);
         }catch(Exception e){
             e.printStackTrace();
         }
-        if(params==null)params=new HashMap<String,String>();
-        String call = r.getCall();
-        Method m = SysService.class.getMethod(call, new Class[]{RequestBody.class,Map.class, String.class});
-        res = (ResponseBody) m.invoke(sysService,r, params, id);
-        return JsonMapper.toJsonString(res);
+        String rtn="";
+        try{
+            rtn = JsonMapper.toJsonString(res);
+            rtn = Encodes.encodeToBase64((String) rtn);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        sysControlMapper.updateRequest2(r);
+        return rtn;
     }
 // region
     /*public String hello1(String requestBody) {

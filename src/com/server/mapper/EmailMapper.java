@@ -21,6 +21,8 @@ public interface EmailMapper extends MainMapper {
     void delete(Map param);
     void readed(Map param);
     List<HashMap> getMailList(Map param);
+    List<String> getMailList2(Map param);
     List<HashMap> getMailUList(Map param);
     List<HashMap> getMailAList(Map param);
+    List<HashMap> getMail1Attach(Map param);
 }

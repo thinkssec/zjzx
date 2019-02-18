@@ -72,6 +72,9 @@
         order by hpsj desc
         <include refid="com.base.baseMapper.pageEnd"/>
     </select>
+    <select id="getDw4" resultType="java.util.HashMap">
+        select * from SYS_OFFICE t where type=1
+    </select>
     <update id="saveJqsqty">
         DECLARE
         v_id varchar2(100):='';

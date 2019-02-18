@@ -15,7 +15,7 @@ import java.util.*;
 @SuppressWarnings({"rawtypes", "unchecked"})
 public class XmlUtils {
     public static void main(String[] args) throws DocumentException, IOException {
-        String textFromFile = FileUtils.readFileToString(new File("c:/testbczb.xml"), "UTF-8");
+        String textFromFile = FileUtils.readFileToString(new File("c:/55555555.xml"), "UTF-8");
         //region
         //Map<String, Object> map = xml2map(textFromFile, false);
         // long begin = System.currentTimeMillis();
@@ -30,7 +30,7 @@ public class XmlUtils {
         Map<String, Object> map = Xml2MapWithAttr(textFromFile, true);
         //System.out.println(map);
         Document doc = Map2Xml(map);
-        System.out.println(FormatXml(doc));
+        System.out.println(map);
     }
 
     /**

@@ -63,6 +63,7 @@ public class Global {
 	public static final String YHBCZBXF_BASE_URL = "/yhbczb/";
 	public static final String DWBCZBXF_BASE_URL = "/dwbczb/";
 	public static final String DWBCELFXF_BASE_URL = "/dwbcelf/";
+	public static final String DWBCGCFXF_BASE_URL = "/dwgcf/";
 	public static final String DWBCSBZC_BASE_URL = "/dwbcsbzc/";
 	public static final String USERFILES = "userfiles";
 	/**
