@@ -5,6 +5,7 @@ import com.common.annotation.SqlServerDao;
 import com.server.Entity.MainMapper;
 import com.server.Entity.RequestBody;
 
+import java.sql.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -21,7 +22,7 @@ public interface SysControlMapper extends MainMapper {
     void updateRequest3(RequestBody param);
     void updateHdlMsg(RequestBody param);
     void deleteRequest(RequestBody param);
-    List<HashMap> getRequestList();
+    List<HashMap> getRequestList(String c1, String c2);
     List<HashMap> getHandleMsgList();
     void doBuzByin(Map param);
     void insertTest();

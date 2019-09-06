@@ -128,5 +128,8 @@
          <extension>ndxml</extension>
         <mime-type>application/x-msdownload</mime-type>
     </mime-mapping>
+     <session-config>
+	  <session-timeout>30</session-timeout>
+	 </session-config>
 
 </web-app>

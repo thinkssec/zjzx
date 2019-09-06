@@ -12,6 +12,7 @@
     <link rel="stylesheet" type="text/css" href="<%=request.getContextPath() %>/static/easyui/themes/color.css">
     <script type="text/javascript" src="<%=request.getContextPath() %>/static/easyui/jquery.min.js"></script>
     <script type="text/javascript" src="<%=request.getContextPath() %>/static/easyui/jquery.easyui.min.js"></script>
+     <script type="text/javascript" src="<%=request.getContextPath() %>/static/easyui/datagrid-export.js"></script>
     <script type="text/javascript" src="<%=request.getContextPath() %>/static/easyui/locale/easyui-lang-zh_CN.js"></script>
 </head>
 <style>
@@ -22,16 +23,34 @@
 </script>
 <body>
 <div>
-<table id="datatable" title="请求列表">
-
+<form:form id="searchForm" action="../em/getRequestList" method="post" class="breadcrumb form-search" onsubmit="loading('正在载入，请稍等...');">
+    <table id="datatable" title="请求列表">
+     <input class="easyui-datetimebox" name="c1" id="c1" 
+    data-options="required:true,showSeconds:false" style="width:150px"><font font-family="Sans-serif" font-size="2.5em">  --  </font> 
+    <input class="easyui-datetimebox" name="c2" id="c2" 
+    data-options="required:true,showSeconds:false" style="width:150px"> 
+    <input id="btnSubmit" class="btn btn-primary" type="submit" value="查询"/>
 </table>
+    <%-- <div style="margin-top:8px;">
+        <input id="hid_c2" type="hidden" name="c2" value="">
+        <input type="hidden" name="c7" value="${condition.c7}">
+        <input type="hidden" name="c5" value="${condition.c5}">查询标志
+        <input name="c1" class="easyui-textbox" labelPosition="left"
+               data-options="prompt:'在此输入关键字...'" style="width:300px" value="${condition.c1}">
+        &nbsp;&nbsp;&nbsp;<input id="btnSubmit" class="btn btn-primary" type="submit" value="查询"/>
+    </div> --%>
+</form:form>
+<!-- <table id="datatable" title="请求列表">
+     <input class="easyui-datetimebox" name="time1" id="time1"
+    data-options="required:true,showSeconds:false" style="width:150px"><font font-family="Sans-serif" font-size="2.5em">  --  </font> 
+    <input class="easyui-datetimebox" name="time2" id="time2"
+    data-options="required:true,showSeconds:false" style="width:150px"> 
+</table> -->
 </div>
 <div style="padding-top:10px">
 <table id="datatable2" title="业务处理队列">
 </table>
 </div>
-
-
 <script type="text/javascript">
     var toolbar = [{
         text:'手动刷新',
@@ -48,6 +67,13 @@
             iconCls:'icon-ok',
             handler:function(){
                 window.open('http://localhost:8080/druid/index.html');
+            }
+        },
+        {
+            text:'导出excle',
+            iconCls:'icon-redo',
+            handler:function(){
+                    stockPrizeExport();
             }
         }
     ];
@@ -80,6 +106,7 @@
         columns: [[
             {field: 'ID',hidden: true},
             {field: 'USERNAME', title: '请求用户', width: 180},
+            {field: 'DW', title: '单位', width: 180},
             /*{field: 'IP', title: 'IP地址', width: 180},*/
             {field: 'CALL', title: '请求指令', width: 180},
             {field: 'I', title: '接收时间', width: 180},
@@ -109,6 +136,7 @@
         columns: [[
             {field: 'ID',hidden: true},
             {field: 'USERNAME', title: '请求用户', width: 180},
+            {field: 'DW', title: '单位', width: 180},
             {field: 'CALL', title: '请求命令', width: 180},
             {field: 'I', title: '开始时间', width: 180},
             {field: 'O', title: '完成时间', width: 180},
@@ -133,6 +161,9 @@
         //$('#datatable').datagrid(dgOptions);
         $('#datatable2').datagrid(dgOptions2);
     }
+     function stockPrizeExport(){
+       $('#datatable').datagrid('toExcel','请求列表.xls');
+    } 
 </script>
 </body>
 </html>

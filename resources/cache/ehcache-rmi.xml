@@ -20,12 +20,12 @@
     </defaultCache>
 	
 	<!-- 系统缓存 -->
-	<cache name="sysCache" maxEntriesLocalHeap="1000" eternal="true" overflowToDisk="true" statistics="true">
+	<cache name="sysCache" maxEntriesLocalHeap="5000" eternal="true" overflowToDisk="true" statistics="true">
 		<cacheEventListenerFactory class="net.sf.ehcache.distribution.RMICacheReplicatorFactory"/>
     </cache>
     
     <!-- 用户缓存 -->
-	<cache name="userCache" maxEntriesLocalHeap="1000" eternal="true" overflowToDisk="true" statistics="true">
+	<cache name="userCache" maxEntriesLocalHeap="5000" eternal="true" overflowToDisk="true" statistics="true">
 		<cacheEventListenerFactory class="net.sf.ehcache.distribution.RMICacheReplicatorFactory"/>
     </cache>
     

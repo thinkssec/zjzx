@@ -10,23 +10,54 @@ import com.server.Entity.Condition;
 import com.server.Entity.RequestBody;
 import com.server.Entity.ResponseBody;
 import com.server.mapper.*;
+
+import org.apache.tools.ant.Project;    
+import org.apache.tools.ant.taskdefs.Expand;
+
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
+
 import org.apache.commons.io.IOUtils;
 import org.dom4j.Document;
 import org.dom4j.DocumentException;
+import org.dom4j.DocumentHelper;
+import org.dom4j.Element;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.FileCopyUtils;
+import org.springframework.web.bind.annotation.RequestMapping;
 
+import java.util.zip.GZIPInputStream;
+import java.util.zip.GZIPOutputStream;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
+import java.util.zip.ZipInputStream;
+
+import sun.misc.BASE64Decoder;
+import sun.misc.BASE64Encoder;
+
+import java.util.zip.ZipOutputStream;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.math.BigDecimal;
+import java.nio.charset.Charset;
 import java.sql.Blob;
 import java.text.SimpleDateFormat;
 import java.util.*;
+
+import javax.annotation.PostConstruct;
 
 /**
  * Created by Administrator on 2017/11/7.
@@ -55,10 +86,11 @@ public class AnonService {
     String dwbczbPath = Global.DWBCZBXF_BASE_URL;
     String dwbcsbzcPath = Global.DWBCSBZC_BASE_URL;
     String bbh_last="@_@";
-
+    @Autowired
+    SysService sysService;
     private static String upgradeDec = "upgrade";
     private static String databbDec = "databb";
-
+   
     //private static String upgradeFilePath="C:\\\\upload\\\\softwarefiles\\\\";
     public ResponseBody testConnect(RequestBody rq, Map params, String id) {
         ResponseBody r = new ResponseBody(params, "1", "连接成功", id, rq.getTaskid());
@@ -355,6 +387,8 @@ public class AnonService {
 
     public ResponseBody getServiceIp(RequestBody rq, Map params, String id) {
         ResponseBody rp = new ResponseBody(params, "1", "获取成功", id, rq.getTaskid());
+        System.out.println("++++++++++++"+rq.getTaskid());
+        System.out.println("++++++++++++"+Global.getConfig("server.ip.port"));
         rp.setIp(Global.getConfig("server.ip.port"));
         return rp;
     }
@@ -482,7 +516,7 @@ public class AnonService {
         String textFromFile = "";
         User user = UserUtils.getUser();
         try {
-            textFromFile = FileUtils.readFileToString(new File("c:/55555555.xml"), "UTF-8");
+            textFromFile = FileUtils.readFileToString(new File("c:/444.xml"), "UTF-8");
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -904,4 +938,474 @@ public class AnonService {
             System.out.println("文件不存在!");
         }
     }
+
+    public ResponseBody readbczbMapSql(RequestBody rq, Map params, String id) {
+        ResponseBody rp = new ResponseBody(params, "1", "获取成功", id, rq.getTaskid());
+        String textFromFile = "";
+        User user = UserUtils.getUser();
+        try {
+            textFromFile = FileUtils.readFileToString(new File("E:/111.xml"), "UTF-8");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        Map<String, Object> map = null;
+        try {
+            map = XmlUtils.Xml2MapWithAttr(textFromFile, true);
+            //String sql = AppUtils.readMap2Sql22(map, "-1","","1045","askdf;allasdj;kf","12313121312","");
+            //System.out.println(sql);
+            /*HashMap h = new HashMap();
+            h.put("sql", sql);*/
+            System.out.println("------入库开始时间"+DateUtils.getDateTime());
+            //bczbMapper.mergeProject(h);
+            HashMap<String,List> sqlHt=AppUtils.readMap2Sql2(map, "-1", "", "1093", (String) rq.getCpu(), user.getId(), "");
+            List aList=sqlHt.get("a");
+            List bList=sqlHt.get("b");
+            HashMap h = new HashMap();
+            if(aList!=null){
+                String sql=" null;";
+                for(int i=0;i<aList.size();i++){
+                    sql+=aList.get(i);
+                }
+                h.put("sql", sql);
+                bczbMapper.mergeProject(h);
+            }
+            if(bList!=null){
+                String sql=" null;";
+                for(int i=0;i<bList.size();i++){
+                    sql+=bList.get(i);
+                    if(i%3000==0){
+                        h.put("sql", sql);
+                        bczbMapper.mergeProject(h);
+                        sql=" null;";
+                    }
+                }
+                h.put("sql", sql);
+                bczbMapper.mergeProject(h);
+            }
+            System.out.println("------入库结束时间"+DateUtils.getDateTime());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return rp;
+    }
+
+   //补全基础指标库字段 
+    public void bqzd(Map<String, Object> map){
+    	try{
+    		//查询获取xml文件中所有属性，并去重
+    		List<String> keylist = digui(map);
+    		//格式化
+    		List<String> newkeylist = new ArrayList<String>();
+    		for(int i = 0 ;i<keylist.size();i++){
+        		if(keylist.get(i).indexOf("@")!=-1){
+        			newkeylist.add(keylist.get(i).replace("@", ""));
+        		}else{
+        			newkeylist.add(keylist.get(i));
+        		}
+        	}
+    		HashMap h = new HashMap();
+    		for(int n = 0; n <newkeylist.size(); n++){
+    			String checksql = "where table_name=upper('app_zbxx') and (column_name=upper('"+newkeylist.get(n)+"')or column_name=upper('P_"+newkeylist.get(n)+"'))";
+    			String insertsql = "alter table app_zbxx add p_"+newkeylist.get(n)+" varchar2(500)";
+    			h.put("checksql", checksql);
+    			h.put("insertsql", insertsql);
+    			bczbMapper.bqzd(h);
+    		}
+    	}catch (Exception e) {
+            e.printStackTrace();
+        }
+
+    }
+    
+    List<String> keylist = new ArrayList<String>();
+    public List digui(Map<String, Object> map){
+    	for (String key : map.keySet()){
+    		if(!keylist.contains(key)&&!"#text".equals(key)){
+        		keylist.add(key);
+    		}
+			 Object node = map.get(key);
+/*			 if("GeneralInformation".equals(key) && node instanceof Map){*/
+				 for (String okey : ((Map<String, Object>) node).keySet()){
+					 Object property = ((Map<String, Object>) node).get(okey);
+					 if (property instanceof String){
+						 if(!keylist.contains(okey)&&!"#text".equals(okey)){
+				        		keylist.add(okey);	
+				    		}
+					 }else if(property instanceof Map){
+						 digui((Map<String, Object>) map.get(okey));
+					 }else if (property instanceof List){
+						 for (int i = 0; i < ((List) property).size(); i++){
+							 Map<String, Object> child = new HashMap<String, Object>();
+	                            child.put(okey, ((List) property).get(i));
+	                            digui(child);
+						 }
+						 
+					 }
+				 } 
+		 }
+    	return  keylist;
+    }
+  //补充指标统计采集
+    public ResponseBody bczbtjCj(RequestBody rq, Map params, String id) {
+        //System.out.println("----------------------------------------------------");
+        ResponseBody rp = new ResponseBody(params, "1", "获取成功", id, rq.getTaskid());
+        try {
+            User user = UserUtils.getUser();
+            String textFromFile = "";
+            BASE64Decoder decoder = new BASE64Decoder();
+            try {
+            	textFromFile = FileUtils.readFileToString(new File("E:/20190424092250228.aup"), "UTF-8");
+                //System.out.println(textFromFile);
+                if (StringUtils.isBlank(textFromFile)) return rp;
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            Map<String, Object> map = null;
+            Map<String, Object> judgeMap = null;
+            try {
+            	judgeMap = XmlUtils.Xml2MapWithAttr(textFromFile, true);
+            	try{
+            		bqzd(judgeMap);
+            	}catch (Exception e) {
+                    e.printStackTrace();
+                }
+                map = XmlUtils.Xml2MapWithAttr(textFromFile, true);
+                String dw = "1093";
+                if (StringUtils.isNotBlank(user.getDeptCode())) 
+                	dw = user.getDeptCode().substring(0, 4);
+                //String sql = AppUtils.readMap2Sql2(map, "-1", "", dw, (String) rq.getCpu(), user.getId(), "");
+                HashMap<String, List> sqlHt = AppUtils.insertBczbTjSql(map, "-1", "", dw, (String) rq.getCpu(), user.getId(), "");
+                List aList = sqlHt.get("a");
+                List bList = sqlHt.get("b");
+                HashMap h = new HashMap();
+                if (aList != null) {
+                    String sql = " null;";
+                    for (int i = 0; i < aList.size(); i++) {
+                        sql += aList.get(i);
+                    }
+                    h.put("sql", sql);
+                    bczbMapper.mergeProject(h); 
+                }
+                if (bList != null) {
+                    String sql = " null;";
+                    for (int i = 0; i < bList.size(); i++) {
+                        sql += bList.get(i);
+                        if (i % 400 == 0) {
+                            h.put("sql", sql);
+                            bczbMapper.mergeProject(h);
+                            sql = " null;";
+                        }
+                    }
+                    h.put("sql", sql);
+                    bczbMapper.mergeProject(h);
+                }
+            } catch (Exception e) {
+                rp.setIssuccess("0");
+                rp.setMessage("获取失败");
+                e.printStackTrace();
+            }
+        } catch (Exception e) {
+            //e.printStackTrace();
+        }
+        return rp;
+    } 
+    
+    
+    
+    
+  
+
+    //补充指标采集
+    public ResponseBody bczbCjp(RequestBody rq, Map params, String id) {
+        //System.out.println("----------------------------------------------------");
+    	long timestart = (long) System.currentTimeMillis();
+        ResponseBody rp = new ResponseBody(params, "1", "获取成功", id, rq.getTaskid());
+        try {
+            User user = UserUtils.getUser();
+            String textFromFile = "";
+            try {
+            	textFromFile = FileUtils.readFileToString(new File("E:/zip/a0069a6f38d6434389b7e18c7f7f5e.zip"), "UTF-8");
+                if (StringUtils.isBlank(textFromFile)) return rp;
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            Map<String, Object> map = null;
+            try {
+                map = XmlUtils.Xml2MapWithAttr(textFromFile, true);
+                String dw = "1093";
+                if (StringUtils.isNotBlank(user.getDeptCode())) 
+                	dw = user.getDeptCode().substring(0, 4);
+                //String sql = AppUtils.readMap2Sql2(map, "-1", "", dw, (String) rq.getCpu(), user.getId(), "");
+                HashMap<String, List> sqlHt = AppUtils.readMap2Sql22(map, "-1", "", dw, (String) rq.getCpu(), user.getId(), "");
+                List aList = sqlHt.get("a");
+                List bList = sqlHt.get("b");
+                HashMap h = new HashMap();
+                if (aList != null) {
+                    String sql = " null;";
+                    for (int i = 0; i < aList.size(); i++) {
+                        sql += aList.get(i);
+                    }
+                    h.put("sql", sql);
+                    long alisttime = (long) System.currentTimeMillis();
+                    bczbMapper.mergeProject(h);
+                }
+               if (bList != null) {
+                    String sql = " null;";
+                    for (int i = 0; i < bList.size(); i++) {
+                        sql += bList.get(i);
+                        System.out.println(i);
+                        if (i % 400 == 0) {
+                            h.put("sql", sql);
+                            //bczbMapper.mergeProject(h);
+                            sql = " null;";
+                        }
+                    }
+                    h.put("sql", sql);
+                    //bczbMapper.mergeProject(h);
+                    long timeout = (long) System.currentTimeMillis();
+                    System.out.println("组建前5000入库sql耗时："+(timeout-timestart)/1000+"秒");
+                }
+                /*if (bList != null) {
+                	//bczbMapper.changshi(bList);
+                	StringBuilder sql = new StringBuilder();
+                    sql.append(" null; ");
+                    for (int i = 0; i < bList.size(); i++) {
+                    	String nnn =(String) bList.get(i);
+                    	sql.append(nnn);
+                        System.out.println(i);
+                        if (i % 400 == 0) {
+                        	//sql.append(" SELECT 1 FROM DUAL;");
+                            h.put("sql", sql);
+                            //System.out.println(sql);
+                           // bczbMapper.mergeProject(h);
+                            sql.delete(0, sql.length());
+                            sql.append(" null; ");
+                        }
+                   }
+                    h.put("sql", sql);
+                   // bczbMapper.mergeProject(h);
+                    long timeout = (long) System.currentTimeMillis();
+                    System.out.println("优化后解析加组建sql耗时："+(timeout-timestart)/1000+"秒");
+                }*/
+            } catch (Exception e) {
+                rp.setIssuccess("0");
+                rp.setMessage("获取失败");
+                e.printStackTrace();
+            }
+        } catch (Exception e) {
+            //e.printStackTrace();
+        }
+        return rp;
+    }
+  //解压缩字符串
+    public  String releaseCompression(String compressStr) throws IOException{
+    	BASE64Decoder decoder = new BASE64Decoder();
+    	byte[] b = decoder.decodeBuffer(compressStr);
+    	ByteArrayOutputStream out = new ByteArrayOutputStream();
+    	ByteArrayInputStream in = new ByteArrayInputStream(b);
+        GZIPInputStream gunzip = new GZIPInputStream(in);
+    	byte[] buffer = new byte[256];
+    	int n;
+    	while ((n = gunzip.read(buffer)) >= 0) {
+    	    out.write(buffer, 0, n);
+    	}
+    	  // toString()使用平台默认编码，也可以显式的指定如toString("GBK")
+        return  out.toString("UTF-8");
+    }
+    
+    //字符串压缩
+    public  String compress(String uncompressStr) throws IOException {
+    	if(uncompressStr==null||uncompressStr.length()<=0){
+    		return uncompressStr;
+    	}
+    	try{
+    		BASE64Encoder ecoder = new BASE64Encoder();
+    		ByteArrayOutputStream out = new ByteArrayOutputStream();
+    	    GZIPOutputStream gzip = new GZIPOutputStream(out);
+    	    gzip.write(uncompressStr.getBytes("UTF-8"));
+    	    gzip.close();
+    	return ecoder.encode(out.toByteArray());
+    	}catch(Exception e){
+    		e.printStackTrace();
+    		return null;
+    	}
+    	    
+    	
+    }
+    
+    public Document getMapFromDb3(String root) {
+        LinkedHashMap<String, LinkedHashMap> treeM = new LinkedHashMap<>();
+        List<LinkedHashMap> treeMm = bczbMapper.getYhBczbTreeById(root);
+        for (LinkedHashMap t : treeMm) {
+            treeM.put((String) t.get("ID"), t);
+        }
+        List<HashMap> propertyL = bczbMapper.getDic();
+        Map<String, List<String>> propertyM = new HashMap<String, List<String>>();
+        for (HashMap p : propertyL) {
+            List<String> m = propertyM.get(p.get("OTYPE") + "");
+            if (m == null) {
+                m = new ArrayList();
+                propertyM.put(p.get("OTYPE") + "", m);
+            }
+            m.add(p.get("OKEY") + "");
+        }
+        Map<String, Map> propertys = new HashMap<String, Map>();
+        for (LinkedHashMap m : treeMm) {
+            List<String> pl = propertyM.get(m.get("OTYPE"));
+            Map mm = propertys.get(m.get("ID"));
+            if (mm == null) {
+                mm = new LinkedHashMap();
+                propertys.put(m.get("ID") + "", mm);
+            }
+            if (pl != null)
+                for (String mmm : pl) {
+                    mm.put("@" + mmm, m.get("P_" + mmm.toUpperCase()) == null ? "" : m.get("P_" + mmm.toUpperCase()));
+                }
+            else {
+                System.out.println(m.get("OTYPE"));
+            }
+            //mm.put("#text",m.get("P_TEXT")==null?"":m.get("P_TEXT"));
+
+        }
+        //System.out.println("33 "+new SimpleDateFormat("hh:mm:ss.SSS").format(System.currentTimeMillis()));
+        Map<String, List> tree = new LinkedHashMap<String, List>();
+        for (String key : treeM.keySet()) {
+            LinkedHashMap m = treeM.get(key);
+            List children = tree.get(m.get("PID"));
+            if (children == null) {
+                children = new ArrayList();
+                tree.put((String) m.get("PID"), children);
+            }
+            children.add(treeM.get(key));
+        }
+        Map<String, Object> docStr = AppUtils.readSql22Map(treeM, tree, root, propertys);
+        Document doc = null;
+        String xmlstr = "";
+       try{
+            doc = XmlUtils.Map2Xml(docStr);
+            xmlstr = XmlUtils.FormatXml(doc);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return doc;
+    }
+    
+  //用户补充指标入库
+    public ResponseBody yhbczbRkTest(RequestBody rq, Map params, String id) {
+        ResponseBody rp = new ResponseBody(params, "1", "获取成功", id, rq.getTaskid());
+        User user = UserUtils.getUser();
+        int c = frameMapper.isAdmin(user.getId());
+        System.out.println("管理员提交-------------"+user.getId());
+        if (c > 0) {
+            String textFromFile = "";
+            BASE64Decoder decoder = new BASE64Decoder();
+            try {
+            	String textFromFile1 = new String(decoder.decodeBuffer((String) params.get("BCZBDATA")), "UTF-8");
+                textFromFile = releaseCompression(textFromFile1);
+                if (StringUtils.isBlank(textFromFile)) return rp;
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            Map<String, Object> map = null;
+            try {
+                String dw = "1093";
+                if (StringUtils.isNotBlank(user.getDeptCode())) dw = user.getDeptCode().substring(0, 4);
+                map = XmlUtils.Xml2MapWithAttr(textFromFile, true);
+                String sql = AppUtils.readMap2Sql4(map, "-1", "", dw, (String) rq.getCpu(), user.getId(), "");
+                HashMap h = new HashMap();
+
+                h.put("sql", sql);
+
+                bczbMapper.mergeProject4(h);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        } else {
+            try {
+                String textFromFile = "";
+                BASE64Decoder decoder = new BASE64Decoder();
+                try {
+                	textFromFile = FileUtils.readFileToString(new File("E:/c88663f6a9fc4c0493b31196a55650.dwbc"), "UTF-8");
+                    //System.out.println(textFromFile);
+                    if (StringUtils.isBlank(textFromFile)) return rp;
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+
+                Map<String, Object> map = null;
+                List<HashMap> adm = new ArrayList<HashMap>();
+                try {
+                    String dw = "1093";//默认临时组
+                    if (StringUtils.isNotBlank(user.getDeptCode())) dw = user.getDeptCode().substring(0, 4);
+                    adm = frameMapper.getAdminByCode(dw);
+                    if (adm.size() == 0) {
+                        rp.setIssuccess("0");
+                        rp.setMessage("获取单位管理员列表失败！");
+                        return rp;
+                    }
+                    map = XmlUtils.Xml2MapWithAttr(textFromFile, true);
+                    String sql = AppUtils.readMap2Sql3(map, "-1", "", dw, (String) rq.getCpu(), user.getId(), "");
+                    HashMap h = new HashMap();
+                    h.put("sql", sql);
+                    bczbMapper.mergeProject3(h);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+                if (map.get("GeneralInformation") == null) return rp;
+                String[] bczbids = ((String) ((Map) map.get("GeneralInformation")).get("@BCZBIDS")).split(",");
+                Document doc = DocumentHelper.createDocument();
+                Element ls = DocumentHelper.createElement("bcList");
+                ls.addAttribute("OilCode", (String) ((Map) map.get("GeneralInformation")).get("@OilCode"));
+                //ls.addAttribute("OilCode", "8100");
+                //ls.addAttribute("BBH", "3");
+                doc.add(ls);
+                String sss = "'" + UUID.randomUUID().toString() + "'";
+                for (String dd : bczbids) {
+                    sss += ",'" + dd + "'";
+
+                }
+                sss = "(" + sss + ")";
+                List<HashMap> llll = bczbMapper.getZbByServerId(sss);
+                for (HashMap dd : llll) {
+                    Document n = getMapFromDb3((String) dd.get("ID"));
+                    ls.add(n.getRootElement());
+                }
+                //bczbXfPath
+                String ii = UUID.randomUUID().toString();
+                String saveDirectoryPath = Global.getConfig("upLoadPath") + "/" + yhbczbPath + "/" + ii;
+                String xml = "";
+                try {
+                    xml = XmlUtils.FormatXml(doc);
+                } catch (DocumentException e) {
+                    e.printStackTrace();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+                FileUtils.writeToFile(saveDirectoryPath, xml, false);
+                for (HashMap tm : adm) {
+                    Map mail = new HashMap();
+                    mail.put("FJRID", user.getId());
+                    mail.put("FJRYHM", user.getLoginName());
+                    mail.put("FJRXM", user.getUsername());
+                    //mail.put("SJRID", "2BD695B466C2435BA3F6B6258AFBA49E");
+                    mail.put("SJRID", tm.get("USERID"));
+                    mail.put("ZT", "用户提交补充指标");
+                    mail.put("LB", "3");
+                    mail.put("PATH", "/" + ii);
+                    mail.put("ID", UUID.randomUUID().toString());
+                    emailMapper.sendMail(mail);
+                }
+
+            } catch (Exception e) {
+                rp.setIssuccess("0");
+                rp.setMessage("操作失败！");
+                e.printStackTrace();
+            }
+        }
+        return rp;
+    } 
+    
+    
+    
 }
+

@@ -39,7 +39,7 @@
           left join (select t.*, s.userid
                        from v_office t, sys_userrole s
                       where t.id = s.roleid
-                        and type between 1 and 4) c
+                        and type between 1 and 4 order by type) c
             on a.userid = c.userid
          where (LOGINNAME=#{username} or a.userid=#{username}) and rownum=1
     </select>

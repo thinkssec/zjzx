@@ -44,6 +44,7 @@ public interface JqsqMapper {
 	List<HashMap> getDw3(Condition condition);
 	List<HashMap> getDw4(Condition condition);
 	List<HashMap> getYq(Condition condition);
+	List<HashMap> getbb(Condition condition);
     void saveJqsqpz(HashMap map);
     HashMap isRegist(Map map);
 	HashMap isRegist2(Map map);

@@ -24,6 +24,7 @@ import java.util.Map;
 @MyBatisDao
 public interface BczbMapper {
 	void mergeProject(HashMap map);
+	void bqzd(HashMap map);
 	void insertBczb1(HashMap map);
 	void insertBczb2(HashMap map);
 	void mergeProject3(HashMap map);
@@ -38,6 +39,9 @@ public interface BczbMapper {
 	List<LinkedHashMap> getOtherTest2();
 	//获取原始补充指标
 	List<HashMap> getYsBczb(Map c);
+	List<HashMap> getxmbczbList(Condition condition);
+	List<HashMap> getxtbczbList(Condition condition);
+	List<HashMap> getbczbyyList(Condition condition);
 	List<HashMap> getYsBczbXf(Map c);
 	List<HashMap> getDwBczbByDw(Map c);
 	List<HashMap> getDwElfByDw(Map c);
@@ -72,6 +76,7 @@ public interface BczbMapper {
 	void addZb2Zb(Map params);
     void addZb2ZbSbzc(Condition params);
 	void delZb2Fz(Map params);
+	void delBCZB(Map params);
 	void delFz(@Param("ID") String id);
 
 	void delZb2Ml(Map m);
@@ -86,5 +91,6 @@ public interface BczbMapper {
 
 	void xfElf(Map m);
 	void xfGcf(Map m);
+	void changshi(List list);
     List<HashMap> getDic();
 }

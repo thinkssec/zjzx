@@ -3,6 +3,7 @@ package com.server.controller;
 import com.common.mapper.JsonMapper;
 import com.server.mapper.SysControlMapper;
 import com.server.service.AdminService;
+
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang.ArrayUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,8 +17,10 @@ import org.springframework.web.multipart.commons.CommonsMultipartFile;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
+
 import java.io.File;
 import java.io.IOException;
+import java.sql.Date;
 import java.util.HashMap;
 import java.util.List;
 
@@ -48,9 +51,8 @@ public class AdminController{
 
     @RequestMapping("getRequestList")
     @ResponseBody
-    public String getRequestList() {
-        List<HashMap> u=sysControlMapper.getRequestList();
-
+    public String getRequestList(@RequestParam String  c1, @RequestParam String c2) {
+        List<HashMap> u=sysControlMapper.getRequestList(c1,c2);
         String jdata= JsonMapper.getInstance().toJson(u);
         return jdata;
     }

@@ -78,20 +78,20 @@
 		<property name="queryId"
 				  value="com.taobao.accs.mass.petadata.dal.sqlmap.AccsDeviceInfoDAOMapper.selectByExampleForPetaData" />
 	</bean>-->
-	<bean id ="dataSource" class= "com.common.config.DynamicDataSource" >
+	<!-- <bean id ="dataSource" class= "com.common.config.DynamicDataSource" >
 		<property name ="targetDataSources">
 			<map key-type ="java.lang.String">
 				<entry value-ref ="dataSource1" key= "dataSource1"></entry >
-				<!--<entry value-ref ="dataSource2" key= "dataSource2"></entry >-->
+				<entry value-ref ="dataSource2" key= "dataSource2"></entry >
 				<entry value-ref ="dataSource3" key= "dataSource3"></entry >
 			</map >
 		</property>
-		<property name ="defaultTargetDataSource" ref= "dataSource1"></property >      <!-- 默认使用ds1的数据源 -->
-	</bean >
+		<property name ="defaultTargetDataSource" ref= "dataSource1"></property >      默认使用ds1的数据源
+	</bean > -->
 
 
 	<!-- 数据源配置, 使用 BoneCP 数据库连接池 -->
-	<bean id="dataSource1" class="com.alibaba.druid.pool.DruidDataSource" init-method="init" destroy-method="close">
+	<bean id="dataSource" class="com.alibaba.druid.pool.DruidDataSource" init-method="init" destroy-method="close">
 	    <!-- 数据源驱动类可不写，Druid默认会自动根据URL识别DriverClass -->
 	    <property name="driverClassName" value="${jdbc.driver}" />
 
@@ -118,10 +118,11 @@
 		<property name="testWhileIdle" value="true" />
 		<property name="testOnBorrow" value="false" />
 		<property name="testOnReturn" value="false" />
-
-		<!-- 打开PSCache，并且指定每个连接上PSCache的大小（Oracle使用）
+		<!-- <property name="poolPreparedStatements" value="true" />
+		<property name="maxPoolPreparedStatementPerConnectionSize" value="0" /> --> 
+		<!-- 打开PSCache，并且指定每个连接上PSCache的大小（Oracle使用） -->
 		<property name="poolPreparedStatements" value="true" />
-		<property name="maxPoolPreparedStatementPerConnectionSize" value="20" /> -->
+		<property name="maxPoolPreparedStatementPerConnectionSize" value="20" />
 
 		<!-- 配置监控统计拦截的filters -->
 	    <property name="filters" value="stat" />

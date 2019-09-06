@@ -5,6 +5,7 @@ import com.common.annotation.mapper.JsonMapper;
 import com.server.Entity.RequestBody;
 import com.server.Entity.ResponseBody;
 import com.server.service.AnonService;
+
 import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -39,5 +40,9 @@ public class AnonController2 {
         res = (ResponseBody) m.invoke(anonService, r,params, id);
         return JsonMapper.toJsonString(res);
     }
+    @RequestMapping("reee")
+    public void reee(){
+    	System.out.println("调用该方法");
+    }                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          
 
 }

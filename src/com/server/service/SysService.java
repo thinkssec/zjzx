@@ -1,27 +1,22 @@
 package com.server.service;
 
-import com.common.annotation.RequestPermission;
-import com.common.annotation.mapper.JsonMapper;
-import com.common.config.Global;
-import com.common.realm.StatelessRealm;
-import com.common.sys.entity.Office;
-import com.common.sys.entity.Role;
-import com.common.sys.entity.User;
-import com.common.utils.*;
-import com.common.utils.StringUtils;
-import com.fasterxml.jackson.databind.JavaType;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.collect.Lists;
-import com.server.Entity.Condition;
-import com.server.Entity.Menu;
-import com.server.Entity.RequestBody;
-import com.server.Entity.ResponseBody;
-import com.server.mapper.*;
-import com.sun.jna.Library;
-import com.sun.jna.Native;
-import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang.*;
-import org.apache.shiro.authz.annotation.RequiresPermissions;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+import java.util.zip.GZIPInputStream;
+import java.util.zip.GZIPOutputStream;
+
+import net.sf.json.JSONArray;
+
+import org.apache.commons.lang.StringEscapeUtils;
 import org.dom4j.Document;
 import org.dom4j.DocumentException;
 import org.dom4j.DocumentHelper;
@@ -31,21 +26,40 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.FileCopyUtils;
-import org.springframework.web.context.ContextLoader;
-import org.springframework.web.context.WebApplicationContext;
+
 import sun.misc.BASE64Decoder;
 import sun.misc.BASE64Encoder;
 
-import javax.servlet.ServletContext;
-import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.sql.Blob;
-import java.text.SimpleDateFormat;
-import java.util.*;
+import org.apache.commons.codec.binary.Base64;
+
+import com.common.annotation.RequestPermission;
+import com.common.annotation.mapper.JsonMapper;
+import com.common.config.Global;
+import com.common.sys.entity.Office;
+import com.common.sys.entity.Role;
+import com.common.sys.entity.User;
+import com.common.utils.AppUtils;
+import com.common.utils.FileUtils;
+import com.common.utils.StringUtils;
+import com.common.utils.UserUtils;
+import com.common.utils.XmlUtils;
+import com.fasterxml.jackson.databind.JavaType;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.server.Entity.Condition;
+import com.server.Entity.Menu;
+import com.server.Entity.RequestBody;
+import com.server.Entity.ResponseBody;
+import com.server.mapper.BbglMapper;
+import com.server.mapper.BczbMapper;
+import com.server.mapper.EmailMapper;
+import com.server.mapper.FrameMapper;
+import com.server.mapper.JqsqMapper;
+import com.server.mapper.PermisionMapper;
+import com.server.mapper.SyncMapper;
+import com.server.mapper.SysControlMapper2;
+import com.server.mapper.UserMapper;
+import com.sun.jna.Library;
+import com.sun.jna.Native;
 
 /**
  * Created by Administrator on 2017/10/18.
@@ -151,7 +165,6 @@ public class SysService {
         }
         return rp;
     }
-
     public ResponseBody milSendAttach(RequestBody rq, Map params, String id) {
         ResponseBody rp = new ResponseBody(params, "1", "邮件发送成功", id, rq.getTaskid());
         try {
@@ -198,6 +211,7 @@ public class SysService {
                     /*File file = new File(fullPath);
                     String fileStr = FileCopyUtils.copyToString(new FileReader(file));*/
                     String fileStr =new String (FileUtils.getBytes(fullPath),"UTF-8");
+                    fileStr = compress(fileStr);
                     Map mmmm=new HashMap();
                     mmmm.put("YJID",(String) params.get("ID"));
                     mmmm.put("FJMC",apath.replaceAll("/",""));
@@ -735,6 +749,9 @@ public class SysService {
                 List<HashMap> h = JsonMapper.getInstance().fromJson(updL, javaType);
                 HashMap m = new HashMap();
                 m.put("list", h);
+                for(int i = 0; i < h.size(); i++){
+                	System.out.println("++++++++++++="+h.get(i));
+                    }
                 jqsqMapper.saveJqsqty(m);
             } catch (Exception e) {
                 e.printStackTrace();
@@ -782,8 +799,25 @@ public class SysService {
             try {
                 //String updL = StringEscapeUtils.unescapeHtml(condition.getC6());
                 String updL = condition.getC6();
+                String HPDWMC = condition.getC1();
                 JavaType javaType = JsonMapper.getInstance().getTypeFactory().constructParametricType(List.class, HashMap.class);
                 List<HashMap> h = JsonMapper.getInstance().fromJson(updL, javaType);
+                if(h.size()==0){
+                	HashMap map = new HashMap();
+                	if(condition.getC4().equals("del")){
+                		map.put("HPDWMC", null);
+                        map.put("HPDW", null);
+                        map.put("HPYQSJ", null);
+                        map.put("HPYQSJMC", null);
+                	}if(condition.getC4().equals("save")){
+                		map.put("HPDWMC", HPDWMC);
+                        map.put("HPDW", condition.getC2());
+                        map.put("HPYQSJ", "8200,8300,8400,8100,8500,8600,8900,9000,9100");
+                        map.put("HPYQSJMC", "中原,河南,江汉,胜利,江苏,西北,华北,西南,长输");
+                	}
+                	map.put("CPUID", condition.getC3());
+                    h.add(map);
+                }
                 HashMap m = new HashMap();
                 m.put("list", h);
                 jqsqMapper.saveJqsqpz(m);
@@ -1043,6 +1077,27 @@ public class SysService {
             Condition condition = objectMapper.readValue(rq.getParams(), Condition.class);
             try {
                 List<HashMap> lsHt = jqsqMapper.getYq(condition);
+                String jdata = JsonMapper.getInstance().toJson(lsHt);
+                rp.setDatas(jdata);
+            } catch (Exception e) {
+                e.printStackTrace();
+                rp.setIssuccess("0");
+                rp.setMessage("获取数据列表失败！" + e.getMessage());
+            }
+        } catch (Exception e) {
+            rp.setIssuccess("0");
+            rp.setMessage("获取数据列表失败！" + e.getMessage());
+            e.printStackTrace();
+        }
+        return rp;
+    }
+    public ResponseBody getbb(RequestBody rq, Map params, String id) {
+        ResponseBody rp = new ResponseBody(params, "1", "获取数据列表成功！", id, rq.getTaskid());
+        try {
+            ObjectMapper objectMapper = new ObjectMapper();
+            Condition condition = objectMapper.readValue(rq.getParams(), Condition.class);
+            try {
+                List<HashMap> lsHt = jqsqMapper.getbb(condition);
                 String jdata = JsonMapper.getInstance().toJson(lsHt);
                 rp.setDatas(jdata);
             } catch (Exception e) {
@@ -1564,6 +1619,10 @@ public class SysService {
                 }
                 //System.out.println("-------------"+children);
                 HashMap m = toTree(lsHt, children, rootId);
+                String name = (String) m.get("text");
+                if(name.equals("单位补充指标")){
+                	m.put("code", "B");
+                }
                 List mm = new ArrayList();
                 mm.add(m);
                 rp.setDatas(com.common.annotation.mapper.JsonMapper.toJsonString(mm));
@@ -2095,15 +2154,21 @@ public class SysService {
 
     public ResponseBody saveUserListD(RequestBody rq, Map params, String id) {
         ResponseBody rp = new ResponseBody(params, "1", "保存成功！", id, rq.getTaskid());
+       User user = UserUtils.getUser();
+       String deptid = user.getDeptCode().substring(0, 4);
+        String strdep = "\"DEPTID\":\""+deptid+"\"";
+       
         try {
             ObjectMapper objectMapper = new ObjectMapper();
             Condition condition = objectMapper.readValue(rq.getParams(), Condition.class);
             try {
                 //String updL = StringEscapeUtils.unescapeHtml(condition.getC6());
                 String updL = condition.getC6();
+                updL = updL.replace("}]", "," + strdep + "}]");
+               /* updL+=deptid;*/
                 JavaType javaType = JsonMapper.getInstance().getTypeFactory().constructParametricType(List.class, HashMap.class);
                 List<HashMap> h = JsonMapper.getInstance().fromJson(updL, javaType);
-                //System.out.println("updL-------------" + updL);
+                /*h.add(pa);*/
                 HashMap m = new HashMap();
                 m.put("list", h);
                 permisionMapper.saveUserListD(m);
@@ -2231,7 +2296,7 @@ public class SysService {
                 JavaType javaType = JsonMapper.getInstance().getTypeFactory().constructParametricType(List.class, HashMap.class);
                 List<HashMap> h = JsonMapper.getInstance().fromJson(updL, javaType);
                 HashMap m = new HashMap();
-                m.put("list", h);
+                m.put("list", h);	
                 m.put("id", condition.getId());
                 permisionMapper.assignUserGly(m);
             } catch (Exception e) {
@@ -3290,12 +3355,14 @@ public class SysService {
         ResponseBody rp = new ResponseBody(params, "1", "获取原始补充指标成功", id, rq.getTaskid());
         try {
             ObjectMapper objectMapper = new ObjectMapper();
+            System.out.println("params======================="+rq.getParams());
             Condition condition = objectMapper.readValue(rq.getParams(), Condition.class);
 
             User user = UserUtils.getUser();
             Map pa = new HashMap();
             pa.put("DEPTID", user.getDeptCode().substring(0, 4));
-            //System.out.println(pa);
+            //pa.put("DEPTID", 1093);
+            System.out.println("deptid======================="+user.getDeptCode().substring(0, 4));
             //params.put("DEPTID", "1045");
             try {
                 List<HashMap> bbls = bczbMapper.getYsBczb(pa);
@@ -3415,7 +3482,81 @@ public class SysService {
         }
         return rp;
     }
-
+  //获取中心发布指标统计列表
+    public ResponseBody xmbczbList(RequestBody rq, Map params, String id) {
+        ResponseBody rp = new ResponseBody(params, "1", "获取数据列表", id, rq.getTaskid());
+        try {
+            ObjectMapper objectMapper = new ObjectMapper();
+            Condition condition = objectMapper.readValue(rq.getParams(), Condition.class);
+            try {
+                List<HashMap> lsHt = bczbMapper.getxmbczbList(condition);
+                HashMap r = new HashMap();
+                condition.setStart(null);
+                r.put("total", bczbMapper.getxmbczbList(condition).size());
+                r.put("rows", lsHt);
+                rp.setDatas(com.common.annotation.mapper.JsonMapper.toJsonString(r));
+            } catch (Exception e) {
+                e.printStackTrace();
+                rp.setIssuccess("0");
+                rp.setMessage("获取数据列表失败！" + e.getMessage());
+            }
+        } catch (Exception e) {
+            rp.setIssuccess("0");
+            rp.setMessage("获取数据列表失败！" + e.getMessage());
+            e.printStackTrace();
+        }
+        return rp;
+    }
+  //获取系统补充指标列表
+    public ResponseBody xtbczbList(RequestBody rq, Map params, String id) {
+        ResponseBody rp = new ResponseBody(params, "1", "获取数据列表", id, rq.getTaskid());
+        try {
+            ObjectMapper objectMapper = new ObjectMapper();
+            Condition condition = objectMapper.readValue(rq.getParams(), Condition.class);
+            try {
+                List<HashMap> lsHt = bczbMapper.getxtbczbList(condition);
+                HashMap r = new HashMap();
+                condition.setStart(null);
+                r.put("total", bczbMapper.getxtbczbList(condition).size());
+                r.put("rows", lsHt);
+                rp.setDatas(com.common.annotation.mapper.JsonMapper.toJsonString(r));
+            } catch (Exception e) {
+                e.printStackTrace();
+                rp.setIssuccess("0");
+                rp.setMessage("获取数据列表失败！" + e.getMessage());
+            }
+        } catch (Exception e) {
+            rp.setIssuccess("0");
+            rp.setMessage("获取数据列表失败！" + e.getMessage());
+            e.printStackTrace();
+        }
+        return rp;
+    }
+  //获取不充值表应用统计列表
+    public ResponseBody bczbyyList(RequestBody rq, Map params, String id) {
+        ResponseBody rp = new ResponseBody(params, "1", "获取数据列表", id, rq.getTaskid());
+        try {
+            ObjectMapper objectMapper = new ObjectMapper();
+            Condition condition = objectMapper.readValue(rq.getParams(), Condition.class);
+            try {
+                List<HashMap> lsHt = bczbMapper.getbczbyyList(condition);
+                HashMap r = new HashMap();
+                condition.setStart(null);
+                r.put("total", bczbMapper.getbczbyyList(condition).size());
+                r.put("rows", lsHt);
+                rp.setDatas(com.common.annotation.mapper.JsonMapper.toJsonString(r));
+            } catch (Exception e) {
+                e.printStackTrace();
+                rp.setIssuccess("0");
+                rp.setMessage("获取数据列表失败！" + e.getMessage());
+            }
+        } catch (Exception e) {
+            rp.setIssuccess("0");
+            rp.setMessage("获取数据列表失败！" + e.getMessage());
+            e.printStackTrace();
+        }
+        return rp;
+    }
     //中心补充指标
     public ResponseBody getBczbzxList(RequestBody rq, Map params, String id) {
         ResponseBody rp = new ResponseBody(params, "1", "获取原始补充指标成功", id, rq.getTaskid());
@@ -4423,10 +4564,10 @@ public class SysService {
         try {
             ObjectMapper objectMapper = new ObjectMapper();
             Condition condition = objectMapper.readValue(rq.getParams(), Condition.class);
-
             User user = UserUtils.getUser();
             Map pa = new HashMap();
             pa.put("DEPTID", user.getDeptCode().substring(0, 4));
+            pa.put("c1", condition.getC1());
             //System.out.println(pa);
             //params.put("DEPTID", "1045");
             try {
@@ -5395,6 +5536,9 @@ public class SysService {
             ObjectMapper objectMapper = new ObjectMapper();
             Condition condition = objectMapper.readValue(rq.getParams(), Condition.class);
             User user = UserUtils.getUser();
+            System.out.println("condition的c1="+condition.getC1());
+            System.out.println("condition的c1="+condition.getC5());
+            System.out.println("condition的c1="+condition.getC6());
             try {
                 List<HashMap> lszb = bczbMapper.getZbByFz(condition);
                 String xml = "";
@@ -5414,6 +5558,13 @@ public class SysService {
                 //bczbXfPath
                 String saveDirectoryPath = Global.getConfig("upLoadPath") + "/" + bczbXfPath + "/" + condition.getC1();
                 xml = XmlUtils.FormatXml(doc);
+                try{
+                	/*xml = compress(xml);*/
+                	byte[] b = xml.toString().getBytes("UTF-8");
+                	xml = new BASE64Encoder().encode(b);
+                }catch (UnsupportedEncodingException e){
+                	e.printStackTrace();
+                }
                 FileUtils.writeToFile(saveDirectoryPath, xml, false);
                 bczbMapper.updateFzPath(condition.getC1(), saveDirectoryPath);
                 Map mail = new HashMap();
@@ -5683,7 +5834,7 @@ public class SysService {
         Map<String, Object> docStr = AppUtils.readSql22Map(treeM, tree, root, propertys);
         Document doc = null;
         String xmlstr = "";
-        try {
+       try{
             doc = XmlUtils.Map2Xml(docStr);
             xmlstr = XmlUtils.FormatXml(doc);
         } catch (Exception e) {
@@ -5870,64 +6021,6 @@ public class SysService {
         return rp;
     }
 
-    //补充指标采集
-    public ResponseBody bczbCj(RequestBody rq, Map params, String id) {
-        //System.out.println("----------------------------------------------------");
-        ResponseBody rp = new ResponseBody(params, "1", "获取成功", id, rq.getTaskid());
-        try {
-            User user = UserUtils.getUser();
-            String textFromFile = "";
-            BASE64Decoder decoder = new BASE64Decoder();
-            try {
-                textFromFile = new String(decoder.decodeBuffer((String) params.get("BCZBDATA")), "UTF-8");
-                //System.out.println(textFromFile);
-                if (StringUtils.isBlank(textFromFile)) return rp;
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-            Map<String, Object> map = null;
-            try {
-                map = XmlUtils.Xml2MapWithAttr(textFromFile, true);
-                String dw = "1093";
-                if (StringUtils.isNotBlank(user.getDeptCode())) dw = user.getDeptCode().substring(0, 4);
-                //String sql = AppUtils.readMap2Sql2(map, "-1", "", dw, (String) rq.getCpu(), user.getId(), "");
-                HashMap<String, List> sqlHt = AppUtils.readMap2Sql22(map, "-1", "", dw, (String) rq.getCpu(), user.getId(), "");
-                List aList = sqlHt.get("a");
-                List bList = sqlHt.get("b");
-                HashMap h = new HashMap();
-                if (aList != null) {
-                    String sql = " null;";
-                    for (int i = 0; i < aList.size(); i++) {
-                        sql += aList.get(i);
-                    }
-                    h.put("sql", sql);
-                    bczbMapper.mergeProject(h);
-                }
-                if (bList != null) {
-                    String sql = " null;";
-                    for (int i = 0; i < bList.size(); i++) {
-                        sql += bList.get(i);
-                        if (i % 400 == 0) {
-                            h.put("sql", sql);
-                            bczbMapper.mergeProject(h);
-                            sql = " null;";
-                        }
-                    }
-                    h.put("sql", sql);
-                    bczbMapper.mergeProject(h);
-                }
-            } catch (Exception e) {
-                rp.setIssuccess("0");
-                rp.setMessage("获取失败");
-                e.printStackTrace();
-                logger.error(e.toString());
-            }
-        } catch (Exception e) {
-            //e.printStackTrace();
-        }
-        return rp;
-    }
-
     //提交到补充指标库
     public ResponseBody yhbczbRk_bak(RequestBody rq, Map params, String id) {
         ResponseBody rp = new ResponseBody(params, "1", "获取成功", id, rq.getTaskid());
@@ -6055,6 +6148,7 @@ public class SysService {
     }
 
     //提交到补充指标库
+    //用户补充中心指标入库
     public ResponseBody yhbczxzbRk(RequestBody rq, Map params, String id) {
         ResponseBody rp = new ResponseBody(params, "1", "获取成功", id, rq.getTaskid());
         User user = UserUtils.getUser();
@@ -6168,7 +6262,66 @@ public class SysService {
         }
         return rp;
     }
+    //补充指标采集
+    public ResponseBody bczbCj(RequestBody rq, Map params, String id) {
+        //System.out.println("----------------------------------------------------");
+        ResponseBody rp = new ResponseBody(params, "1", "获取成功", id, rq.getTaskid());
+        try {
+            User user = UserUtils.getUser();
+            String textFromFile = "";
+            BASE64Decoder decoder = new BASE64Decoder();
+            try {
+            	String textFromFile1 = new String(decoder.decodeBuffer((String) params.get("BCZBDATA")), "UTF-8");
+                textFromFile = releaseCompression(textFromFile1);
+                if (StringUtils.isBlank(textFromFile)) return rp;
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            Map<String, Object> map = null;
+            try {
+                map = XmlUtils.Xml2MapWithAttr(textFromFile, true);
+                String dw = "1093";
+                if (StringUtils.isNotBlank(user.getDeptCode())) 
+                	dw = user.getDeptCode().substring(0, 4);
+                //String sql = AppUtils.readMap2Sql2(map, "-1", "", dw, (String) rq.getCpu(), user.getId(), "");
+                HashMap<String, List> sqlHt = AppUtils.readMap2Sql22(map, "-1", "", dw, (String) rq.getCpu(), user.getId(), "");
+                List aList = sqlHt.get("a");
+                List bList = sqlHt.get("b");
+                HashMap h = new HashMap();
+                if (aList != null) {
+                    String sql = " null;";
+                    for (int i = 0; i < aList.size(); i++) {
+                        sql += aList.get(i);
+                    }
+                    h.put("sql", sql);
+                    bczbMapper.mergeProject(h);
+                }
+                if (bList != null) {
+                    String sql = " null;";
+                    for (int i = 0; i < bList.size(); i++) {
+                        sql += bList.get(i);
+                        if (i % 400 == 0) {
+                            h.put("sql", sql);
+                            bczbMapper.mergeProject(h);
+                            sql = " null;";
+                        }
+                    }
+                    h.put("sql", sql);
+                    bczbMapper.mergeProject(h);
+                }
+            } catch (Exception e) {
+                rp.setIssuccess("0");
+                rp.setMessage("获取失败");
+                e.printStackTrace();
+                logger.error(e.toString());
+            }
+        } catch (Exception e) {
+            //e.printStackTrace();
+        }
+        return rp;
+    }
 
+//用户补充指标入库
     public ResponseBody yhbczbRk(RequestBody rq, Map params, String id) {
         ResponseBody rp = new ResponseBody(params, "1", "获取成功", id, rq.getTaskid());
         User user = UserUtils.getUser();
@@ -6178,7 +6331,8 @@ public class SysService {
             String textFromFile = "";
             BASE64Decoder decoder = new BASE64Decoder();
             try {
-                textFromFile = new String(decoder.decodeBuffer((String) params.get("BCZBDATA")), "UTF-8");
+            	String textFromFile1 = new String(decoder.decodeBuffer((String) params.get("BCZBDATA")), "UTF-8");
+                textFromFile = releaseCompression(textFromFile1);
                 if (StringUtils.isBlank(textFromFile)) return rp;
             } catch (Exception e) {
                 e.printStackTrace();
@@ -6202,13 +6356,9 @@ public class SysService {
                 String textFromFile = "";
                 BASE64Decoder decoder = new BASE64Decoder();
                 try {
-                    textFromFile = new String(decoder.decodeBuffer((String) params.get("BCZBDATA")), "UTF-8");
-
-                    //textFromFile = StringEscapeUtils.unescapeHtml((String) textFromFile);
+                	String textFromFile1 = new String(decoder.decodeBuffer((String) params.get("BCZBDATA")), "UTF-8");
+                    textFromFile = releaseCompression(textFromFile1);
                     if (StringUtils.isBlank(textFromFile)) return rp;
-            /*System.out.println("------------------------");
-            String saveDirectoryPath = Global.getConfig("upLoadPath") +"/"+ bczbXfPath+"/55555555";
-            FileUtils.writeToFile(saveDirectoryPath,textFromFile,false);*/
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
@@ -6262,6 +6412,13 @@ public class SysService {
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
+                try{
+                	/*xml = compress(xml);*/
+                	byte[] b = xml.toString().getBytes("UTF-8");
+                	xml = new BASE64Encoder().encode(b);
+                }catch (UnsupportedEncodingException e){
+                	e.printStackTrace();
+                }
                 FileUtils.writeToFile(saveDirectoryPath, xml, false);
                 for (HashMap tm : adm) {
                     Map mail = new HashMap();
@@ -6286,7 +6443,7 @@ public class SysService {
         return rp;
     }
 
-    //提交到补充二类费
+    //提交到补充二类费指标库
     public ResponseBody yhbcelfRk(RequestBody rq, Map params, String id) {
         ResponseBody rp = new ResponseBody(params, "1", "获取成功", id, rq.getTaskid());
         User user = UserUtils.getUser();
@@ -7411,6 +7568,31 @@ public class SysService {
         }
         return rp;
     }
+    //补充指标删除
+    public ResponseBody delBCZB(RequestBody rq, Map params, String id) {
+        ResponseBody rp = new ResponseBody(params, "1", "保存成功！", id, rq.getTaskid());
+        try {
+            ObjectMapper objectMapper = new ObjectMapper();
+            Condition condition = objectMapper.readValue(rq.getParams(), Condition.class);
+            try {
+                String updL = StringEscapeUtils.unescapeHtml(condition.getC1());
+                JavaType javaType = JsonMapper.getInstance().getTypeFactory().constructParametricType(List.class, HashMap.class);
+                List<HashMap> h = JsonMapper.getInstance().fromJson(updL, javaType);
+                Map m = new HashMap();
+                m.put("list", h);
+                bczbMapper.delBCZB(m);
+            } catch (Exception e) {
+                e.printStackTrace();
+                rp.setIssuccess("0");
+                rp.setMessage("操作失败！" + e.getMessage());
+            }
+        } catch (Exception e) {
+            rp.setIssuccess("0");
+            rp.setMessage("操作失败！" + e.getMessage());
+            e.printStackTrace();
+        }
+        return rp;
+    }
 
     public ResponseBody delZb2Ml(RequestBody rq, Map params, String id) {
         ResponseBody rp = new ResponseBody(params, "1", "保存成功！", id, rq.getTaskid());
@@ -8198,6 +8380,127 @@ public class SysService {
             System.out.println("文件不存在!");
         }
     }
+    
+    List<String> keylist = new ArrayList<String>();
+    public List digui(Map<String, Object> map){
+    	for (String key : map.keySet()){
+    		if(!keylist.contains(key)&&!"#text".equals(key)){
+        		keylist.add(key);
+    		}
+			 Object node = map.get(key);
+/*			 if("GeneralInformation".equals(key) && node instanceof Map){*/
+				 for (String okey : ((Map<String, Object>) node).keySet()){
+					 Object property = ((Map<String, Object>) node).get(okey);
+					 if (property instanceof String){
+						 if(!keylist.contains(okey)&&!"#text".equals(okey)){
+				        		keylist.add(okey);	
+				    		}
+					 }else if(property instanceof Map){
+						 digui((Map<String, Object>) map.get(okey));
+					 }else if (property instanceof List){
+						 for (int i = 0; i < ((List) property).size(); i++){
+							 Map<String, Object> child = new HashMap<String, Object>();
+	                            child.put(okey, ((List) property).get(i));
+	                            digui(child);
+						 }
+						 
+					 }
+				 } 
+		 }
+    	return  keylist;
+    }
+  //补全基础指标库字段 
+    public void bqzd(Map<String, Object> map){
+    	try{
+    		//查询获取xml文件中所有属性，并去重
+    		List<String> keylist = digui(map);
+    		//格式化
+    		List<String> newkeylist = new ArrayList<String>();
+    		for(int i = 0 ;i<keylist.size();i++){
+        		if(keylist.get(i).indexOf("@")!=-1){
+        			newkeylist.add(keylist.get(i).replace("@", ""));
+        		}else{
+        			newkeylist.add(keylist.get(i));
+        		}
+        	}
+    		HashMap h = new HashMap();
+    		for(int n = 0; n <newkeylist.size(); n++){
+    			String checksql = "where table_name=upper('app_zbxx') and (column_name=upper('"+newkeylist.get(n)+"')or column_name=upper('P_"+newkeylist.get(n)+"'))";
+    			String insertsql = "alter table app_zbxx add p_"+newkeylist.get(n)+" varchar2(500)";
+    			h.put("checksql", checksql);
+    			h.put("insertsql", insertsql);
+    			bczbMapper.bqzd(h);
+    		}
+    	}catch (Exception e) {
+            e.printStackTrace();
+        }
+
+    }
+    
+  //补充指标统计采集
+    public ResponseBody bczbtjCj(RequestBody rq, Map params, String id) {
+        //System.out.println("----------------------------------------------------");
+        ResponseBody rp = new ResponseBody(params, "1", "获取成功", id, rq.getTaskid());
+        try {
+            User user = UserUtils.getUser();
+            String textFromFile = "";
+            BASE64Decoder decoder = new BASE64Decoder();
+            try {
+            	textFromFile = new String(decoder.decodeBuffer((String) params.get("BCZBDATA")), "UTF-8");
+                //System.out.println(textFromFile);
+                if (StringUtils.isBlank(textFromFile)) return rp;
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            Map<String, Object> map = null;
+            Map<String, Object> judgeMap = null;
+            try {
+            	judgeMap = XmlUtils.Xml2MapWithAttr(textFromFile, true);
+            	try{
+            		bqzd(judgeMap);
+            	}catch (Exception e) {
+                    e.printStackTrace();
+                }
+                map = XmlUtils.Xml2MapWithAttr(textFromFile, true);
+                String dw = "1093";
+                if (StringUtils.isNotBlank(user.getDeptCode())) 
+                	dw = user.getDeptCode().substring(0, 4);
+                //String sql = AppUtils.readMap2Sql2(map, "-1", "", dw, (String) rq.getCpu(), user.getId(), "");
+                HashMap<String, List> sqlHt = AppUtils.insertBczbTjSql(map, "-1", "", dw, (String) rq.getCpu(), user.getId(), "");
+                List aList = sqlHt.get("a");
+                List bList = sqlHt.get("b");
+                HashMap h = new HashMap();
+                if (aList != null) {
+                    String sql = " null;";
+                    for (int i = 0; i < aList.size(); i++) {
+                        sql += aList.get(i);
+                    }
+                    h.put("sql", sql);
+                    bczbMapper.mergeProject(h);
+                }
+                if (bList != null) {
+                    String sql = " null;";
+                    for (int i = 0; i < bList.size(); i++) {
+                        sql += bList.get(i);
+                        if (i % 400 == 0) {
+                            h.put("sql", sql);
+                            bczbMapper.mergeProject(h);
+                            sql = " null;";
+                        }
+                    }
+                    h.put("sql", sql);
+                    bczbMapper.mergeProject(h);
+                }
+            } catch (Exception e) {
+                rp.setIssuccess("0");
+                rp.setMessage("获取失败");
+                e.printStackTrace();
+            }
+        } catch (Exception e) {
+            //e.printStackTrace();
+        }
+        return rp;
+    }
     //region
     /*@CompResponseBody
     //@Transactional
@@ -8330,4 +8633,39 @@ public class SysService {
 
     */
 // endregion
+  //解压缩字符串
+    public  String releaseCompression(String compressStr) throws IOException{
+    	BASE64Decoder decoder = new BASE64Decoder();
+    	byte[] b = decoder.decodeBuffer(compressStr);
+    	ByteArrayOutputStream out = new ByteArrayOutputStream();
+    	ByteArrayInputStream in = new ByteArrayInputStream(b);
+        GZIPInputStream gunzip = new GZIPInputStream(in);
+    	byte[] buffer = new byte[256];
+    	int n;
+    	while ((n = gunzip.read(buffer)) >= 0) {
+    	    out.write(buffer, 0, n);
+    	}
+    	  // toString()使用平台默认编码，也可以显式的指定如toString("GBK")
+        return  out.toString("UTF-8");
+    }
+    
+    //字符串压缩
+    public  String compress(String uncompressStr) throws IOException {
+    	if(uncompressStr==null||uncompressStr.length()<=0){
+    		return uncompressStr;
+    	}
+    	try{
+    		BASE64Encoder ecoder = new BASE64Encoder();
+    		ByteArrayOutputStream out = new ByteArrayOutputStream();
+    	    GZIPOutputStream gzip = new GZIPOutputStream(out);
+    	    gzip.write(uncompressStr.getBytes("UTF-8"));
+    	    gzip.close();
+    	return ecoder.encode(out.toByteArray());
+    	}catch(Exception e){
+    		e.printStackTrace();
+    		return null;
+    	}
+    	    
+    	
+    }
 }

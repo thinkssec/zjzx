@@ -11,6 +11,9 @@
         <include refid="com.base.baseMapper.pageStart"/>
         select a.*,to_char(sqtime,'yyyymmdd hh24:mi:ss') sj,
         to_char(HPTIME,'yyyymmdd hh24:mi:ss') hpsj,decode(status,1,'停用',2,'注销','在用') zt from SYS_JQRZ_HP a where (status =1 or status is null)
+        <if test="c1 != null">
+            and a.sqr like '%'||#{c1}||'%'
+        </if>
         order by hpsj desc
         <include refid="com.base.baseMapper.pageEnd"/>
     </select>
@@ -25,6 +28,9 @@
     </select>
     <select id="getYq" resultType="java.util.HashMap">
         select id,name from app_yq order by id
+    </select>
+    <select id="getbb" resultType="java.util.HashMap">
+        select id,mc from app_jckbb
     </select>
     <select id="isRegist" resultType="java.util.HashMap">
         select * from SYS_JQRZ_HP where cpuid=#{CPUID} and (status is null or status=1)
@@ -61,6 +67,9 @@
         select a.*,to_char(sqtime,'yyyymmdd hh24:mi:ss') sj,
         to_char(HPTIME,'yyyymmdd hh24:mi:ss') hpsj,decode(status,1,'停用',2,'注销','在用') zt
         from SYS_JQRZ_HP a where (status =1 or status is null) and nvl(hpdw,'-1100')!=#{dwdm} and hpdw is null
+        <if test="c1 != null">
+            and a.sqr like '%'||#{c1}||'%'
+        </if>
         order by hpsj desc
         <include refid="com.base.baseMapper.pageEnd"/>
     </select>
@@ -69,6 +78,9 @@
         select a.*,to_char(sqtime,'yyyymmdd hh24:mi:ss') sj,
         to_char(HPTIME,'yyyymmdd hh24:mi:ss') hpsj,decode(status,1,'停用',2,'注销','在用') zt
         from SYS_JQRZ_HP a where (status =1 or status is null) and nvl(hpdw,'-1100')=#{dwdm}
+        <if test="c1 != null">
+            and a.sqr like '%'||#{c1}||'%'
+        </if>
         order by hpsj desc
         <include refid="com.base.baseMapper.pageEnd"/>
     </select>
@@ -278,7 +290,7 @@
             on (a.loginname= b.loginname)
             when not matched then
             insert (a.userid,a.USERNAME,a.DW,a.YDDH,a.EMAIL,a.CREATETIME,a.LOGINNAME,a.GDDH,a.PWD,a.UPWD,a.bzxx)
-            values (v_id,b.SQR,b.SQDW,b.SQSJ,b.SQYX,b.SQTIME,b.LOGINNAME,b.SQRGDDH,'7c4a8d09ca3762af61e59520943dc26494f8941b','7c4a8d09ca3762af61e59520943dc26494f8941b',b.BZ);
+            values (v_id,b.SQR,b.SQDW,b.SQSJ,b.SQYX,b.SQTIME,b.LOGINNAME,b.SQRGDDH,'d34dd4b08cad8a66f68707c43a4b1b8b1e0d6485','d34dd4b08cad8a66f68707c43a4b1b8b1e0d6485',b.BZ);
             <if test="record.USERID==null or record.USERID==''">
                 insert into SYS_MYPAN(id,parent_id,name) values (v_id,0,'个人空间');
             </if>

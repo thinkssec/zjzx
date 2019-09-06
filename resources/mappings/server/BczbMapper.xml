@@ -50,6 +50,15 @@
         commit;
         END;
     </insert>
+   <!-- 补充指标删除 -->
+    <insert id="delBCZB">
+        BEGIN
+        <foreach collection="list" item="record" index="index">
+            delete from APP_OBJECT_BCZBTREE where id=#{record.ID};
+        </foreach>
+        commit;
+        END;
+    </insert>
     <insert id="addZb2Ml">
         DECLARE
           v_id varchar2(50):='';
@@ -276,6 +285,30 @@
         </foreach>
         )
     </insert>
+    <!-- 补全app_zbxx缺少字段 -->
+    <insert id="bqzd">
+		   declare
+		   v_rowcount integer;
+		   begin
+		   select count(1) into v_rowcount from user_tab_columns
+		   ${checksql};
+		   if v_rowcount=0 then
+		   execute immediate'${insertsql}';
+		   end if;
+		end;
+    </insert>
+<!--     <update id="changshi" parameterType="java.util.List">
+    <foreach collection="list" item="item" index="index" open="(" separator="" close=")">
+     DECLARE
+        v_deptid number(4):=-1;
+        v_count number(1):=0;
+        v_infoid varchar2(50):='';
+        v_cdxgc number(1):=0;
+        v_cc number(16):=0;
+         #{item}
+		</foreach>
+		
+</update> -->
     <update id="mergeProject">
         DECLARE
         v_deptid number(4):=-1;
@@ -364,6 +397,7 @@
             end;
           end loop;
           delete app_zb_bcralation where zhzbid = #{ID};
+          delete app_zb_bczh where id = #{ID};
           commit;
         end;
     </delete>
@@ -403,7 +437,7 @@
     <delete id="delGcf4Ml">
         delete from APP_GCF_MLRALATION where bczbid=#{c4}
     </delete>
-    <select id="getBczbProperty" fetchSize="50000"  resultType="java.util.LinkedHashMap">
+    <select id="getBczbProperty"   resultType="java.util.LinkedHashMap">
         with b as (select id
                  from APP_OBJECT_BCZBTREE
                connect by prior id = pid
@@ -431,10 +465,10 @@
     <select id="getOtherTest" resultType="java.util.LinkedHashMap">
         select * from APP_OBJTEST
     </select>
-    <select id="getOtherTest2" fetchSize="50000" resultType="java.util.LinkedHashMap">
+    <select id="getOtherTest2"  resultType="java.util.LinkedHashMap">
         select * from APP_OPROPERTY
     </select>
-    <select id="getYsBczb_bak" fetchSize="50000" resultType="java.util.HashMap">
+    <select id="getYsBczb_bak"  resultType="java.util.HashMap">
         <![CDATA[
         with p as
              (select t.*,(select username from APP_USER where userid=t.userid) username
@@ -453,7 +487,7 @@
         and display1 = '1'
 
     </select>
-    <!--<select id="getYsBczb" fetchSize="50000" resultType="java.util.HashMap">
+    <!--<select id="getYsBczb"  resultType="java.util.HashMap">
         <![CDATA[
         with p as
              (select t.*,(select username from APP_USER where userid=t.userid) username
@@ -465,7 +499,7 @@
             select to_char(p.rksj,'yyyymmdd hh24:mi:ss') rksj,'' zt,p.*
               from p
     </select>-->
-    <select id="getYsBczb" fetchSize="50000" resultType="java.util.HashMap">
+    <select id="getYsBczb"  resultType="java.util.HashMap">
         WITH C AS
         (SELECT B.*
         FROM APP_OBJECT_BCZBTREE B,
@@ -498,12 +532,58 @@
         where id in ( ${scope}))
         select p.id id,a.*,p.p_projecttitle PRO_DXGC from app_object_bczbtree a,p where a.id = p.pid
     </select>
+    <!-- 项目补充指标统计 -->
+    <select id="getxmbczbList" resultType="java.util.HashMap">
+        <include refid="com.base.baseMapper.pageStart"/>
+        select * from(select b.name yq,a.p_bbh bbh, a.p_bm zbbm ,a.p_mc zbmc ,a.pid,sum(p_pc) sycs,sum(p_gcl) zbgclhj 
+        from app_zbxx a ,app_yq b where a.oilid = b.id and a.p_mc is not null GROUP BY b.name,a.p_bbh, a.p_bm,a.pid,a.p_mc)where 1=1
+        <if test="c1 != null">
+            and yq like '%'||#{c1}||'%'
+        </if>
+        <include refid="com.base.baseMapper.pageEnd"/>
+         order by sycs desc
+        <if test="sort != null">
+            ${sort}
+        </if>
+    </select>
+    
+    <!-- 系统补充指标统计 -->
+    <select id="getxtbczbList" resultType="java.util.HashMap">
+        <include refid="com.base.baseMapper.pageStart"/>
+        select d.P_BM,d.P_MC, to_char(d.rksj,'yyyymmdd') rksj,
+          dp.dwmc, yq.name yqname 
+          from  app_object_dwcbbczb d ,app_yq yq, app_dept dp
+        where  d.oilid = yq.id and dp.DWDM = d.deptid and d.p_bm is not null
+        <if test="c1 != null">
+            and d.P_MC like '%'||#{c1}||'%'
+        </if>
+        <include refid="com.base.baseMapper.pageEnd"/>
+         order by rksj desc
+        <if test="sort != null">
+            ${sort}
+        </if>
+    </select>
+     <select id="getbczbyyList" resultType="java.util.HashMap">
+        <include refid="com.base.baseMapper.pageStart"/>
+        select * from(select b.DWMC,a.P_BM,a.P_MC,sum(a.P_PC) sycs,sum(a.P_GCL) zbgclhj from app_zbxx
+        a,app_dept b where a.deptid=b.DWDM GROUP BY b.DWMC,a.P_BM,a.P_MC)where 1=1
+        <if test="c1 != null">
+            and DWMC  like '%'||#{c1}||'%'
+        </if>
+        <include refid="com.base.baseMapper.pageEnd"/>
+         order by sycs desc
+        <if test="sort != null">
+            ${sort}
+        </if>
+    </select>
+    
     <select id="getZhzbList" resultType="java.util.HashMap">
         <include refid="com.base.baseMapper.pageStart"/>
         select (select username from app_user where userid=w.userid) ry,to_char(rksj,'yyyymmdd hh24:mi:ss') sj,(select name from APP_YQ where bzyqh=oilid) oilname,decode(status,'1','已下发','未下发') zt,w.* from APP_ZB_BCZH w where 1=1
         <if test="dwdm != null">
             and deptid=#{dwdm}
         </if>
+        
         <if test="c1 != null">
             and name like '%'||#{c1}||'%'
         </if>
@@ -523,7 +603,7 @@
            </if>
     </select>
 
-    <select id="getBczbByFz_bak" fetchSize="50000" resultType="java.util.HashMap">
+    <select id="getBczbByFz_bak"  resultType="java.util.HashMap">
 
         with p as
              (select a.* from APP_OBJECT_BCZBTREE a,APP_ZB_BCRALATION t where a.id=t.bczbid <if test="c1!=null and c1!=''"> and t.zhzbid=#{c1}</if> ),
@@ -537,7 +617,7 @@
         and display1 = '1'
 
     </select>
-    <select id="getBczbByFz" fetchSize="50000" resultType="java.util.HashMap">
+    <select id="getBczbByFz"  resultType="java.util.HashMap">
         with p as
         (select a.*,(select username from APP_USER where userid=a.userid) username from APP_OBJECT_BCZBTREE a,APP_ZB_BCRALATION t where a.id=t.bczbid <if test="c1!=null and c1!=''"> and t.zhzbid=#{c1}</if> )
         select to_char(p.rksj,'yyyymmdd hh24:mi:ss') rksj,'' zt,p.*
@@ -604,7 +684,7 @@
         and d.okey = a.okey
         and display1 = '1'
     </select>
-    <select id="getDwBczb_bak"  fetchSize="50000" resultType="java.util.HashMap">
+    <select id="getDwBczb_bak"   resultType="java.util.HashMap">
         <![CDATA[
         with p as
              (select t.*
@@ -623,7 +703,7 @@
         and d.okey = a.okey
         and display1 = '1'
     </select>
-    <select id="getDwBczb"  fetchSize="50000" resultType="java.util.HashMap">
+    <select id="getDwBczb"   resultType="java.util.HashMap">
         <![CDATA[
         with p as
              (select t.*
@@ -634,9 +714,12 @@
         start with pid = '-1' <if test="DEPTID!=null and DEPTID!=''"> and deptid=#{DEPTID}</if> )
         select to_char(p.rksj,'yyyymmdd hh24:mi:ss') rksj,p.oilid,
         (select name from app_yq where bzyqh=p.OILID) yqname,'' zt,p.*
-        from p
+        from p where 1=1
+        <if test="c1 != null">
+            and P_MC = #{c1}
+        </if>
     </select>
-    <select id="getYhBczb_bak" fetchSize="50000" resultType="java.util.HashMap">
+    <select id="getYhBczb_bak"  resultType="java.util.HashMap">
         <![CDATA[
         with p as
              (select t.*,(select username from APP_USER where userid=t.userid) username
@@ -654,7 +737,7 @@
         and d.okey = a.okey
         and display1 = '1'
     </select>
-    <select id="getYhBczb" fetchSize="50000" resultType="java.util.HashMap">
+    <select id="getYhBczb"  resultType="java.util.HashMap">
         <![CDATA[
         with p as
              (select t.*,(select username from APP_USER where userid=t.userid) username

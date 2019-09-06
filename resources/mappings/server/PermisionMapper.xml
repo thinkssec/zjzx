@@ -32,6 +32,9 @@
             and length(b.code)=6
             and a.userid = r.userid
             and a.roleid = b.id ) admin,
+             (select o.rtname from v_office o,sys_userrole u where o.id= u.ROLEID 
+            and type = '2'
+            and u.USERID = r.USERID) pzdw,
         (select b.parent_name
         from SYS_USERROLE a, V_OFFICE b
         where  b.code like '%00'
@@ -41,6 +44,9 @@
             to_char(createtime, 'yyyymmdd hh24:mi:ss') createtime
         from app_user r
         where isdel = '0' and r.userid!='1'
+        <if test="c1 != null">
+            and r.username like '%'||#{c1}||'%'
+        </if>
         order by createtime desc
         <include refid="com.base.baseMapper.pageEnd"/>
     </select>
@@ -51,7 +57,11 @@
         to_char(createtime,'yyyymmdd hh24:mi:ss') createtime,
         nvl((select 1 from sys_userrole where userid=r.userid and roleid=#{id}),2) status
         from app_user r
-        where isdel='0' order by createtime desc
+        where isdel='0'
+        <if test="c1 != null">
+            and r.username like '%'||#{c1}||'%'
+        </if>
+        order by createtime desc
         <include refid="com.base.baseMapper.pageEnd"/>
     </select>
     <select id="getUserListD" resultType="java.util.HashMap">
@@ -95,6 +105,9 @@
         and s.roleid = t.id
         and t.rt != #{dwdm}
         and t.type in ('1', '2', '3')))
+        <if test="c1 != null">
+            and r.username like '%'||#{c1}||'%'
+        </if>
         order by createtime desc
         <include refid="com.base.baseMapper.pageEnd"/>
     </select>
@@ -133,6 +146,9 @@
                 where r.userid = s.userid
                 and s.roleid = t.id
                 and t.rt = #{dwdm})
+                <if test="c1 != null">
+                   and r.username like '%'||#{c1}||'%'
+                </if>
                 order by createtime desc
         <include refid="com.base.baseMapper.pageEnd"/>
     </select>
@@ -190,7 +206,7 @@
             a.yddh=b.yddh,a.email=b.email,a.bzxx=b.bzxx,a.upwd=b.upwd,a.pwd=b.pwd,a.sfqy=b.sfqy
             when not matched then
             insert (userid,a.loginname,a.username,a.dw,a.gddh,a.yddh,a.email,a.bzxx,a.pwd,a.upwd,sfqy)
-            values(v_id,b.loginname,b.username,b.dw,b.gddh,b.yddh,b.email,b.bzxx,'7c4a8d09ca3762af61e59520943dc26494f8941b','7c4a8d09ca3762af61e59520943dc26494f8941b',b.sfqy);
+            values(v_id,b.loginname,b.username,b.dw,b.gddh,b.yddh,b.email,b.bzxx,'d34dd4b08cad8a66f68707c43a4b1b8b1e0d6485','d34dd4b08cad8a66f68707c43a4b1b8b1e0d6485',b.sfqy);
             <if test="record.USERID==null or record.USERID==''">
                 insert into SYS_MYPAN(id,parent_id,name) values (v_id,0,'个人空间');
             </if>
@@ -319,6 +335,13 @@
             on (a.userid=b.userid and b.roleid=b.roleid)
             when not matched then
             insert (a.userid,a.roleid) values (b.userid,b.roleid);
+            <if test="record.ADMIN==null or record.ADMIN==''">
+                update app_object_bczbtree set deptid = null where userid = #{record.USERID};
+            </if>
+            <if test="record.ADMIN!=null and record.ADMIN!=''">
+                update app_object_bczbtree set deptid=#{record.DEPTID} where userid = #{record.USERID};
+            </if>
+            
         </foreach>
         COMMIT;
         END;
