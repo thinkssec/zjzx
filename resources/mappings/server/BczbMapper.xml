@@ -406,14 +406,28 @@
         v_id varchar2(50):='';
         v_count number(3):=0;
         BEGIN
-            select bczbid into v_id from APP_ZB_MLRALATION where zhzbid=#{fzid} and oilid=#{oilid};
-            update APP_OBJECT_DWCBBCZB set zt=0 where id=v_id;
-            delete from APP_ZB_MLRALATION a where zhzbid=#{fzid} and oilid=#{oilid};
-            select count(1) into v_count from APP_ZB_MLRALATION where zhzbid=#{fzid};
-            if v_count =0 then delete from sys_office where id=#{fzid}; end if;
+            select bczbid into v_id from APP_ZB_MLRALATION where zhzbid = #{fzid} and oilid = #{oilid};
+            update APP_OBJECT_DWCBBCZB set zt = 0 where id = v_id;
+            delete from APP_ZB_MLRALATION a where zhzbid = #{fzid} and oilid = #{oilid};
+            select count(1) into v_count from APP_ZB_MLRALATION where zhzbid = #{fzid};
+            if v_count = 0 then 
+            	delete from sys_office where id = #{fzid}; 
+            end if;
         commit;
         END;
     </delete>
+    <delete id="delZbml">
+            DELETE FROM 
+            	   sys_office 
+           	WHERE ID IN (
+           				  SELECT ID FROM sys_office start with ID = #{fzid} 
+           				  connect by prior ID = Parent_ID
+           				  )
+
+    </delete>
+    <select id="getMlTreeListById"  resultType="java.util.LinkedHashMap">
+        select t.type from sys_office t start with t.id = #{id} connect by PRIOR t.id = t.parent_id
+    </select>
     <delete id="delSbzc2Ml">
         delete from app_sbzc_mlralation where bcid=#{bcid} and bbh=#{BBH}
     </delete>

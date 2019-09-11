@@ -297,10 +297,8 @@ public class AnonService {
     public ResponseBody AuthRealm(RequestBody rq, Map params, String id) {
         ResponseBody rp = new ResponseBody(params, "1", "获取用户成功", id, rq.getTaskid());
         try {
-            //System.out.println();
             ObjectMapper objectMapper = new ObjectMapper();
             Condition condition = objectMapper.readValue(rq.getParams(), Condition.class);
-            //System.out.println("------"+condition);
             HashMap m = userMapper.getUserOne(condition.getLoginName());
             rp.setDatas(com.common.annotation.mapper.JsonMapper.toJsonString(m));
         } catch (Exception e) {

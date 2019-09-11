@@ -80,6 +80,8 @@ public interface BczbMapper {
 	void delFz(@Param("ID") String id);
 
 	void delZb2Ml(Map m);
+	 List<HashMap> getMlTreeListById(Map m);
+	void delZbml(Map m);
 	void delElf2Ml(Map m);
     void delSbzc2Ml(Map m);
 	List<LinkedHashMap> getYhBczbProperty(String bczbid);

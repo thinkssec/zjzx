@@ -45,6 +45,7 @@ import com.common.utils.UserUtils;
 import com.common.utils.XmlUtils;
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.collect.Maps;
 import com.server.Entity.Condition;
 import com.server.Entity.Menu;
 import com.server.Entity.RequestBody;
@@ -7281,6 +7282,7 @@ public class SysService {
                     }
                 }
                 bczbMapper.addZb2Ml(mw);
+                createOrReloadTreeXml(rp,condition);
             } catch (Exception e) {
                 e.printStackTrace();
                 rp.setIssuccess("0");
@@ -7481,6 +7483,7 @@ public class SysService {
                     }
                 }*/
                 bczbMapper.addZb2Zb(mw);
+                createOrReloadTreeXml(rp,condition);
                 //原来的设计
                 //region
                 /*{
@@ -7602,55 +7605,21 @@ public class SysService {
             try {
                 String c1 = StringEscapeUtils.unescapeHtml(condition.getC1());
                 String c2 = condition.getC2();
+                String isZb = condition.getC3();
                 Map m = new HashMap();
                 if (StringUtils.isBlank(c1)) {
                     return rp;
                 }
                 m.put("oilid", c1.substring(1));
                 m.put("fzid", c2);
-                //System.out.println("-------------------"+m);
-                bczbMapper.delZb2Ml(m);
-                //原来的设计//region
-                {
-                    try {
-                        User user = UserUtils.getUser();
-                        condition.setUserid(user.getId());
-                        condition.setDwdm(user.getDeptCode().substring(0, 4));
-                        Map mtt = new HashMap();
-                        mtt.put("CODE", condition.getDwdm());
-                        HashMap<String, Office> lsHt = frameMapper.bczbMlLists(mtt);
-                        List<HashMap> zbdic = frameMapper.getMlZbAList(mtt);
-                        LinkedHashMap<String, LinkedHashMap<String, Object>> rs = new LinkedHashMap();
-                        HashMap<String, List<Office>> children = new HashMap();
-                        Map<String, List<Map>> zbchildren = new HashMap();
-                        String rootId = "";
-                        for (String key : lsHt.keySet()) {
-                            if (lsHt.get(key).getCode().length() == 8) rootId = key;
-                            List c = children.get(lsHt.get(key).getParentId());
-                            zbchildren.put(lsHt.get(key).getId(), new ArrayList());
-                            if (c == null) {
-                                c = new ArrayList<Office>();
-                                children.put((String) lsHt.get(key).getParentId(), c);
-                            }
-                            c.add(lsHt.get(key));
-                        }
-                        for (HashMap z : zbdic) {
-                            String mlid = (String) z.get("ZHZBID");
-                            List c = zbchildren.get(mlid);
-                            c.add(z);
-                        }
-                        Map<String, Object> docStr = AppUtils.getMlMap(lsHt, children, rootId, zbchildren);
-                        String xml = "";
-                        Document doc = XmlUtils.Map2Xml(docStr);
-                        String saveDirectoryPath = Global.getConfig("upLoadPath") + "/" + dwbczbPath + "/" + rootId;
-                        xml = XmlUtils.FormatXml(doc);
-                        FileUtils.writeToFile(saveDirectoryPath, xml, false);
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                        rp.setIssuccess("0");
-                        rp.setMessage("操作失败！" + e.getMessage());
-                    }
+                if("yes".equals(isZb)) {
+                	bczbMapper.delZb2Ml(m);
+                }else{
+                	bczbMapper.delZbml(m);
                 }
+                
+                //原来的设计//region
+                createOrReloadTreeXml(rp,condition);
                 //endregion
             } catch (Exception e) {
                 e.printStackTrace();
@@ -7663,6 +7632,51 @@ public class SysService {
             e.printStackTrace();
         }
         return rp;
+    }
+    
+    public ResponseBody mlContainsZb(RequestBody rq, Map params, String id) {
+    	 ResponseBody rp = new ResponseBody(params, "1", "保存成功！", id, rq.getTaskid());
+    	 String returnData =  "";
+    	try {
+            ObjectMapper objectMapper = new ObjectMapper();
+            Condition condition = objectMapper.readValue(rq.getParams(), Condition.class);
+            
+            try {
+                String c1 = condition.getC1();
+                Map<String,String> parm = Maps.newHashMap();
+                if (StringUtils.isBlank(c1)) {
+                    return rp;
+                }
+                parm.put("id", c1);
+                List<HashMap> mlTreeList = bczbMapper.getMlTreeListById(parm);
+                List<String> typeList = new ArrayList<String>();
+                for (int i = 0; i < mlTreeList.size(); i++) {
+                	HashMap hashMap = mlTreeList.get(i);
+                	String type = hashMap.get("TYPE").toString();
+                	typeList.add(type);
+				}
+                if(typeList.contains("2") && typeList.contains("9")) {
+           		 	returnData = "no";
+                }
+                if(typeList.contains("2") && !typeList.contains("9")){
+                	returnData = "yesml";
+                }
+                if(!typeList.contains("2") && typeList.contains("9")){
+                	returnData = "yeszb";
+                }
+                rp.setDatas(returnData);
+            }catch (Exception e) {
+                e.printStackTrace();
+                rp.setIssuccess("0");
+                rp.setMessage("操作失败！" + e.getMessage());
+            }
+    	}catch (Exception e) {
+            rp.setIssuccess("0");
+            rp.setMessage("操作失败！" + e.getMessage());
+            e.printStackTrace();
+        }
+    	
+    	return rp;
     }
 
     public ResponseBody delElf2Ml(RequestBody rq, Map params, String id) {
@@ -8667,5 +8681,49 @@ public class SysService {
     	}
     	    
     	
+    }
+    
+    /**
+          *生成父级树结构XML 
+     * */
+    public void createOrReloadTreeXml(ResponseBody rp, Condition condition){
+            try {
+                User user = UserUtils.getUser();
+                condition.setUserid(user.getId());
+                condition.setDwdm(user.getDeptCode().substring(0, 4));
+                Map mtt = new HashMap();
+                mtt.put("CODE", condition.getDwdm());
+                HashMap<String, Office> lsHt = frameMapper.bczbMlLists(mtt);
+                List<HashMap> zbdic = frameMapper.getMlZbAList(mtt);
+                LinkedHashMap<String, LinkedHashMap<String, Object>> rs = new LinkedHashMap();
+                HashMap<String, List<Office>> children = new HashMap();
+                Map<String, List<Map>> zbchildren = new HashMap();
+                String rootId = "";
+                for (String key : lsHt.keySet()) {
+                    if (lsHt.get(key).getCode().length() == 8) rootId = key;
+                    List c = children.get(lsHt.get(key).getParentId());
+                    zbchildren.put(lsHt.get(key).getId(), new ArrayList());
+                    if (c == null) {
+                        c = new ArrayList<Office>();
+                        children.put((String) lsHt.get(key).getParentId(), c);
+                    }
+                    c.add(lsHt.get(key));
+                }
+                for (HashMap z : zbdic) {
+                    String mlid = (String) z.get("ZHZBID");
+                    List c = zbchildren.get(mlid);
+                    c.add(z);
+                }
+                Map<String, Object> docStr = AppUtils.getMlMap(lsHt, children, rootId, zbchildren);
+                String xml = "";
+                Document doc = XmlUtils.Map2Xml(docStr);
+                String saveDirectoryPath = Global.getConfig("upLoadPath") + "/" + dwbczbPath + "/" + rootId;
+                xml = XmlUtils.FormatXml(doc);
+                FileUtils.writeToFile(saveDirectoryPath, xml, false);
+            } catch (Exception e) {
+                e.printStackTrace();
+                rp.setIssuccess("0");
+                rp.setMessage("操作失败！" + e.getMessage());
+            }
     }
 }
