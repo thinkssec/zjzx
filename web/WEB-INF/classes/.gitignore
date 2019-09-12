@@ -1,12 +1,12 @@
 /111.tld
-/cache
-/com
+/cache/
+/com/
 /datasource.xml
 /log4j.properties
-/mappings
+/mappings/
 /mybatis-config.xml
 /mybatis-refresh.properties
-/org
+/org/
 /spring-context-jedis.xml
 /spring-context-shiro.xml
 /spring-context.xml

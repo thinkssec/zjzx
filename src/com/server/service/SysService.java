@@ -2165,13 +2165,39 @@ public class SysService {
             try {
                 //String updL = StringEscapeUtils.unescapeHtml(condition.getC6());
                 String updL = condition.getC6();
+                String insertOrDelete = condition.getC1();
+                
                 updL = updL.replace("}]", "," + strdep + "}]");
                /* updL+=deptid;*/
                 JavaType javaType = JsonMapper.getInstance().getTypeFactory().constructParametricType(List.class, HashMap.class);
                 List<HashMap> h = JsonMapper.getInstance().fromJson(updL, javaType);
+                List<HashMap> resultList = new ArrayList<HashMap>();
+                List<HashMap> lsHt = jqsqMapper.getDw3(condition);
+                String fpzCode = "";
+                for (int i = 0; i < lsHt.size(); i++) {
+                	HashMap fpzMap = lsHt.get(i);
+                	String fpzName = (String)fpzMap.get("NAME");
+                	if("全部用户组".equals(fpzName)) {
+                		fpzCode = (String)fpzMap.get("CODE");
+                	}
+				}
+                if(h != null) {
+	                for(int i = 0 ; i < h.size(); i++) {
+	                	HashMap hashMap = h.get(i);
+	                	if("insert".equals(insertOrDelete)) {
+	                		hashMap.put("ADMIN", fpzCode);
+	                		hashMap.put("ADMINMC", "全部用户组");
+	                	}else if("delete".equals(insertOrDelete)) {
+	                		hashMap.put("ADMIN", "");
+	                		hashMap.put("ADMINMC", "");
+	                	}
+	                	resultList.add(hashMap);
+	                }
+                }
+                
                 /*h.add(pa);*/
                 HashMap m = new HashMap();
-                m.put("list", h);
+                m.put("list", resultList);
                 permisionMapper.saveUserListD(m);
             } catch (Exception e) {
                 e.printStackTrace();
