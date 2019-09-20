@@ -53,7 +53,18 @@
     <select id="getUserList2" resultType="java.util.HashMap">
         <include refid="com.base.baseMapper.pageStart"/>
         select r.userid,r.username,r.loginname,r.pwd,r.upwd,r.gddh,r.yddh,r.dw,r.sfqy,
-        decode(sfqy,'1','启用','未启用') sfqymc,r.fpz,r.email,r.bzxx,
+        decode(sfqy,'1','启用','未启用') sfqymc,
+        (select b.id
+            from SYS_USERROLE a, V_OFFICE b
+            where  b.code like '%00'
+            and length(b.code)=6
+            and a.userid = r.userid
+            and a.roleid = b.id ) admin,
+             (select o.rtname from v_office o,sys_userrole u where o.id= u.ROLEID 
+            and type = '2'
+            and u.USERID = r.USERID) fpz
+        
+        ,r.email,r.bzxx,
         to_char(createtime,'yyyymmdd hh24:mi:ss') createtime,
         nvl((select 1 from sys_userrole where userid=r.userid and roleid=#{id}),2) status
         from app_user r

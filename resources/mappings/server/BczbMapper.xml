@@ -425,7 +425,7 @@
            				  )
 
     </delete>
-    <select id="getMlTreeListById"  resultType="java.util.LinkedHashMap">
+    <select id="getMlTreeListById"  resultType="String">
         select t.type from sys_office t start with t.id = #{id} connect by PRIOR t.id = t.parent_id
     </select>
     <delete id="delSbzc2Ml">
@@ -1025,4 +1025,33 @@
         (select name from app_yq where bzyqh=p.OILID) yqname,'' zt,p.*
         from p
     </select>
+    
+    <select id="getZbsBymainId" resultType="String">
+    		select bczbid
+			  from app_zb_mlralation
+			where zhzbid = #{c15}
+    </select>
+    
+    <update id="updateRealZbmc">
+    		update APP_OBJECT_DWCBBCZB t
+			   set t.p_mc = #{c16}
+			 where t.id = #{c11}
+    </update>
+    
+    <select id="getOilAreasByZbId" resultType="String">
+    		select oilid
+			  from app_zb_mlralation
+			where zhzbid = #{zbid}
+    </select>
+    
+    <delete id="deleteSourceZb">
+    	delete from APP_OBJECT_DWCBBCZB t where t.id = (select a.bczbid from app_zb_mlralation a where a.zhzbid = #{c2} and a.oilid = #{c5})  
+    </delete>
+    
+    <delete id="deleteOldZbRelation">
+     	 delete from app_zb_mlralation a where a.zhzbid = #{c2} and a.oilid = #{c5}
+    </delete>
+     
+     
+    
 </mapper>

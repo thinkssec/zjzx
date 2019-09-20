@@ -78,9 +78,9 @@ public interface BczbMapper {
 	void delZb2Fz(Map params);
 	void delBCZB(Map params);
 	void delFz(@Param("ID") String id);
-
+	
 	void delZb2Ml(Map m);
-	 List<HashMap> getMlTreeListById(Map m);
+	 List<String> getMlTreeListById(Map m);
 	void delZbml(Map m);
 	void delElf2Ml(Map m);
     void delSbzc2Ml(Map m);
@@ -95,4 +95,9 @@ public interface BczbMapper {
 	void xfGcf(Map m);
 	void changshi(List list);
     List<HashMap> getDic();
+    void updateRealZbmc(Condition m);
+    List<String> getZbsBymainId(Condition m);
+    List<String> getOilAreasByZbId(Map<String,String> m);
+    void deleteSourceZb(Condition m);
+    void deleteOldZbRelation(Condition m);
 }

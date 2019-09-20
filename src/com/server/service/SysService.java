@@ -1582,6 +1582,7 @@ public class SysService {
             User user = UserUtils.getUser();
             Map pa = new HashMap();
             pa.put("CODE", user.getDeptCode().substring(0, 4));
+//            pa.put("CODE", "B");
 
             try {
                 HashMap<String, Office> lsHt = frameMapper.bczbMlLists(pa);
@@ -1605,7 +1606,8 @@ public class SysService {
                     c.add(lsHt.get(key));
                 }
                 if (StringUtils.isBlank(rootId)) {
-                    frameMapper.insertBczbRoot(user.getDeptCode(), user.getDeptId());
+                  frameMapper.insertBczbRoot(user.getDeptCode(), user.getDeptId());
+//                    frameMapper.insertBczbRoot("B", user.getDeptId());
                     lsHt = frameMapper.bczbMlLists(pa);
                     children = new HashMap();
                     for (String key : lsHt.keySet()) {
@@ -6732,6 +6734,7 @@ public class SysService {
                 condition.setUserid(user.getId());
                 condition.setDwdm(user.getDeptCode().substring(0, 4));
                 bczbMapper.saveBczbZh(condition);
+                createOrReloadTreeXml(rp,condition);
             } catch (Exception e) {
                 e.printStackTrace();
                 rp.setIssuccess("0");
@@ -6747,7 +6750,6 @@ public class SysService {
 
     public ResponseBody bczbmlsave(RequestBody rq, Map params, String id) {
         ResponseBody rp = new ResponseBody(params, "1", "保存成功！", id, rq.getTaskid());
-        try {
             try {
                 ObjectMapper objectMapper = new ObjectMapper();
                 Condition condition = objectMapper.readValue(rq.getParams(), Condition.class);
@@ -6755,49 +6757,29 @@ public class SysService {
                     User user = UserUtils.getUser();
                     condition.setUserid(user.getId());
                     condition.setDwdm(user.getDeptCode().substring(0, 4));
-                    frameMapper.bczbmlsave(condition);
-                    Map m = new HashMap();
-                    m.put("CODE", condition.getDwdm());
-                    HashMap<String, Office> lsHt = frameMapper.bczbMlLists(m);
-                    List<HashMap> zbdic = frameMapper.getMlZbAList(m);
-                    LinkedHashMap<String, LinkedHashMap<String, Object>> rs = new LinkedHashMap();
-                    HashMap<String, List<Office>> children = new HashMap();
-                    Map<String, List<Map>> zbchildren = new HashMap();
-                    String rootId = "";
-                    for (String key : lsHt.keySet()) {
-                        if (lsHt.get(key).getCode().length() == 8) rootId = key;
-                        List c = children.get(lsHt.get(key).getParentId());
-                        zbchildren.put(lsHt.get(key).getId(), new ArrayList());
-                        if (c == null) {
-                            c = new ArrayList<Office>();
-                            children.put((String) lsHt.get(key).getParentId(), c);
-                        }
-                        c.add(lsHt.get(key));
+                    String c5 = condition.getC5();
+                    condition.setC15(condition.getC1());
+                    condition.setC16(condition.getC2());
+                    frameMapper.bczbmlsave(condition);//保存指标关系
+                    if("yes".equals(c5)) {//若为修改指标
+                    	List<String> zbs = bczbMapper.getZbsBymainId(condition);//1、先查询出所此条记录所有的保存指标ID
+                    	if(!zbs.isEmpty() && zbs.size() > 0) {
+                    		for (int i = 0; i < zbs.size(); i++) {//2、循环遍历  保存指标ID  后根据指标id进行更新
+                    			String zbid  = zbs.get(i);
+                    			condition.setC11(zbid);
+                    			bczbMapper.updateRealZbmc(condition);
+							}
+                    	}
                     }
-                    for (HashMap z : zbdic) {
-                        String mlid = (String) z.get("ZHZBID");
-                        List c = zbchildren.get(mlid);
-                        c.add(z);
-                    }
-                    Map<String, Object> docStr = AppUtils.getMlMap(lsHt, children, rootId, zbchildren);
-                    String xml = "";
-                    Document doc = XmlUtils.Map2Xml(docStr);
-                    String saveDirectoryPath = Global.getConfig("upLoadPath") + "/" + dwbczbPath + "/" + rootId;
-                    xml = XmlUtils.FormatXml(doc);
-                    FileUtils.writeToFile(saveDirectoryPath, xml, false);
-                } catch (Exception e) {
-                    e.printStackTrace();
-                    rp.setIssuccess("0");
-                    rp.setMessage("操作失败！" + e.getMessage());
-                }
-            } catch (Exception e) {
-                rp.setIssuccess("0");
-                rp.setMessage("操作失败！" + e.getMessage());
-                e.printStackTrace();
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+                    createOrReloadTreeXml( rp,  condition);
+	            } catch (Exception e) {
+	                rp.setIssuccess("0");
+	                rp.setMessage("操作失败！" + e.getMessage());
+	                e.printStackTrace();
+	            }
+	        } catch (Exception e) {
+	            e.printStackTrace();
+	        }
         return rp;
     }
 
@@ -7389,12 +7371,29 @@ public class SysService {
             Condition condition = objectMapper.readValue(rq.getParams(), Condition.class);
             try {
                 String updL = StringEscapeUtils.unescapeHtml(condition.getC1());
-                String c2 = condition.getC2();
+                String c2 = condition.getC2(); //指标关系表中ID
+                String c4 = condition.getC4(); //是更新还是
+                String c5 = condition.getC5(); //更新的油区ID
                 JavaType javaType = JsonMapper.getInstance().getTypeFactory().constructParametricType(List.class, HashMap.class);
                 List<HashMap> h = JsonMapper.getInstance().fromJson(updL, javaType);
                 Map mw = new HashMap();
                 mw.put("list", h);
                 mw.put("fzid", c2);
+                if("updateOilArea".equals(c4)) {
+                	bczbMapper.deleteSourceZb(condition);
+                	bczbMapper.deleteOldZbRelation(condition);
+                }
+                bczbMapper.addZb2Zb(mw);
+                condition.setC15(condition.getC2());//右侧树中指标ID,根据此ID,查询原指标ID
+                condition.setC16(condition.getC3());//将原指标ID  改为此名称
+                List<String> zbs = bczbMapper.getZbsBymainId(condition);//1、先查询出所此条记录所有的保存指标ID
+            	if(!zbs.isEmpty() && zbs.size() > 0) {
+            		for (int i = 0; i < zbs.size(); i++) {//2、循环遍历  保存指标ID  后根据指标id进行更新
+            			String zbid = zbs.get(i);
+            			condition.setC11(zbid);
+            			bczbMapper.updateRealZbmc(condition);
+					}
+            	}
                 //System.out.println("6666666666666666"+m);
                 {
                     for (HashMap mmm : h) {
@@ -7508,7 +7507,8 @@ public class SysService {
                         }
                     }
                 }*/
-                bczbMapper.addZb2Zb(mw);
+                
+                
                 createOrReloadTreeXml(rp,condition);
                 //原来的设计
                 //region
@@ -7585,6 +7585,7 @@ public class SysService {
                 m.put("list", h);
                 m.put("fzid", c2);
                 bczbMapper.delZb2Fz(m);
+                createOrReloadTreeXml(rp,condition);
             } catch (Exception e) {
                 e.printStackTrace();
                 rp.setIssuccess("0");
@@ -7674,21 +7675,18 @@ public class SysService {
                     return rp;
                 }
                 parm.put("id", c1);
-                List<HashMap> mlTreeList = bczbMapper.getMlTreeListById(parm);
-                List<String> typeList = new ArrayList<String>();
-                for (int i = 0; i < mlTreeList.size(); i++) {
-                	HashMap hashMap = mlTreeList.get(i);
-                	String type = hashMap.get("TYPE").toString();
-                	typeList.add(type);
-				}
-                if(typeList.contains("2") && typeList.contains("9")) {
+                List<String> mlTreeList = bczbMapper.getMlTreeListById(parm);
+                
+                if(mlTreeList.contains("2") && mlTreeList.contains("9")) {
            		 	returnData = "no";
-                }
-                if(typeList.contains("2") && !typeList.contains("9")){
+                }else if(mlTreeList.contains("2") && !mlTreeList.contains("9")){
                 	returnData = "yesml";
-                }
-                if(!typeList.contains("2") && typeList.contains("9")){
+                }else if(!mlTreeList.contains("2") && mlTreeList.contains("9")){
                 	returnData = "yeszb";
+                }else {
+                	System.out.println("=======Error Info============");
+                	System.out.println("mz and zb type is not right! ");
+                	System.out.println("=======Error Info============");
                 }
                 rp.setDatas(returnData);
             }catch (Exception e) {
@@ -7704,6 +7702,45 @@ public class SysService {
     	
     	return rp;
     }
+    
+    public ResponseBody oilAreaIsExist(RequestBody rq, Map params, String id) {
+   	 ResponseBody rp = new ResponseBody(params, "1", "保存成功！", id, rq.getTaskid());
+   	 String returnData =  "";
+   	try {
+           ObjectMapper objectMapper = new ObjectMapper();
+           Condition condition = objectMapper.readValue(rq.getParams(), Condition.class);
+           
+           try {
+               String c1 = condition.getC1();
+               String insertOilArea = condition.getC2();
+               Map<String,String> parm = Maps.newHashMap();
+               if (StringUtils.isBlank(c1)) {
+                   return rp;
+               }
+               parm.put("zbid", c1);
+               List<String> mlTreeList = bczbMapper.getOilAreasByZbId(parm);
+
+               if(mlTreeList.contains(insertOilArea)) {
+            	   returnData = "updateOilArea";
+               }else {
+            	   returnData = "addOilArea";
+               }
+               rp.setDatas(returnData);
+           }catch (Exception e) {
+               e.printStackTrace();
+               rp.setIssuccess("0");
+               rp.setMessage("操作失败！" + e.getMessage());
+           }
+   	}catch (Exception e) {
+           rp.setIssuccess("0");
+           rp.setMessage("操作失败！" + e.getMessage());
+           e.printStackTrace();
+       }
+   	
+   	return rp;
+   }
+    
+    
 
     public ResponseBody delElf2Ml(RequestBody rq, Map params, String id) {
         ResponseBody rp = new ResponseBody(params, "1", "保存成功！", id, rq.getTaskid());
