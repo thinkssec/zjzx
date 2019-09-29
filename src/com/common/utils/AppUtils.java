@@ -1237,16 +1237,27 @@ public class AppUtils {
     }
 
 
-
+    /**
+     * 将树结构生成Map方便格式化为XML
+     * 
+     * */
     public static Map<String, Object> getMlMap(HashMap<String, Office> objdic, Map<String, List<Office>> tree, String root, Map<String, List<Map>> zbM) {
         Map<String, Object> doc = new LinkedHashMap<String, Object>();
         Office r=objdic.get(root);
         if(r!=null) {
             Map m = new HashMap();
-            m.put("Level", r.getGrade()==null?"":r.getGrade());
-            m.put("Code", r.getId()==null?"":r.getCode());
-            m.put("BzCode", r.getId()==null?"":r.getCode());
-            m.put("Text", r.getName()==null?"":r.getName());
+            String mlcode =  r.getCode();
+            String deptCode = mlcode.substring(0, 8);
+            System.out.println("=========================");
+            System.out.println("mlCode=" + mlcode);
+            System.out.println("=========================");
+            if(StringUtils.isNotBlank(mlcode) && "undefined" != mlcode ) {
+            	mlcode = mlcode.replace(deptCode, "B");
+            }
+            m.put("Level",  r.getGrade() == null ? "" : r.getGrade());
+            m.put("Code",   r.getId()    == null ? "" : mlcode);
+            m.put("BzCode", r.getId()    == null ? "" : mlcode);
+            m.put("Text",   r.getName()  == null ? "" : r.getName());
             List ccc=new ArrayList();
             List ddd=new ArrayList();
             HashMap eee=new HashMap();
@@ -1265,11 +1276,19 @@ public class AppUtils {
                 List<Map> lll=zbM.get(root);
                 for(Map o:lll){
                     Map sss=new HashMap();
-                    sss.put("BM",o.get("BM")==null?"":o.get("BM"));
-                    sss.put("CODE",o.get("CODE")==null?"":o.get("CODE"));
-                    sss.put("OILID",o.get("OILID")==null?"":o.get("OILID"));
-                    sss.put("YSBM",o.get("CODE")==null?"":o.get("CODE"));
-                    sss.put("TITLE",o.get("TITLE")==null?"":o.get("TITLE"));
+                    String code =  (String)o.get("CODE");
+                    System.out.println("=========================");
+                    System.out.println("code=" + code);
+                    System.out.println("=========================");
+                    if(StringUtils.isNoneBlank(code) && "undefined" != code ) {
+                    	code = code.replace(deptCode, "B");
+                    }
+                    Object object = o.get("CODE");
+                    sss.put("BM",   o.get("BM")    == null ? "" : o.get("BM"));
+                    sss.put("CODE", o.get("CODE")  == null ? "" : o.get("CODE"));
+                    sss.put("OILID",o.get("OILID") == null ? "" : o.get("OILID"));
+                    sss.put("YSBM", o.get("CODE")  == null ? "" : code);
+                    sss.put("TITLE",o.get("TITLE") == null ? "" : o.get("TITLE"));
                     /*Map ttt=new HashMap();
                     ttt.put("BCZBLocal",sss);*/
                     ddd.add(sss);

@@ -1032,6 +1032,10 @@
 			where zhzbid = #{c15}
     </select>
     
+    <select id="getZbInfoById" resultType="java.util.HashMap">
+    		select * from APP_OBJECT_DWCBBCZB where id = #{zbid}
+    </select>
+    
     <update id="updateRealZbmc">
     		update APP_OBJECT_DWCBBCZB t
 			   set t.p_mc = #{c16}

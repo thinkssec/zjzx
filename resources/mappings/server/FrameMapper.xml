@@ -419,7 +419,7 @@ END;
         v_code varchar2(100);
         BEGIN
         select (max(code)+1) into v_code from sys_office where parent_id=#{c4} and length(code) between 0 and 14;
-        if v_code is null then select code||'001' into v_code from sys_office where id=#{c4}; end if;
+        if v_code is null then select code||'01' into v_code from sys_office where id=#{c4}; end if;
         merge into sys_office a using (select #{c1} id,
         #{c4} parent_id,#{c2} name,'1' useable,#{c3} remarks from dual) b
         on (a.id=b.id)

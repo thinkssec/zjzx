@@ -100,4 +100,5 @@ public interface BczbMapper {
     List<String> getOilAreasByZbId(Map<String,String> m);
     void deleteSourceZb(Condition m);
     void deleteOldZbRelation(Condition m);
+    List getZbInfoById(String zbid);
 }
