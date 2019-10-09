@@ -314,7 +314,7 @@
     <update  id="saveYq">
         BEGIN
         <foreach  collection="list"  item="record"  index="index">
-            merge  into  zjzx.APP_YQ  a  using  (select  #{record.ID}  ID  from  dual)  b
+            merge  into  APP_YQ  a  using  (select  #{record.ID}  ID  from  dual)  b
             on  (a.ID=b.ID)
             when  matched  then
             update  set  name=#{record.NAME},
@@ -331,7 +331,7 @@
     <update  id="saveYqbb">
         BEGIN
         <foreach  collection="list"  item="record"  index="index">
-            merge  into  zjzx.APP_JCKBB  a  using  (select  #{record.ID}  ID  from  dual)  b
+            merge  into  APP_JCKBB  a  using  (select  #{record.ID}  ID  from  dual)  b
             on  (a.ID=b.ID)
             when  matched  then
             update  set  MC=#{record.MC},
@@ -348,7 +348,7 @@
     <delete  id="delyq">
         BEGIN
         <foreach  collection="list"  item="record"  index="index">
-            delete  from    zjzx.APP_YQ  where  id=#{record.ID};
+            delete  from    APP_YQ  where  id=#{record.ID};
         </foreach>
         COMMIT;
         END;
@@ -356,7 +356,7 @@
     <delete  id="delyqbb">
         BEGIN
         <foreach  collection="list"  item="record"  index="index">
-            delete  from    zjzx.APP_JCKBB  where  id=#{record.ID};
+            delete  from    APP_JCKBB  where  id=#{record.ID};
         </foreach>
         COMMIT;
         END;
