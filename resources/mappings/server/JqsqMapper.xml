@@ -12,7 +12,7 @@
         select a.*,to_char(sqtime,'yyyymmdd hh24:mi:ss') sj,
         to_char(HPTIME,'yyyymmdd hh24:mi:ss') hpsj,decode(status,1,'停用',2,'注销','在用') zt from SYS_JQRZ_HP a where (status =1 or status is null)
         <if test="c1 != null">
-            and a.sqr like '%'||#{c1}||'%'
+            and (a.sqr like '%'||#{c1}||'%' or a.sqdw like '%'||#{c1}||'%')
         </if>
         order by hpsj desc
         <include refid="com.base.baseMapper.pageEnd"/>

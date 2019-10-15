@@ -546,6 +546,15 @@
         where id in ( ${scope}))
         select p.id id,a.*,p.p_projecttitle PRO_DXGC from app_object_bczbtree a,p where a.id = p.pid
     </select>
+    
+    <select id="getOnlyProjectById" resultType="java.util.HashMap">
+        select * from app_object_bczbtree where id = #{id}
+    </select>
+    
+    <select id="getResultMap" resultType="java.util.HashMap">
+        select a.* from app_object_bczbtree a where a.id = #{pid}
+    </select>
+    
     <!-- 项目补充指标统计 -->
     <select id="getxmbczbList" resultType="java.util.HashMap">
         <include refid="com.base.baseMapper.pageStart"/>

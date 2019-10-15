@@ -61,6 +61,10 @@ public interface BczbMapper {
 	List<HashMap> getBczbByMl(Map c);
 	List<HashMap> getBcsbzcByMl(Map c);
 	List<HashMap> getProjectByScope(@Param("scope") String scope);
+	
+	List<HashMap> getOnlyProjectById(@Param("id") String id);
+	List<HashMap> getResultMap(@Param("pid") String pid);
+	
 	List<HashMap> getZhzbList(Condition params);
 	List<HashMap> getJsrList(Condition params);
 	List<HashMap> getZbByFz(Condition params);

@@ -3614,7 +3614,27 @@ public class SysService {
                 for (String k : plist.keySet()) {
                     scope += ",'" + k + "'";
                 }
-                List<HashMap> lsP = bczbMapper.getProjectByScope(scope);
+                
+                HashMap<String, String> pMap = new HashMap();
+                List<HashMap<String, String>> lsP = new ArrayList<HashMap<String,String>>();
+                pMap.putAll(plist);
+                for (String k : pMap.keySet()) {
+                	List<HashMap> onlyProjectByid = bczbMapper.getOnlyProjectById(k);
+                	if(onlyProjectByid.size() > 0) {
+                		HashMap resultMap = onlyProjectByid.get(0);
+                		String pid = (String)resultMap.get("PID");
+                		String oneid = (String)resultMap.get("ID");
+                		String p_projecttitle = (String)resultMap.get("P_PROJECTTITLE");
+                		List<HashMap> result = bczbMapper.getResultMap(pid);
+                		if(result.size() > 0) {
+                			HashMap hashMap = result.get(0);
+                			hashMap.put("ID", oneid);
+                			hashMap.put("PRO_DXGC", p_projecttitle);
+                			lsP.add(hashMap);
+                		}
+                	}
+                }
+//                List<HashMap> lsP = bczbMapper.getProjectByScope(scope);
 
                 //转换后的project
                 HashMap<String, HashMap> projects = new HashMap();

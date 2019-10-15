@@ -27,7 +27,7 @@
     </delete>
     <select id="getBbxtlist" resultType="java.util.HashMap">
         <include refid="com.base.baseMapper.pageStart"/>
-        select decode(status,'1','已下发','未下发') zt,to_char(rksj,'yyyymmdd hh24:mi:ss') sj,t.* from APP_BB_XT t where 1=1
+        select decode(status,'1','已下发','未下发') zt,to_char(rksj,'yyyymmdd hh24:mi:ss') sj,t.* from APP_BB_XT t where 1=1 order by bbh desc
         <if test="c1 != null">
             and mc like '%'||#{c1}||'%'
         </if>
