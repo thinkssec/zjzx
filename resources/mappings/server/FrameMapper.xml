@@ -845,6 +845,7 @@ END;
                 and (type = 2 or type=9)
                 and substr(code,1,4)=#{CODE}
                 and substr(code, 7, 8) = '03'
+                order by code asc
     </select>
 
     <select id="getMlZbAList" resultType="java.util.HashMap">

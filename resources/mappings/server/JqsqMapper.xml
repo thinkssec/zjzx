@@ -68,7 +68,7 @@
         to_char(HPTIME,'yyyymmdd hh24:mi:ss') hpsj,decode(status,1,'停用',2,'注销','在用') zt
         from SYS_JQRZ_HP a where (status =1 or status is null) and nvl(hpdw,'-1100')!=#{dwdm} and hpdw is null
         <if test="c1 != null">
-            and a.sqr like '%'||#{c1}||'%'
+            and a.sqr like '%'||#{c1}||'%' or a.sqdw like '%'||#{c1}||'%'
         </if>
         order by hpsj desc
         <include refid="com.base.baseMapper.pageEnd"/>
@@ -127,8 +127,18 @@
     <update id="saveJqsqpz">
         BEGIN
         <foreach collection="list" item="record" index="index">
-            update SYS_JQRZ_HP set hpdw=#{record.HPDW},hpdwmc=#{record.HPDWMC},hpyqsj=#{record.HPYQSJ},
-            hpyqsjmc=#{record.HPYQSJMC}
+            UPDATE 
+            	SYS_JQRZ_HP 
+            SET	
+            	sqr=#{record.SQR},
+            	sqdw=#{record.SQDW},
+            	sqyqsj=#{record.SQYQSJ},
+            	sqsj=#{record.SQSJ},
+            	sqyx=#{record.SQYX},
+            	hpdw=#{record.HPDW},
+            	hpdwmc=#{record.HPDWMC},
+            	hpyqsj=#{record.HPYQSJ},
+            	hpyqsjmc=#{record.HPYQSJMC}
             where cpuid=#{record.CPUID};
         </foreach>
         COMMIT;

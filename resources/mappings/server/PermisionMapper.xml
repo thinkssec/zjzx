@@ -45,7 +45,7 @@
         from app_user r
         where isdel = '0' and r.userid!='1'
         <if test="c1 != null">
-            and (r.username like '%'||#{c1}||'%' or r.loginname like '%'||#{c1}||'%')
+            and (r.username like '%'||#{c1}||'%' or r.loginname like '%'||#{c1}||'%' or r.dw like '%'||#{c1}||'%')
         </if>
         order by createtime desc
         <include refid="com.base.baseMapper.pageEnd"/>
