@@ -928,7 +928,72 @@ END;
                 and (type = 2 or type=10)
                 and substr(code,1,4)=#{CODE}
                 and substr(code, 7, 8) = '04'
+                order by code asc
     </select>
+    
+    <select id="getRelationNum" resultType="java.lang.Integer">
+        select count(*) from app_sbzc_mlralation where zhid = #{id} and bbh = #{bbh}
+    </select>
+    
+    <select id="getMlChildrenZbCountByParentId" resultType="java.lang.Integer">
+		 select count(*) from app_sbzc_mlralation where bbh = #{bbh} and zhid in (
+		 	select a.id
+			  from (select *
+			          from APP_SBZC_ML t
+			         start with t.parent_id = #{parentId}
+			        connect by t.parent_id = prior t.id
+			        ) a
+			 where a.type = '10'
+		 )
+    </select>
+    
+    <select id="getMlChildrenZbCountById" resultType="java.lang.Integer">
+		 select count(*) from app_sbzc_mlralation where bbh = #{bbh} and zhid in (
+		 	select a.id
+			  from (select *
+			          from APP_SBZC_ML t
+			          start with t.parent_id = #{parentId}
+			          connect by t.parent_id = prior t.id
+			        ) a
+			 where a.type = '10' and a.id  != #{id}
+		 )
+    </select>
+    
+    <delete id="deleteMlRealtion" >
+       delete from app_sbzc_mlralation where bbh = #{bbh} and zhid in(
+       		select a.id
+			  from (select *
+			          from APP_SBZC_ML t
+			         start with t.parent_id = #{parentId}
+			                 or t.id = #{id}
+			        connect by t.parent_id = prior t.id
+			        ) a
+			 where a.type = '10'
+       )
+    </delete>
+    
+    <delete id="cascadeDeleteMlById" >
+       delete from APP_SBZC_ML where bbh = #{bbh} and id in(
+       		select a.id
+			  from (select *
+			          from APP_SBZC_ML t
+			         start with t.parent_id = #{parentId}
+			                 or t.id = #{id}
+			        connect by t.parent_id = prior t.id
+			        ) a
+			 where a.type = '2'
+       )
+    </delete>
+    
+    <delete id="deleteMlById" >
+       delete from APP_SBZC_ML where id = #{id}
+    </delete>
+    
+    
+    <delete id="deleteZbById" >
+       delete from APP_SBZC_ML where bbh = #{bbh} and id = #{id}
+    </delete>
+    
     <select id="isAdmin" resultType="java.lang.Integer">
         select count(1)
           from SYS_USERROLE t, sys_office s
@@ -1077,4 +1142,104 @@ END;
           from SYS_USERROLE t
          where roleid = '999913'
     </select>
+    
+    <insert id="addBcsbzcZb">
+        INSERT INTO 
+        	APP_SBZC_BC(
+        		id,lb,bm,mc,xh,dw,cjmc,pp,ccrq,ccjg,gyjg,gyly,oilid,gxsj,lysm,bz,bbh
+        	) VALUES (
+             #{id},#{lb},#{bm},#{mc},#{xh},#{dw},#{cj},#{pp},#{ccrq},#{ccjg},
+             #{gyjg},#{jgly},#{oilid},#{jggxsj},#{jglysm},#{bz},#{bbh}
+           )
+    </insert>
+    <update id="updateBcsbzcZb">
+        UPDATE 
+        	APP_SBZC_BC 
+        SET
+        	lb = #{lb},
+        	bm = #{bm},
+        	mc = #{mc},
+        	xh = #{xh},
+        	dw = #{dw},
+        	cjmc = #{cj},
+        	pp = #{pp},
+        	ccrq = #{ccrq},
+        	ccjg = #{ccjg},
+        	gyjg = #{gyjg},
+        	gyly = #{jgly},
+        	gxsj = #{jggxsj},
+        	lysm = #{jglysm},
+        	bz = #{bz}
+        WHERE id = #{id}
+        and  bbh = #{bbh}
+        and  oilid = #{oilid}
+    </update>
+    <insert id="saveBcsbzcMl">
+        INSERT INTO 
+        	APP_SBZC_ML(
+        		id,  parent_id,  name,   code,   type,  master,  useable,  bbh
+        	) VALUES (
+              #{id},#{parent_id},#{name},#{code},#{type},#{lb}, #{useable},#{bbh}
+           )
+    </insert>
+    
+    <insert id="saveBcsbzcMlZbRealtion">
+        INSERT INTO 
+        	app_sbzc_mlralation(
+        		zhid,  bcid,   oilid,   code,  bbh
+        	) VALUES (
+              #{zhid}, #{bcid}, #{oilid}, #{code}, #{bbh}
+           )
+    </insert>
+    
+    <select id="getMlExistByName" resultType="java.lang.String">
+        select id from APP_SBZC_ML where name = #{mc} and bbh = #{bbh}
+    </select>
+    <select id="getZbExistByName" resultType="java.lang.String">
+        select id from APP_SBZC_BC where mc = #{mc} and oilid = #{oilid} and bbh = #{bbh} 
+    </select>
+    
+    <select id="getExportMlDataByBbh" resultType="Map">
+        select t.* from APP_SBZC_ML t where t.bbh = #{bbh} and t.type = '10'
+    </select>
+    <select id="getExportZbidByMlid" resultType="String">
+        select bcid from app_sbzc_mlralation where zhid = #{mlid} 
+    </select>
+    <select id="getExportZbDataByid" resultType="Map">
+        select t1.*, t2.name yqname 
+        	from app_sbzc_bc t1 
+        left join 
+        	app_yq t2 on t1.oilid = t2.BZYQH
+        where t1.id = #{zbid}
+    </select>
+    <update id="updateBcsbzcZbById">
+        UPDATE 
+        	APP_SBZC_BC 
+        SET
+        	lb = #{lb},
+        	mc = #{mc},
+        	xh = #{xh},
+        	dw = #{dw},
+        	cjmc = #{cj},
+        	pp = #{pp},
+        	ccrq = #{ccrq},
+        	ccjg = #{ccjg},
+        	gyjg = #{gyjg},
+        	gyly = #{jgly},
+        	gxsj = #{jggxsj},
+        	lysm = #{jglysm},
+        	bz = #{bz}
+        WHERE id = #{id}
+    </update>
+    <update id="updateBcsbzcMlById">
+        UPDATE 
+        	APP_SBZC_ML t1 
+        SET
+        	t1.name = #{mc},
+        	t1.master = #{lb}
+        WHERE id = (
+        	select zhid from app_sbzc_mlralation where bcid = #{zbid}
+        )
+    </update>
+    
 </mapper>

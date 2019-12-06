@@ -114,7 +114,7 @@
             if v_count=0 then
             begin
             select (max(code)+1) into v_code from APP_SBZC_ML where parent_id=#{c4} and bbh=#{c21};
-            if v_code is null then select code||'0000000001' into v_code from APP_SBZC_ML where id=#{c4} and bbh=#{c21}; end if;
+            if v_code is null then select code||'0001' into v_code from APP_SBZC_ML where id=#{c4} and bbh=#{c21}; end if;
             select sys_guid() into v_id from dual;
             select sys_guid() into v_bcid from dual;
             insert into APP_SBZC_ML(id,parent_id,name,master,phone,fax,email,code,type,USEABLE,bbh) values (v_id,#{c4},#{c2},#{c14},#{c16},#{c3},#{c6},v_code,'10','1',#{c21});
@@ -431,6 +431,23 @@
     <delete id="delSbzc2Ml">
         delete from app_sbzc_mlralation where bcid=#{bcid} and bbh=#{BBH}
     </delete>
+    
+    <delete id="delSbzcZB">
+        delete from app_sbzc_bc where id = #{bcid} and bbh = #{BBH}
+    </delete>
+    
+    <select id="getMlidByParam"  resultType="String">
+        select t.zhid from app_sbzc_mlralation t where t.bcid = #{bcid} and bbh = #{BBH}
+    </select>
+    
+    <select id="getMlRelationNum"  resultType="Integer">
+        select count(*) from app_sbzc_mlralation b where b.zhid = #{zhid} and b.bbh = #{BBH}
+    </select>
+    
+    <delete id="delMlWhenNull">
+        delete from app_sbzc_ml a where a.id = #{zhid}
+    </delete>
+    
     <delete id="delElf2Ml">
         declare
         v_id varchar2(50):='';
@@ -884,7 +901,8 @@
            start with length(code) = 8
                   and type = 2
                   and substr(code, 1, 4) = #{CODE}
-                  and substr(code, 7, 8) = '04')
+                  and substr(code, 7, 8) = '04'
+                  )
         select sk.*,t.code,t.zhid
           from APP_SBZC_BC sk,APP_SBZC_MLRALATION t, ml s
          where t.zhid = s.id and sk.id=t.bcid and sk.bbh=#{BBH} and sk.bbh=t.bbh
@@ -1064,7 +1082,11 @@
     <delete id="deleteOldZbRelation">
      	 delete from app_zb_mlralation a where a.zhzbid = #{c2} and a.oilid = #{c5}
     </delete>
-     
-     
     
+    <select id="getAddCodeByParam" resultType="String">
+    	select (max(code)+1) from APP_SBZC_ML where parent_id = #{id} and bbh = #{bbh}
+    </select>
+    <select id="getNewCodeByParam" resultType="String">
+		select code||'0001' from APP_SBZC_ML where id = #{id} and bbh = #{bbh}     
+    </select>
 </mapper>

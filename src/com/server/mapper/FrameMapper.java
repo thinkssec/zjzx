@@ -116,4 +116,28 @@ public interface FrameMapper extends MainMapper {
 
     int isAdmin(@Param("USERID") String userid);
     int isZx(@Param("USERID") String userid);
+    
+    int getRelationNum(Map<String,String> m);
+    void deleteMlRealtion(Map<String,String> m);
+    int getMlChildrenZbCountByParentId(Map<String,String> m);
+    int getMlChildrenZbCountById(Map<String,String> m);
+    
+    void cascadeDeleteMlById(Map<String,String> m);
+    void deleteMlById(Map<String,String> m);
+    
+    void deleteZbById(Map<String,String> m);
+    void addBcsbzcZb(Map<String,String> m);
+    void updateBcsbzcZb(Map<String,String> m);
+    
+    void saveBcsbzcMl(Map<String,String> m);
+    void saveBcsbzcMlZbRealtion(Map<String,String> m);
+    String getMlExistByName(Map<String,String> m);
+    String getZbExistByName(Map<String,String> m);
+    
+    List<Map<String,String>> getExportMlDataByBbh(Map<String,String> param);
+    List<String> getExportZbidByMlid(@Param("mlid")String mlid);
+    List<Map<String,String>> getExportZbDataByid(@Param("zbid")String zbid);
+    void updateBcsbzcZbById(Map<String, String> map);
+    void updateBcsbzcMlById(Map<String, String> map);
+    
 }

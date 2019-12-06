@@ -57,4 +57,6 @@ public interface JqsqMapper {
 	void saveJqsqzhux(HashMap m);
 
 	void saveJqsqqiy(HashMap m);
+	
+	String getYqidByName(Condition condition);
 }

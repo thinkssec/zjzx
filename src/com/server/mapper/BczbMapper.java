@@ -88,6 +88,7 @@ public interface BczbMapper {
 	void delZbml(Map m);
 	void delElf2Ml(Map m);
     void delSbzc2Ml(Map m);
+    void delSbzcZB(Map<String,String> m);
 	List<LinkedHashMap> getYhBczbProperty(String bczbid);
 	List<LinkedHashMap> getDwBczbProperty(String bczbid);
 //补充设备主材
@@ -105,4 +106,9 @@ public interface BczbMapper {
     void deleteSourceZb(Condition m);
     void deleteOldZbRelation(Condition m);
     List getZbInfoById(String zbid);
+    String getAddCodeByParam(Map<String,String> m);
+    String getNewCodeByParam(Map<String,String> m);
+    String getMlidByParam(Map<String,String> m);
+    int getMlRelationNum(Map<String,String> m);
+    void delMlWhenNull(Map<String,String> m);
 }

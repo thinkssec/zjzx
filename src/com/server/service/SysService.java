@@ -6,6 +6,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -14,7 +15,8 @@ import java.util.UUID;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
-import net.sf.json.JSONArray;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
 import org.apache.commons.lang.StringEscapeUtils;
 import org.dom4j.Document;
@@ -26,11 +28,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
-
-import sun.misc.BASE64Decoder;
-import sun.misc.BASE64Encoder;
-
-import org.apache.commons.codec.binary.Base64;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.multipart.MultipartFile;
 
 import com.common.annotation.RequestPermission;
 import com.common.annotation.mapper.JsonMapper;
@@ -61,6 +60,9 @@ import com.server.mapper.SysControlMapper2;
 import com.server.mapper.UserMapper;
 import com.sun.jna.Library;
 import com.sun.jna.Native;
+
+import sun.misc.BASE64Decoder;
+import sun.misc.BASE64Encoder;
 
 /**
  * Created by Administrator on 2017/10/18.
@@ -7698,6 +7700,65 @@ public class SysService {
     	return rp;
     }
     
+    public ResponseBody bczcMlIsContainsZb(RequestBody rq, Map params, String id) {
+   	 	ResponseBody rp = new ResponseBody(params, "1", "保存成功！", id, rq.getTaskid());
+   	 	String returnData =  "";
+   	 	try {
+   	 			ObjectMapper objectMapper = new ObjectMapper();
+   	 			Condition condition = objectMapper.readValue(rq.getParams(), Condition.class);
+	            try {
+	               String mlId = condition.getC1();
+	               String bbh = condition.getC2();
+	               String type = condition.getC3();
+	               String parentId = condition.getC4();
+	               String code = condition.getC5();
+	               Map<String,String> parm = Maps.newHashMap();
+	               parm.put("id", mlId);
+	               parm.put("bbh", bbh);
+	               parm.put("parentId", parentId);
+	               Integer bczcNum = null;
+	               
+	               if("10".equals(type)) {//如果是指标
+	            	   bczcNum = frameMapper.getRelationNum(parm);//获取补充主材的数量
+	               }else if("2".equals(type)) {//如果是目录
+	            	   if(code.length() < 6 ) {
+	            		   bczcNum = frameMapper.getMlChildrenZbCountByParentId(parm);
+		               }else {
+		            	   bczcNum = frameMapper.getMlChildrenZbCountById(parm);
+		               }
+	               }
+	               
+	               if(bczcNum > 0) {
+	            	   returnData = "no";
+	               }else {
+	            	   returnData = "yes";
+	            	   //执行删除目录和指标的关系
+	            	   if("2".equals(type)) {
+	            		   if(code.length() < 6 ) {
+	            			   frameMapper.cascadeDeleteMlById(parm);
+			               }else {
+			            	   frameMapper.deleteMlById(parm);
+			               }
+//	            		   frameMapper.deleteMlRealtion(parm); 
+	            	   }else if("10".equals(type)) {
+	            		   frameMapper.deleteZbById(parm);
+	            	   }
+	               }
+	               rp.setDatas(returnData);
+	           }catch (Exception e) {
+	               e.printStackTrace();
+	               rp.setIssuccess("0");
+	               rp.setMessage("操作失败！" + e.getMessage());
+	           }
+	   	}catch (Exception e) {
+	           rp.setIssuccess("0");
+	           rp.setMessage("操作失败！" + e.getMessage());
+	           e.printStackTrace();
+	    }
+   	 	return rp;
+   }    
+    
+    
     public ResponseBody oilAreaIsExist(RequestBody rq, Map params, String id) {
    	 ResponseBody rp = new ResponseBody(params, "1", "保存成功！", id, rq.getTaskid());
    	 String returnData =  "";
@@ -7820,7 +7881,14 @@ public class SysService {
                 m.put("bcid", c2);
                 m.put("BBH", condition.getC11());
                 //System.out.println("-------------------"+m);
+                bczbMapper.delSbzcZB(m);
+                String mlId = bczbMapper.getMlidByParam(m);
                 bczbMapper.delSbzc2Ml(m);
+                m.put("zhid", mlId);
+                if(bczbMapper.getMlRelationNum(m) == 0 ) {
+                	bczbMapper.delMlWhenNull(m);
+                }
+                System.out.println("123123");
                 //原来的设计
                 //region
                 {
@@ -7848,7 +7916,7 @@ public class SysService {
                             c.add(lsHt.get(key));
                         }
                         for (HashMap z : zbdic) {
-                            String mlid = (String) z.get("ZHZBID");
+                            String mlid = (String) z.get("ZHID");
                             List c = zbchildren.get(mlid);
                             c.add(z);
                         }
@@ -8852,5 +8920,501 @@ public class SysService {
                     e.printStackTrace();
                 }
             }
+    }
+    
+    public ResponseBody importBcsbzcExcel(RequestBody rq, Map params, String id) {
+        ResponseBody rp = new ResponseBody(params, "1", "导入成功！", id, rq.getTaskid());
+        try {
+            ObjectMapper objectMapper = new ObjectMapper();
+            Condition condition = objectMapper.readValue(rq.getParams(), Condition.class);
+            try {
+            	String c1 = condition.getC1();
+            	List<String> listData = Arrays.asList(c1.split("&"));
+            	String bbh = condition.getC2();
+            	String mlParentId = condition.getC3();
+            	Map<String,String> codeParam = new HashMap<String, String>();
+            	codeParam.put("bbh", bbh);
+            	codeParam.put("id", mlParentId);
+            	for (int i = 0; i < listData.size(); i++) {
+            		String string = listData.get(i);
+            		Map<String, String> importData = getStringToMap(string);//导入的数据
+            		List<Map<String, String>> imputZbDataList = getImputZbDataList(importData);//获取到指标的数据
+            		Map<String, String> mlData = new HashMap<String, String>();//导入的指标数据形成目录
+            		Map<String, String> realtionData = new HashMap<String, String>();//导入的指标数据形成目录
+            		
+            		//编码
+            		String bm = bczbMapper.getAddCodeByParam(codeParam);
+            		if(StringUtils.isBlank(bm)) {
+            			bm = bczbMapper.getNewCodeByParam(codeParam);
+            		}
+            		
+            		String mlid = UUID.randomUUID().toString().replaceAll("-", "");//UUID生成 导入数据的ID
+            		mlData.put("id", mlid);
+            		mlData.put("bbh", bbh);
+            		mlData.put("code", bm);
+            		mlData.put("name", importData.get("mc"));
+            		mlData.put("parent_id", mlParentId);
+            		mlData.put("lb", importData.get("lb"));
+            		mlData.put("type", "10");
+            		mlData.put("useable", "1");
+            		
+            		frameMapper.saveBcsbzcMl(mlData);//保存导入的Excel数据到····目录表
+            		
+            		for (int j = 0; j < imputZbDataList.size(); j++) {//保存指标数据、保存关系数据
+            			Map<String, String> zbMap = imputZbDataList.get(j);
+            			String zbid = UUID.randomUUID().toString().replaceAll("-", "");//UUID生成 导入数据的ID
+            			
+            			zbMap.put("bbh", bbh);
+            			zbMap.put("id", zbid);
+            			zbMap.put("bm", bm);
+            			zbMap.put("mc", importData.get("mc"));
+            			zbMap.put("xh", importData.get("xh"));
+            			zbMap.put("dw", importData.get("dw"));
+            			zbMap.put("lb", "设备".equals(importData.get("lb")) ? "SB" : "ZC");
+
+            			Condition condition2 = new Condition();
+                		condition2.setC1(zbMap.get("yq"));
+                		String yqid = jqsqMapper.getYqidByName(condition2);//油区ID
+                		zbMap.put("oilid", yqid);
+                		
+                		realtionData.put("code", bm);
+                		realtionData.put("oilid", yqid);
+                		realtionData.put("bbh", bbh);
+                		realtionData.put("zhid", mlid);
+                		realtionData.put("bcid", zbid);
+                		
+                		frameMapper.addBcsbzcZb(zbMap);//保存导入的Excel数据到····指标表
+                		frameMapper.saveBcsbzcMlZbRealtion(realtionData);//保存导入的Excel数据到····指标-目录关系表
+					}
+				}
+            } catch (Exception e) {
+                e.printStackTrace();
+                rp.setIssuccess("0");
+                rp.setMessage("操作失败！" + e.getMessage());
+            }
+        } catch (Exception e) {
+            rp.setIssuccess("0");
+            rp.setMessage("操作失败！" + e.getMessage());
+            e.printStackTrace();
+        }
+        return rp;
+    }
+    
+    
+    public ResponseBody updateBcsbzcExcel(RequestBody rq, Map params, String id) {
+        ResponseBody rp = new ResponseBody(params, "1", "导入成功！", id, rq.getTaskid());
+        try {
+            ObjectMapper objectMapper = new ObjectMapper();
+            Condition condition = objectMapper.readValue(rq.getParams(), Condition.class);
+            try {
+            	String c1 = condition.getC1();
+            	List<String> listData = Arrays.asList(c1.split("&"));
+            	
+            	
+            	for (int i = 0; i < listData.size(); i++) {
+            		String string = listData.get(i);
+            		Map<String, String> importData = getStringToMap(string);//导入的数据
+            		Map<String, String> mlDataMap = new HashMap<String, String>();
+            		
+            		List<Map<String, String>> imputZbDataList = getImputZbDataList(importData);//获取到指标的数据
+            		for (int j = 0; j < imputZbDataList.size(); j++) {//保存指标数据、保存关系数据
+            			Map<String, String> map = imputZbDataList.get(j);
+            			//1、获取指标ID，更新数据
+            			String zbid = map.get("id");
+            			if(StringUtils.isNotBlank(zbid)) {
+            				frameMapper.updateBcsbzcZbById(map);
+            			}
+            			mlDataMap.put("zbid", zbid);
+            			mlDataMap.put("lb", map.get("lb"));
+            			mlDataMap.put("mc", map.get("mc"));
+            		}
+            		//2、更新指标的关联目录
+        			frameMapper.updateBcsbzcMlById(mlDataMap);
+				}
+            } catch (Exception e) {
+                e.printStackTrace();
+                rp.setIssuccess("0");
+                rp.setMessage("操作失败！" + e.getMessage());
+            }
+        } catch (Exception e) {
+            rp.setIssuccess("0");
+            rp.setMessage("操作失败！" + e.getMessage());
+            e.printStackTrace();
+        }
+        return rp;
+    }
+    
+    public static Map<String,String> getStringToMap(String mapStr){
+    	String str = mapStr.replace("{", "").replace("}", "").replace(" ","");
+        //根据逗号截取字符串数组
+        String[] str1 = str.split(",");
+        //创建Map对象
+        Map<String,String> map = new HashMap<>();
+        //循环加入map集合
+        for (int i = 0; i < str1.length; i++) {
+            //根据":"截取字符串数组
+            String[] str2 = str1[i].split("=");
+            String[] str3 = {str2[0], ""};
+            if(str2.length != 2) {
+            	str3[1] = "null";
+            	map.put(str3[0],str3[1]);
+            }else {
+            	 //str2[0]为KEY,str2[1]为值
+                map.put(str2[0],str2[1]);
+            }
+        }
+        return map;
+    }
+    
+    public List<Map<String,String>> getImputZbDataList(Map<String, String> importData){
+    	List<Map<String,String>> zbDataList = new ArrayList<Map<String,String>>();
+    	Map<String, String> slData = new HashMap<String, String>();//胜利油田指标数据
+    	Map<String, String> zyData = new HashMap<String, String>();//中原油田指标数据
+    	Map<String, String> hnData = new HashMap<String, String>();//河南油田指标数据
+    	Map<String, String> jhData = new HashMap<String, String>();//江汉油田指标数据
+    	Map<String, String> jsData = new HashMap<String, String>();//江苏油田指标数据
+    	Map<String, String> xbData = new HashMap<String, String>();//西北油田指标数据
+    	Map<String, String> hbData = new HashMap<String, String>();//华北油田指标数据
+    	Map<String, String> xnData = new HashMap<String, String>();//西南油田指标数据
+    	Map<String, String> csData = new HashMap<String, String>();//长输油田指标数据
+    	
+    	Map<String, String> publicData = new HashMap<String, String>();//长输油田指标数据
+    	publicData.put("lb", importData.get("lb"));
+    	publicData.put("mc", importData.get("mc"));
+    	publicData.put("dw", importData.get("dw"));
+    	publicData.put("xh", importData.get("xh"));
+    	
+    	if(!importData.get("gyjg_sl").equals("null")) {
+    		slData.put("id", importData.get("id_sl"));
+    		slData.put("pp", importData.get("pp_sl"));
+	    	slData.put("cj", importData.get("cj_sl"));
+	    	slData.put("ccrq", importData.get("ccrq_sl"));
+	    	slData.put("ccjg", importData.get("ccjg_sl"));
+	    	slData.put("gyjg", importData.get("gyjg_sl"));
+	    	slData.put("jgly", importData.get("jgly_sl"));
+	    	slData.put("jggxsj", importData.get("jggxsj_sl"));
+	    	slData.put("jglysm", importData.get("jglysm_sl"));
+	    	slData.put("bz", importData.get("bz_sl"));
+	    	slData.put("yq", "胜利");
+	    	slData.putAll(publicData);
+	    	zbDataList.add(slData);
+    	}
+    	
+    	if(!importData.get("gyjg_zy").equals("null")) {
+    		zyData.put("id", importData.get("id_zy"));
+	    	zyData.put("pp", importData.get("pp_zy"));
+	    	zyData.put("cj", importData.get("cj_zy"));
+	    	zyData.put("ccrq", importData.get("ccrq_zy"));
+	    	zyData.put("ccjg", importData.get("ccjg_zy"));
+	    	zyData.put("gyjg", importData.get("gyjg_zy"));
+	    	zyData.put("jgly", importData.get("jgly_zy"));
+	    	zyData.put("jggxsj", importData.get("jggxsj_zy"));
+	    	zyData.put("jglysm", importData.get("jglysm_zy"));
+	    	zyData.put("bz", importData.get("bz_zy"));
+	    	zyData.put("yq", "中原");
+	    	zyData.putAll(publicData);
+	    	zbDataList.add(zyData);
+    	}
+    	
+    	if(!importData.get("gyjg_hn").equals("null")) {
+    		hnData.put("id", importData.get("id_hn"));
+	    	hnData.put("pp", importData.get("pp_hn"));
+	    	hnData.put("cj", importData.get("cj_hn"));
+	    	hnData.put("ccrq", importData.get("ccrq_hn"));
+	    	hnData.put("ccjg", importData.get("ccjg_hn"));
+	    	hnData.put("gyjg", importData.get("gyjg_hn"));
+	    	hnData.put("jgly", importData.get("jgly_hn"));
+	    	hnData.put("jggxsj", importData.get("jggxsj_hn"));
+	    	hnData.put("jglysm", importData.get("jglysm_hn"));
+	    	hnData.put("bz", importData.get("bz_hn"));
+	    	hnData.put("yq", "河南");
+	    	hnData.putAll(publicData);
+	    	zbDataList.add(hnData);
+    	}
+    	
+    	if(!importData.get("gyjg_jh").equals("null")) {
+    		jhData.put("id", importData.get("id_jh"));
+    		jhData.put("pp", importData.get("pp_jh"));
+        	jhData.put("cj", importData.get("cj_jh"));
+        	jhData.put("ccrq", importData.get("ccrq_jh"));
+        	jhData.put("ccjg", importData.get("ccjg_jh"));
+        	jhData.put("gyjg", importData.get("gyjg_jh"));
+        	jhData.put("jgly", importData.get("jgly_jh"));
+        	jhData.put("jggxsj", importData.get("jggxsj_jh"));
+        	jhData.put("jglysm", importData.get("jglysm_jh"));
+        	jhData.put("bz", importData.get("bz_jh"));
+        	jhData.put("yq", "江汉");
+        	jhData.putAll(publicData);
+        	zbDataList.add(jhData);
+    	}
+    	
+    	if(!importData.get("gyjg_xb").equals("null")) {
+    		jsData.put("id", importData.get("id_js"));
+    		jsData.put("pp", importData.get("pp_js"));
+        	jsData.put("cj", importData.get("cj_js"));
+        	jsData.put("ccrq", importData.get("ccrq_js"));
+        	jsData.put("ccjg", importData.get("ccjg_js"));
+        	jsData.put("gyjg", importData.get("gyjg_js"));
+        	jsData.put("jgly", importData.get("jgly_js"));
+        	jsData.put("jggxsj", importData.get("jggxsj_js"));
+        	jsData.put("jglysm", importData.get("jglysm_js"));
+        	jsData.put("bz", importData.get("bz_js"));
+        	jsData.put("yq", "江苏");
+        	jsData.putAll(publicData);
+        	zbDataList.add(jsData);
+    	}
+    	
+    	if(!importData.get("gyjg_xb").equals("null")) {
+    		xbData.put("id", importData.get("id_xb"));
+    		xbData.put("pp", importData.get("pp_xb"));
+        	xbData.put("cj", importData.get("cj_xb"));
+        	xbData.put("ccrq", importData.get("ccrq_xb"));
+        	xbData.put("ccjg", importData.get("ccjg_xb"));
+        	xbData.put("gyjg", importData.get("gyjg_xb"));
+        	xbData.put("jgly", importData.get("jgly_xb"));
+        	xbData.put("jggxsj", importData.get("jggxsj_xb"));
+        	xbData.put("jglysm", importData.get("jglysm_xb"));
+        	xbData.put("bz", importData.get("bz_xb"));
+        	xbData.put("yq", "西北");
+        	xbData.putAll(publicData);
+        	zbDataList.add(xbData);
+    	}
+    	
+    	if(!importData.get("gyjg_hb").equals("null")) {
+    		hbData.put("id", importData.get("id_hb"));
+	    	hbData.put("pp", importData.get("pp_hb"));
+	    	hbData.put("cj", importData.get("cj_hb"));
+	    	hbData.put("ccrq", importData.get("ccrq_hb"));
+	    	hbData.put("ccjg", importData.get("ccjg_hb"));
+	    	hbData.put("gyjg", importData.get("gyjg_hb"));
+	    	hbData.put("jgly", importData.get("jgly_hb"));
+	    	hbData.put("jggxsj", importData.get("jggxsj_hb"));
+	    	hbData.put("jglysm", importData.get("jglysm_hb"));
+	    	hbData.put("bz", importData.get("bz_hb"));
+	    	hbData.put("yq", "华北");
+	    	hbData.putAll(publicData);
+	    	zbDataList.add(hbData);
+    	}
+    	
+    	if(!importData.get("gyjg_xn").equals("null")) {
+    		xnData.put("id", importData.get("id_xn"));
+	    	xnData.put("pp", importData.get("pp_xn"));
+	    	xnData.put("cj", importData.get("cj_xn"));
+	    	xnData.put("ccrq", importData.get("ccrq_xn"));
+	    	xnData.put("ccjg", importData.get("ccjg_xn"));
+	    	xnData.put("gyjg", importData.get("gyjg_xn"));
+	    	xnData.put("jgly", importData.get("jgly_xn"));
+	    	xnData.put("jggxsj", importData.get("jggxsj_xn"));
+	    	xnData.put("jglysm", importData.get("jglysm_xn"));
+	    	xnData.put("bz", importData.get("bz_xn"));
+	    	xnData.put("yq", "西南");
+	    	xnData.putAll(publicData);
+	    	zbDataList.add(xnData);
+    	}
+    	
+    	if(!importData.get("gyjg_cs").equals("null")) {
+    		csData.put("id", importData.get("id_cs"));
+    		csData.put("pp", importData.get("pp_cs"));
+        	csData.put("cj", importData.get("cj_cs"));
+        	csData.put("ccrq", importData.get("ccrq_cs"));
+        	csData.put("ccjg", importData.get("ccjg_cs"));
+        	csData.put("gyjg", importData.get("gyjg_cs"));
+        	csData.put("jgly", importData.get("jgly_cs"));
+        	csData.put("jggxsj", importData.get("jggxsj_cs"));
+        	csData.put("jglysm", importData.get("jglysm_cs"));
+        	csData.put("bz", importData.get("bz_cs"));
+        	csData.put("yq", "长输");
+        	csData.putAll(publicData);
+        	zbDataList.add(csData);
+    	}
+    	return zbDataList;
+    }
+    
+    private Object trim(String string) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	public ResponseBody getExportMlDataByBbh(RequestBody rq, Map params, String id) {
+        ResponseBody rp = new ResponseBody(params, "1", "请求成功", id, rq.getTaskid());
+        try {
+            ObjectMapper objectMapper = new ObjectMapper();
+            Condition condition = objectMapper.readValue(rq.getParams(), Condition.class);
+            try {
+            	String bbh = condition.getC1();
+            	Map<String, String> param = new HashMap<String, String>();
+            	param.put("bbh",bbh);
+            	List<Map<String, String>> listData = new ArrayList<Map<String,String>>();
+            	
+            	List<Map<String, String>> exportMlDataList = frameMapper.getExportMlDataByBbh(param);
+            	for (int i = 0; i < exportMlDataList.size(); i++) {
+            		Map<String, String> mapData = new HashMap<String, String>();
+            		
+            		Map<String, String> exportMlData = exportMlDataList.get(i);
+
+            		//1、获取Excel中目录的数据列
+            		String lb = "SB".equals(exportMlData.get("MASTER")) ? "设备" : "主材";
+            		String mc = exportMlData.get("NAME");
+            		String code = exportMlData.get("CODE");
+            		
+            		mapData.put("mc", mc);
+            		mapData.put("bm", code);
+            		mapData.put("lb", lb);
+            		String mlid = exportMlData.get("ID");
+            		List<String> exportZbid = frameMapper.getExportZbidByMlid(mlid);
+            		for (int j = 0; j < exportZbid.size(); j++) {
+            			String zbid = exportZbid.get(j);
+            			List<Map<String, String>> exportZbData = frameMapper.getExportZbDataByid(zbid);
+            			if(exportZbData != null) {
+            				for (int k = 0; k < exportZbData.size(); k++) {
+            					//2、获取各个油区指标数据Map
+            					Map<String, String> yqDataMap = getExcelData(exportZbData.get(k));
+            					 //3、将数据保存至map中
+            					mapData.putAll(yqDataMap);
+							}
+            			}
+					}
+            		//4、将map放到list中储存  为了生存excel做准备
+            		listData.add(mapData);
+				}
+            	//5、返回list 用于生成excel
+            	rp.setDatas(org.apache.commons.lang.StringUtils.join(listData.toArray(), "&"));
+            	
+            } catch (Exception e) {
+                rp.setIssuccess("0");
+                rp.setMessage("操作失败！" + e.getMessage());
+                e.printStackTrace();
+            }
+        } catch (Exception e) {
+            rp.setIssuccess("0");
+            rp.setMessage("操作失败！" + e.getMessage());
+            e.printStackTrace();
+        }
+        return rp;
+    }
+    
+    public Map<String,String> getExcelData(Map<String,String> yqData){
+    	Map<String,String> resultMap = new HashMap<String, String>();
+    	String yqname = yqData.get("YQNAME");
+    	
+    	if("胜利".equals(yqname)) {
+    		resultMap.put("pp_sl", yqData.get("PP"));
+    		resultMap.put("cj_sl", yqData.get("CJMC"));
+	    	resultMap.put("ccrq_sl", yqData.get("CCRQ"));
+	    	resultMap.put("ccjg_sl", yqData.get("CCJG"));
+	    	resultMap.put("gyjg_sl", yqData.get("GYJG"));
+	    	resultMap.put("jgly_sl", yqData.get("GYLY"));
+	    	resultMap.put("jggxsj_sl", yqData.get("GXSJ"));
+	    	resultMap.put("jglysm_sl", yqData.get("LYSM"));
+	    	resultMap.put("bz_sl", yqData.get("BZ"));
+	    	resultMap.put("id_sl", yqData.get("ID"));
+    	}
+    	
+    	if("中原".equals(yqname)) {
+    		resultMap.put("pp_zy", yqData.get("PP"));
+    		resultMap.put("cj_zy", yqData.get("CJMC"));
+	    	resultMap.put("ccrq_zy", yqData.get("CCRQ"));
+	    	resultMap.put("ccjg_zy", yqData.get("CCJG"));
+	    	resultMap.put("gyjg_zy", yqData.get("GYJG"));
+	    	resultMap.put("jgly_zy", yqData.get("GYLY"));
+	    	resultMap.put("jggxsj_zy", yqData.get("GXSJ"));
+	    	resultMap.put("jglysm_zy", yqData.get("LYSM"));
+	    	resultMap.put("bz_zy", yqData.get("BZ"));
+	    	resultMap.put("id_zy", yqData.get("ID"));
+    	}
+    	
+    	if("河南".equals(yqname)) {
+    		resultMap.put("pp_hn", yqData.get("PP"));
+    		resultMap.put("cj_hn", yqData.get("CJMC"));
+	    	resultMap.put("ccrq_hn", yqData.get("CCRQ"));
+	    	resultMap.put("ccjg_hn", yqData.get("CCJG"));
+	    	resultMap.put("gyjg_hn", yqData.get("GYJG"));
+	    	resultMap.put("jgly_hn", yqData.get("GYLY"));
+	    	resultMap.put("jggxsj_hn", yqData.get("GXSJ"));
+	    	resultMap.put("jglysm_hn", yqData.get("LYSM"));
+	    	resultMap.put("bz_hn", yqData.get("BZ"));
+	    	resultMap.put("id_hn", yqData.get("ID"));
+    	}
+    	
+    	if("江汉".equals(yqname)) {
+    		resultMap.put("pp_jh", yqData.get("PP"));
+    		resultMap.put("cj_jh", yqData.get("CJMC"));
+	    	resultMap.put("ccrq_jh", yqData.get("CCRQ"));
+	    	resultMap.put("ccjg_jh", yqData.get("CCJG"));
+	    	resultMap.put("gyjg_jh", yqData.get("GYJG"));
+	    	resultMap.put("jgly_jh", yqData.get("GYLY"));
+	    	resultMap.put("jggxsj_jh", yqData.get("GXSJ"));
+	    	resultMap.put("jglysm_jh", yqData.get("LYSM"));
+	    	resultMap.put("bz_jh", yqData.get("BZ"));
+	    	resultMap.put("id_jh", yqData.get("ID"));
+    	}
+    	
+    	if("江苏".equals(yqname)) {
+    		resultMap.put("pp_js", yqData.get("PP"));
+    		resultMap.put("cj_js", yqData.get("CJMC"));
+	    	resultMap.put("ccrq_js", yqData.get("CCRQ"));
+	    	resultMap.put("ccjg_js", yqData.get("CCJG"));
+	    	resultMap.put("gyjg_js", yqData.get("GYJG"));
+	    	resultMap.put("jgly_js", yqData.get("GYLY"));
+	    	resultMap.put("jggxsj_js", yqData.get("GXSJ"));
+	    	resultMap.put("jglysm_js", yqData.get("LYSM"));
+	    	resultMap.put("bz_js", yqData.get("BZ"));
+	    	resultMap.put("id_js", yqData.get("ID"));
+    	}
+    	
+    	if("西北".equals(yqname)) {
+    		resultMap.put("pp_xb", yqData.get("PP"));
+    		resultMap.put("cj_xb", yqData.get("CJMC"));
+	    	resultMap.put("ccrq_xb", yqData.get("CCRQ"));
+	    	resultMap.put("ccjg_xb", yqData.get("CCJG"));
+	    	resultMap.put("gyjg_xb", yqData.get("GYJG"));
+	    	resultMap.put("jgly_xb", yqData.get("GYLY"));
+	    	resultMap.put("jggxsj_xb", yqData.get("GXSJ"));
+	    	resultMap.put("jglysm_xb", yqData.get("LYSM"));
+	    	resultMap.put("bz_xb", yqData.get("BZ"));
+	    	resultMap.put("id_xb", yqData.get("ID"));
+    	}
+    	
+    	if("华北".equals(yqname)) {
+    		resultMap.put("pp_hb", yqData.get("PP"));
+    		resultMap.put("cj_hb", yqData.get("CJMC"));
+	    	resultMap.put("ccrq_hb", yqData.get("CCRQ"));
+	    	resultMap.put("ccjg_hb", yqData.get("CCJG"));
+	    	resultMap.put("gyjg_hb", yqData.get("GYJG"));
+	    	resultMap.put("jgly_hb", yqData.get("GYLY"));
+	    	resultMap.put("jggxsj_hb", yqData.get("GXSJ"));
+	    	resultMap.put("jglysm_hb", yqData.get("LYSM"));
+	    	resultMap.put("bz_hb", yqData.get("BZ"));
+	    	resultMap.put("id_hb", yqData.get("ID"));
+    	}
+    	
+    	if("西南".equals(yqname)) {
+    		resultMap.put("pp_xn", yqData.get("PP"));
+    		resultMap.put("cj_xn", yqData.get("CJMC"));
+	    	resultMap.put("ccrq_xn", yqData.get("CCRQ"));
+	    	resultMap.put("ccjg_xn", yqData.get("CCJG"));
+	    	resultMap.put("gyjg_xn", yqData.get("GYJG"));
+	    	resultMap.put("jgly_xn", yqData.get("GYLY"));
+	    	resultMap.put("jggxsj_xn", yqData.get("GXSJ"));
+	    	resultMap.put("jglysm_xn", yqData.get("LYSM"));
+	    	resultMap.put("bz_xn", yqData.get("BZ"));
+	    	resultMap.put("id_xn", yqData.get("ID"));
+    	}
+    	
+    	if("长输".equals(yqname)) {
+    		resultMap.put("pp_cs", yqData.get("PP"));
+    		resultMap.put("cj_cs", yqData.get("CJMC"));
+	    	resultMap.put("ccrq_cs", yqData.get("CCRQ"));
+	    	resultMap.put("ccjg_cs", yqData.get("CCJG"));
+	    	resultMap.put("gyjg_cs", yqData.get("GYJG"));
+	    	resultMap.put("jgly_cs", yqData.get("GYLY"));
+	    	resultMap.put("jggxsj_cs", yqData.get("GXSJ"));
+	    	resultMap.put("jglysm_cs", yqData.get("LYSM"));
+	    	resultMap.put("bz_cs", yqData.get("BZ"));
+	    	resultMap.put("id_cs", yqData.get("ID"));
+    	}
+    	resultMap.put("xh", yqData.get("XH"));
+    	resultMap.put("dw", yqData.get("DW"));
+    	return resultMap;
     }
 }

@@ -29,6 +29,9 @@
     <select id="getYq" resultType="java.util.HashMap">
         select id,name from app_yq order by id
     </select>
+    <select id="getYqidByName" resultType="String">
+        select id  from app_yq where name = #{c1}
+    </select>
     <select id="getbb" resultType="java.util.HashMap">
         select id,mc from app_jckbb
     </select>
