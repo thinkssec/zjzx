@@ -8,6 +8,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.ibatis.annotations.Param;
+
 /**
  * <b>[appRgcbGlq]数据访问接口</b>
  * 
@@ -51,5 +53,8 @@ List<HashMap>  getyqlist(Condition  condition);
 	void  delyq(HashMap  params);
 	void  saveYqbb(HashMap  map);
 	void  delyqbb(HashMap  params);
+	void  delBbsbzcMlByBbh(@Param("bbh") String bbh);
+	void  delBbsbzcZbByBbh(@Param("bbh") String bbh);
+	void  delBbsbzcRelationByBbh(@Param("bbh") String bbh);
 	//endregion
 }

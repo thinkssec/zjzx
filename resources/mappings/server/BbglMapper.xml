@@ -154,7 +154,7 @@
     <update id="xfSbzcxt">
         BEGIN
         <foreach collection="list" item="record" index="index">
-            update APP_BB_BCSBZC  set status='1' where bbh=#{record.BBH};
+            update APP_BB_BCSBZC  set status='1' , sysj = #{record.SJ} where bbh=#{record.BBH};
         </foreach>
         COMMIT;
         END;
@@ -360,5 +360,14 @@
         </foreach>
         COMMIT;
         END;
+    </delete>
+    <delete id="delBbsbzcMlByBbh">
+        delete from  APP_SBZC_ML where  bbh = #{bbh}
+    </delete>
+    <delete id="delBbsbzcZbByBbh">
+        delete from  APP_SBZC_BC where bbh = #{bbh}
+    </delete>
+    <delete id="delBbsbzcRelationByBbh">
+        delete from app_sbzc_mlralation where bbh = #{bbh}
     </delete>
 </mapper>

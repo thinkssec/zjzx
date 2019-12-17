@@ -1657,7 +1657,8 @@ public class SysService {
                     String mt = (String) hh.get("ZHID");
                     Office ppp = lsHt.get(mt);
                     if (ppp == null) continue;
-                    ppp.getOtherproperty().put("O" + (String) hh.get("OILID"), (String) hh.get("CCJG"));
+                    //ppp.getOtherproperty().put("O" + (String) hh.get("OILID"), (String) hh.get("CCJG"));//
+                    ppp.getOtherproperty().put("O" + (String) hh.get("OILID"), (String) hh.get("GYJG"));
                 }
                 String rootId = "";
                 for (String key : lsHt.keySet()) {
@@ -8266,6 +8267,7 @@ public class SysService {
         try {
             ObjectMapper objectMapper = new ObjectMapper();
             Condition condition = objectMapper.readValue(rq.getParams(), Condition.class);
+            String bbh = condition.getC10();
             try {
                 String updL = StringEscapeUtils.unescapeHtml(condition.getC2());
                 JavaType javaType = JsonMapper.getInstance().getTypeFactory().constructParametricType(List.class, HashMap.class);
@@ -8273,6 +8275,9 @@ public class SysService {
                 HashMap m = new HashMap();
                 m.put("list", h);
                 bbglMapper.delBbsbzc(m);
+                bbglMapper.delBbsbzcMlByBbh(bbh);
+                bbglMapper.delBbsbzcZbByBbh(bbh);
+                bbglMapper.delBbsbzcRelationByBbh(bbh);
             } catch (Exception e) {
                 e.printStackTrace();
                 rp.setIssuccess("0");
@@ -9085,144 +9090,144 @@ public class SysService {
     	publicData.put("xh", importData.get("xh"));
     	
     	if(!importData.get("gyjg_sl").equals("null")) {
-    		slData.put("id", importData.get("id_sl"));
-    		slData.put("pp", importData.get("pp_sl"));
-	    	slData.put("cj", importData.get("cj_sl"));
-	    	slData.put("ccrq", importData.get("ccrq_sl"));
-	    	slData.put("ccjg", importData.get("ccjg_sl"));
-	    	slData.put("gyjg", importData.get("gyjg_sl"));
-	    	slData.put("jgly", importData.get("jgly_sl"));
-	    	slData.put("jggxsj", importData.get("jggxsj_sl"));
-	    	slData.put("jglysm", importData.get("jglysm_sl"));
-	    	slData.put("bz", importData.get("bz_sl"));
+    		slData.put("id", formartNullValue(importData.get("id_sl")));
+    		slData.put("pp", formartNullValue(importData.get("pp_sl")));
+	    	slData.put("cj", formartNullValue(importData.get("cj_sl")));
+	    	slData.put("ccrq", formartNullValue(importData.get("ccrq_sl")));
+	    	slData.put("ccjg", formartNullValue(importData.get("ccjg_sl")));
+	    	slData.put("gyjg", formartNullValue(importData.get("gyjg_sl")));
+	    	slData.put("jgly", formartNullValue(importData.get("jgly_sl")));
+	    	slData.put("jggxsj", formartNullValue(importData.get("jggxsj_sl")));
+	    	slData.put("jglysm", formartNullValue(importData.get("jglysm_sl")));
+	    	slData.put("bz", formartNullValue(importData.get("bz_sl")));
 	    	slData.put("yq", "胜利");
 	    	slData.putAll(publicData);
 	    	zbDataList.add(slData);
     	}
     	
     	if(!importData.get("gyjg_zy").equals("null")) {
-    		zyData.put("id", importData.get("id_zy"));
-	    	zyData.put("pp", importData.get("pp_zy"));
-	    	zyData.put("cj", importData.get("cj_zy"));
-	    	zyData.put("ccrq", importData.get("ccrq_zy"));
-	    	zyData.put("ccjg", importData.get("ccjg_zy"));
-	    	zyData.put("gyjg", importData.get("gyjg_zy"));
-	    	zyData.put("jgly", importData.get("jgly_zy"));
-	    	zyData.put("jggxsj", importData.get("jggxsj_zy"));
-	    	zyData.put("jglysm", importData.get("jglysm_zy"));
-	    	zyData.put("bz", importData.get("bz_zy"));
+    		zyData.put("id", formartNullValue(importData.get("id_zy")));
+	    	zyData.put("pp", formartNullValue(importData.get("pp_zy")));
+	    	zyData.put("cj", formartNullValue(importData.get("cj_zy")));
+	    	zyData.put("ccrq", formartNullValue(importData.get("ccrq_zy")));
+	    	zyData.put("ccjg", formartNullValue(importData.get("ccjg_zy")));
+	    	zyData.put("gyjg", formartNullValue(importData.get("gyjg_zy")));
+	    	zyData.put("jgly", formartNullValue(importData.get("jgly_zy")));
+	    	zyData.put("jggxsj", formartNullValue(importData.get("jggxsj_zy")));
+	    	zyData.put("jglysm", formartNullValue(importData.get("jglysm_zy")));
+	    	zyData.put("bz", formartNullValue(importData.get("bz_zy")));
 	    	zyData.put("yq", "中原");
 	    	zyData.putAll(publicData);
 	    	zbDataList.add(zyData);
     	}
     	
     	if(!importData.get("gyjg_hn").equals("null")) {
-    		hnData.put("id", importData.get("id_hn"));
-	    	hnData.put("pp", importData.get("pp_hn"));
-	    	hnData.put("cj", importData.get("cj_hn"));
-	    	hnData.put("ccrq", importData.get("ccrq_hn"));
-	    	hnData.put("ccjg", importData.get("ccjg_hn"));
-	    	hnData.put("gyjg", importData.get("gyjg_hn"));
-	    	hnData.put("jgly", importData.get("jgly_hn"));
-	    	hnData.put("jggxsj", importData.get("jggxsj_hn"));
-	    	hnData.put("jglysm", importData.get("jglysm_hn"));
-	    	hnData.put("bz", importData.get("bz_hn"));
+    		hnData.put("id", formartNullValue(importData.get("id_hn")));
+	    	hnData.put("pp", formartNullValue(importData.get("pp_hn")));
+	    	hnData.put("cj", formartNullValue(importData.get("cj_hn")));
+	    	hnData.put("ccrq", formartNullValue(importData.get("ccrq_hn")));
+	    	hnData.put("ccjg", formartNullValue(importData.get("ccjg_hn")));
+	    	hnData.put("gyjg", formartNullValue(importData.get("gyjg_hn")));
+	    	hnData.put("jgly", formartNullValue(importData.get("jgly_hn")));
+	    	hnData.put("jggxsj", formartNullValue(importData.get("jggxsj_hn")));
+	    	hnData.put("jglysm", formartNullValue(importData.get("jglysm_hn")));
+	    	hnData.put("bz", formartNullValue(importData.get("bz_hn")));
 	    	hnData.put("yq", "河南");
 	    	hnData.putAll(publicData);
 	    	zbDataList.add(hnData);
     	}
     	
     	if(!importData.get("gyjg_jh").equals("null")) {
-    		jhData.put("id", importData.get("id_jh"));
-    		jhData.put("pp", importData.get("pp_jh"));
-        	jhData.put("cj", importData.get("cj_jh"));
-        	jhData.put("ccrq", importData.get("ccrq_jh"));
-        	jhData.put("ccjg", importData.get("ccjg_jh"));
-        	jhData.put("gyjg", importData.get("gyjg_jh"));
-        	jhData.put("jgly", importData.get("jgly_jh"));
-        	jhData.put("jggxsj", importData.get("jggxsj_jh"));
-        	jhData.put("jglysm", importData.get("jglysm_jh"));
-        	jhData.put("bz", importData.get("bz_jh"));
+    		jhData.put("id", formartNullValue(importData.get("id_jh")));
+    		jhData.put("pp", formartNullValue(importData.get("pp_jh")));
+        	jhData.put("cj", formartNullValue(importData.get("cj_jh")));
+        	jhData.put("ccrq", formartNullValue(importData.get("ccrq_jh")));
+        	jhData.put("ccjg", formartNullValue(importData.get("ccjg_jh")));
+        	jhData.put("gyjg", formartNullValue(importData.get("gyjg_jh")));
+        	jhData.put("jgly", formartNullValue(importData.get("jgly_jh")));
+        	jhData.put("jggxsj", formartNullValue(importData.get("jggxsj_jh")));
+        	jhData.put("jglysm", formartNullValue(importData.get("jglysm_jh")));
+        	jhData.put("bz", formartNullValue(importData.get("bz_jh")));
         	jhData.put("yq", "江汉");
         	jhData.putAll(publicData);
         	zbDataList.add(jhData);
     	}
     	
     	if(!importData.get("gyjg_xb").equals("null")) {
-    		jsData.put("id", importData.get("id_js"));
-    		jsData.put("pp", importData.get("pp_js"));
-        	jsData.put("cj", importData.get("cj_js"));
-        	jsData.put("ccrq", importData.get("ccrq_js"));
-        	jsData.put("ccjg", importData.get("ccjg_js"));
-        	jsData.put("gyjg", importData.get("gyjg_js"));
-        	jsData.put("jgly", importData.get("jgly_js"));
-        	jsData.put("jggxsj", importData.get("jggxsj_js"));
-        	jsData.put("jglysm", importData.get("jglysm_js"));
-        	jsData.put("bz", importData.get("bz_js"));
+    		jsData.put("id", formartNullValue(importData.get("id_js")));
+    		jsData.put("pp", formartNullValue(importData.get("pp_js")));
+        	jsData.put("cj", formartNullValue(importData.get("cj_js")));
+        	jsData.put("ccrq", formartNullValue(importData.get("ccrq_js")));
+        	jsData.put("ccjg", formartNullValue(importData.get("ccjg_js")));
+        	jsData.put("gyjg", formartNullValue(importData.get("gyjg_js")));
+        	jsData.put("jgly", formartNullValue(importData.get("jgly_js")));
+        	jsData.put("jggxsj", formartNullValue(importData.get("jggxsj_js")));
+        	jsData.put("jglysm", formartNullValue(importData.get("jglysm_js")));
+        	jsData.put("bz", formartNullValue(importData.get("bz_js")));
         	jsData.put("yq", "江苏");
         	jsData.putAll(publicData);
         	zbDataList.add(jsData);
     	}
     	
     	if(!importData.get("gyjg_xb").equals("null")) {
-    		xbData.put("id", importData.get("id_xb"));
-    		xbData.put("pp", importData.get("pp_xb"));
-        	xbData.put("cj", importData.get("cj_xb"));
-        	xbData.put("ccrq", importData.get("ccrq_xb"));
-        	xbData.put("ccjg", importData.get("ccjg_xb"));
-        	xbData.put("gyjg", importData.get("gyjg_xb"));
-        	xbData.put("jgly", importData.get("jgly_xb"));
-        	xbData.put("jggxsj", importData.get("jggxsj_xb"));
-        	xbData.put("jglysm", importData.get("jglysm_xb"));
-        	xbData.put("bz", importData.get("bz_xb"));
+    		xbData.put("id", formartNullValue(importData.get("id_xb")));
+    		xbData.put("pp", formartNullValue(importData.get("pp_xb")));
+        	xbData.put("cj", formartNullValue(importData.get("cj_xb")));
+        	xbData.put("ccrq", formartNullValue(importData.get("ccrq_xb")));
+        	xbData.put("ccjg", formartNullValue(importData.get("ccjg_xb")));
+        	xbData.put("gyjg", formartNullValue(importData.get("gyjg_xb")));
+        	xbData.put("jgly", formartNullValue(importData.get("jgly_xb")));
+        	xbData.put("jggxsj", formartNullValue(importData.get("jggxsj_xb")));
+        	xbData.put("jglysm", formartNullValue(importData.get("jglysm_xb")));
+        	xbData.put("bz", formartNullValue(importData.get("bz_xb")));
         	xbData.put("yq", "西北");
         	xbData.putAll(publicData);
         	zbDataList.add(xbData);
     	}
     	
     	if(!importData.get("gyjg_hb").equals("null")) {
-    		hbData.put("id", importData.get("id_hb"));
-	    	hbData.put("pp", importData.get("pp_hb"));
-	    	hbData.put("cj", importData.get("cj_hb"));
-	    	hbData.put("ccrq", importData.get("ccrq_hb"));
-	    	hbData.put("ccjg", importData.get("ccjg_hb"));
-	    	hbData.put("gyjg", importData.get("gyjg_hb"));
-	    	hbData.put("jgly", importData.get("jgly_hb"));
-	    	hbData.put("jggxsj", importData.get("jggxsj_hb"));
-	    	hbData.put("jglysm", importData.get("jglysm_hb"));
-	    	hbData.put("bz", importData.get("bz_hb"));
+    		hbData.put("id", formartNullValue(importData.get("id_hb")));
+	    	hbData.put("pp", formartNullValue(importData.get("pp_hb")));
+	    	hbData.put("cj", formartNullValue(importData.get("cj_hb")));
+	    	hbData.put("ccrq", formartNullValue(importData.get("ccrq_hb")));
+	    	hbData.put("ccjg", formartNullValue(importData.get("ccjg_hb")));
+	    	hbData.put("gyjg", formartNullValue(importData.get("gyjg_hb")));
+	    	hbData.put("jgly", formartNullValue(importData.get("jgly_hb")));
+	    	hbData.put("jggxsj", formartNullValue(importData.get("jggxsj_hb")));
+	    	hbData.put("jglysm", formartNullValue(importData.get("jglysm_hb")));
+	    	hbData.put("bz", formartNullValue(importData.get("bz_hb")));
 	    	hbData.put("yq", "华北");
 	    	hbData.putAll(publicData);
 	    	zbDataList.add(hbData);
     	}
     	
     	if(!importData.get("gyjg_xn").equals("null")) {
-    		xnData.put("id", importData.get("id_xn"));
-	    	xnData.put("pp", importData.get("pp_xn"));
-	    	xnData.put("cj", importData.get("cj_xn"));
-	    	xnData.put("ccrq", importData.get("ccrq_xn"));
-	    	xnData.put("ccjg", importData.get("ccjg_xn"));
-	    	xnData.put("gyjg", importData.get("gyjg_xn"));
-	    	xnData.put("jgly", importData.get("jgly_xn"));
-	    	xnData.put("jggxsj", importData.get("jggxsj_xn"));
-	    	xnData.put("jglysm", importData.get("jglysm_xn"));
-	    	xnData.put("bz", importData.get("bz_xn"));
+    		xnData.put("id", formartNullValue(importData.get("id_xn")));
+	    	xnData.put("pp", formartNullValue(importData.get("pp_xn")));
+	    	xnData.put("cj", formartNullValue(importData.get("cj_xn")));
+	    	xnData.put("ccrq", formartNullValue(importData.get("ccrq_xn")));
+	    	xnData.put("ccjg", formartNullValue(importData.get("ccjg_xn")));
+	    	xnData.put("gyjg", formartNullValue(importData.get("gyjg_xn")));
+	    	xnData.put("jgly", formartNullValue(importData.get("jgly_xn")));
+	    	xnData.put("jggxsj", formartNullValue(importData.get("jggxsj_xn")));
+	    	xnData.put("jglysm", formartNullValue(importData.get("jglysm_xn")));
+	    	xnData.put("bz", formartNullValue(importData.get("bz_xn")));
 	    	xnData.put("yq", "西南");
 	    	xnData.putAll(publicData);
 	    	zbDataList.add(xnData);
     	}
     	
     	if(!importData.get("gyjg_cs").equals("null")) {
-    		csData.put("id", importData.get("id_cs"));
-    		csData.put("pp", importData.get("pp_cs"));
-        	csData.put("cj", importData.get("cj_cs"));
-        	csData.put("ccrq", importData.get("ccrq_cs"));
-        	csData.put("ccjg", importData.get("ccjg_cs"));
-        	csData.put("gyjg", importData.get("gyjg_cs"));
-        	csData.put("jgly", importData.get("jgly_cs"));
-        	csData.put("jggxsj", importData.get("jggxsj_cs"));
-        	csData.put("jglysm", importData.get("jglysm_cs"));
-        	csData.put("bz", importData.get("bz_cs"));
+    		csData.put("id", formartNullValue(importData.get("id_cs")));
+    		csData.put("pp", formartNullValue(importData.get("pp_cs")));
+        	csData.put("cj", formartNullValue(importData.get("cj_cs")));
+        	csData.put("ccrq", formartNullValue(importData.get("ccrq_cs")));
+        	csData.put("ccjg", formartNullValue(importData.get("ccjg_cs")));
+        	csData.put("gyjg", formartNullValue(importData.get("gyjg_cs")));
+        	csData.put("jgly", formartNullValue(importData.get("jgly_cs")));
+        	csData.put("jggxsj", formartNullValue(importData.get("jggxsj_cs")));
+        	csData.put("jglysm", formartNullValue(importData.get("jglysm_cs")));
+        	csData.put("bz", formartNullValue(importData.get("bz_cs")));
         	csData.put("yq", "长输");
         	csData.putAll(publicData);
         	zbDataList.add(csData);
@@ -9417,4 +9422,11 @@ public class SysService {
     	resultMap.put("dw", yqData.get("DW"));
     	return resultMap;
     }
+    public static String formartNullValue(String str) {
+		boolean blank = org.apache.commons.lang.StringUtils.isBlank(str);
+		if(blank || "null".equals(str)) {
+			str = "";
+		}
+		return str;
+	}
 }
