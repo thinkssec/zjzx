@@ -1,5 +1,12 @@
 package com.server.mapper;
 
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import org.apache.ibatis.annotations.MapKey;
+import org.apache.ibatis.annotations.Param;
+
 import com.common.annotation.MyBatisDao;
 import com.common.sys.entity.Office;
 import com.common.sys.entity.Role;
@@ -7,12 +14,6 @@ import com.common.sys.entity.User;
 import com.server.Entity.Condition;
 import com.server.Entity.MainMapper;
 import com.server.Entity.Menu;
-import org.apache.ibatis.annotations.MapKey;
-import org.apache.ibatis.annotations.Param;
-
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 /**
  * Created by Administrator on 2017/10/17.

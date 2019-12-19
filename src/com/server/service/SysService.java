@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -1588,13 +1589,12 @@ public class SysService {
             try {
                 HashMap<String, Office> lsHt = frameMapper.bczbMlLists(pa);
                 HashMap<String, List<Office>> children = new HashMap();
-                List<HashMap> bczbList = bczbMapper.getDwBczbByDw(pa);
-                for (HashMap hh : bczbList) {
-                    String mt = (String) hh.get("ZHZBID");
-                    Office ppp = lsHt.get(mt);
-                    if (ppp == null) continue;
-                    ppp.getOtherproperty().put("O" + (String) hh.get("OILID"), (String) hh.get("ZHDJ"));
-                }
+				
+				 List<HashMap> bczbList = bczbMapper.getDwBczbByDw(pa); for (HashMap hh :
+				 bczbList) { String mt = (String) hh.get("ZHZBID"); Office ppp = lsHt.get(mt);
+				 if (ppp == null) continue; ppp.getOtherproperty().put("O" + (String)
+				 hh.get("OILID"), (String) hh.get("ZHDJ")); }
+				 
                 String rootId = "";
                 for (String key : lsHt.keySet()) {
                     if (lsHt.get(key).getCode().length() == 8) rootId = key;
@@ -1606,7 +1606,7 @@ public class SysService {
                     c.add(lsHt.get(key));
                 }
                 if (StringUtils.isBlank(rootId)) {
-                  frameMapper.insertBczbRoot(user.getDeptCode(), user.getDeptId());
+                    frameMapper.insertBczbRoot(user.getDeptCode(), user.getDeptId());
                     lsHt = frameMapper.bczbMlLists(pa);
                     children = new HashMap();
                     for (String key : lsHt.keySet()) {
@@ -1620,10 +1620,9 @@ public class SysService {
                     }
                 }
                 HashMap m = toTree(lsHt, children, rootId);
-                String name = (String) m.get("text");
-//                if(name.equals("单位补充指标")){
-//                	m.put("code", "B");
-//                }
+                List mContainsMlList = (List)m.get("children");
+                orderDwbczbTree(m,mContainsMlList);
+
                 List mm = new ArrayList();
                 mm.add(m);
                 rp.setDatas(com.common.annotation.mapper.JsonMapper.toJsonString(mm));
@@ -1639,6 +1638,52 @@ public class SysService {
         }
         return rp;
     }
+    
+    /**
+     * 单位补充指标的树排序
+     * */
+    public void orderDwbczbTree(Map mlMap, List mlMapContainsList) {
+    	if(mlMapContainsList != null && mlMapContainsList.size() > 0) {
+			List newOrderMlList = orderDwbczbMl(mlMapContainsList);
+			mlMap.put("children", newOrderMlList);
+        	for (int i = 0; i < mlMapContainsList.size(); i++) {
+        		HashMap nextMl = (HashMap)mlMapContainsList.get(i);//3级目录
+        		List nextMlList = (List)nextMl.get("children");//3级目录包含的多个指标
+        		orderDwbczbTree(nextMl,nextMlList);	
+    		}
+    	}
+    }
+    
+    /**
+     * 对List根据Code排序，
+     * 生成“根据code有序的” list
+     * */
+    public List orderDwbczbMl(List mlDataList) {
+    	List newMlList = new ArrayList<>();
+		List<String> codeList = new ArrayList<String>();
+		if(mlDataList != null && mlDataList.size() > 0) {
+			for (int i = 0; i < mlDataList.size(); i++) {
+				HashMap mlMap = (HashMap)mlDataList.get(i);
+				String code = String.valueOf(mlMap.get("code"));
+				codeList.add(code);
+			}
+			Collections.sort(codeList); 
+			
+			for (int j = 0; j < codeList.size(); j++) {
+				String orderCode = codeList.get(j);
+				for (int k = 0; k < mlDataList.size(); k++) {
+					HashMap mlMap = (HashMap)mlDataList.get(k);
+    				String code = String.valueOf(mlMap.get("code"));
+    				if(orderCode.equals(code)) {
+    					newMlList.add(mlMap);
+    				}
+				}
+			}
+		}
+		return newMlList;
+    }
+    
+    
     //获取单位补充指标目录
     public ResponseBody vsbzcMlLists(RequestBody rq, Map params, String id) {
         ResponseBody rp = new ResponseBody(params, "1", "获取数据列表", id, rq.getTaskid());
@@ -1685,6 +1730,7 @@ public class SysService {
                     }
                 }
                 HashMap m = toTree2(lsHt, children, rootId);
+                
                 List mm = new ArrayList();
                 mm.add(m);
                 rp.setDatas(com.common.annotation.mapper.JsonMapper.toJsonString(mm));
@@ -1842,6 +1888,7 @@ public class SysService {
         h.put("rksj", m.getCreateDate());
         h.put("bz", m.getRemarks());
         h.put("type", m.getType());
+        h.put("grade", m.getGrade());
         //System.out.println("----------------"+m.getOtherproperty());
         h.putAll(m.getOtherproperty());
         if ("9".equals(m.getType())) {
@@ -8830,7 +8877,7 @@ public class SysService {
                 HashMap<String, List<Office>> children = new HashMap();
                 Map<String, List<Map>> zbchildren = new HashMap();
                 String rootId = "";
-                for (String key : lsHt.keySet()) {
+                for (String key : lsHt.keySet()) { 
                     if (lsHt.get(key).getCode().length() == 8) rootId = key;
                     List c = children.get(lsHt.get(key).getParentId());
                     zbchildren.put(lsHt.get(key).getId(), new ArrayList());
@@ -8846,6 +8893,10 @@ public class SysService {
                     c.add(z);
                 }
                 Map<String, Object> docStr = AppUtils.getMlMap(lsHt, children, rootId, zbchildren);
+                HashMap xmlData = (HashMap)docStr.get("BCZBLocalClass");
+                List xmlContainsMlList = (List)((HashMap)xmlData.get("BCZBLocalClasses")).get("BCZBLocalClass");//1级目录
+                orderDwbczbTreeXml(xmlData,xmlContainsMlList);
+                
                 String xml = "";
                 Document doc = XmlUtils.Map2Xml(docStr);
                 String saveDirectoryPath = Global.getConfig("upLoadPath") + "/" + dwbczbPath + "/" + rootId;
@@ -8856,6 +8907,43 @@ public class SysService {
                 rp.setIssuccess("0");
                 rp.setMessage("操作失败！" + e.getMessage());
             }
+    }
+    
+    public void orderDwbczbTreeXml(HashMap xmlData,List xmlContainMlList) {
+    	if(xmlContainMlList != null && xmlContainMlList.size() > 0) {
+			List dwbczbTreeXml = dwbczbTreeXmlList(xmlContainMlList);
+            ((HashMap)xmlData.get("BCZBLocalClasses")).put("BCZBLocalClass", dwbczbTreeXml);
+        	for (int k = 0; k < xmlContainMlList.size(); k++) {
+        		HashMap xmlMap = (HashMap)xmlContainMlList.get(k);//指标目录
+        		List xmlMapContainsList = (List)((HashMap)xmlMap.get("BCZBLocalClasses")).get("BCZBLocalClass");
+        		orderDwbczbTreeXml(xmlMap,xmlMapContainsList);
+        	}
+        }
+    }
+    
+    public List dwbczbTreeXmlList(List xmlDataList) {
+    	List newResultList = new ArrayList<>();
+		List<String> codeList = new ArrayList<String>();
+		if(xmlDataList != null && xmlDataList.size() > 0) {
+        	for (int i = 0; i < xmlDataList.size(); i++) {
+        		HashMap zbxmlMl = (HashMap)xmlDataList.get(i);//指标
+        		String code = String.valueOf(zbxmlMl.get("BzCode"));
+        		codeList.add(code);
+        	}
+        	Collections.sort(codeList); 
+        	
+        	for (int j = 0; j < codeList.size(); j++) {
+				String orderCode = codeList.get(j);
+				for (int p = 0; p < xmlDataList.size(); p++) {
+					HashMap zbMl = (HashMap)xmlDataList.get(p);
+    				String code = String.valueOf(zbMl.get("BzCode"));
+    				if(orderCode.equals(code)) {
+    					newResultList.add(zbMl);
+    				}
+				}
+			}
+        }
+    	return newResultList;
     }
     
     /**

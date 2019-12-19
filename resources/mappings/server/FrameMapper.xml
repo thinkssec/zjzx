@@ -845,7 +845,7 @@ END;
                 and (type = 2 or type=9)
                 and substr(code,1,4)=#{CODE}
                 and substr(code, 7, 8) = '03'
-                order by code asc
+                 ORDER SIBLINGS BY code desc
     </select>
 
     <select id="getMlZbAList" resultType="java.util.HashMap">
@@ -856,7 +856,8 @@ END;
                start with length(code) = 8
                       and type = 2
                       and substr(code, 1, 4) = #{CODE}
-                      and substr(code, 7, 8) = '03')
+                      and substr(code, 7, 8) = '03'
+                      ORDER SIBLINGS BY code desc)
             select b.*,
                    b.bczbid bm,
                    (select p_mc
@@ -916,6 +917,7 @@ END;
                 and type = 2
                 and substr(code,1,4)=#{CODE}
                 and substr(code, 7, 8) = '03'
+                 order by code asc
     </select>
     <select id="getOilByCpu" resultType="java.lang.String">
         select b.hpyqsj from  SYS_JQRZ_HP b where  b.CPUID=#{CPU}
