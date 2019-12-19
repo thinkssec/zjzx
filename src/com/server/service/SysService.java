@@ -9082,26 +9082,49 @@ public class SysService {
             Condition condition = objectMapper.readValue(rq.getParams(), Condition.class);
             try {
             	String c1 = condition.getC1();
+            	String bbh = condition.getC2();
             	List<String> listData = Arrays.asList(c1.split("&"));
             	
             	
             	for (int i = 0; i < listData.size(); i++) {
             		String string = listData.get(i);
             		Map<String, String> importData = getStringToMap(string);//导入的数据
-            		Map<String, String> mlDataMap = new HashMap<String, String>();
             		
+            		String bm = importData.get("bm");
+            		String mlId = frameMapper.getMlIdByParam(bm,bbh);
+            		Map<String, String> mlDataMap = new HashMap<String, String>();
             		List<Map<String, String>> imputZbDataList = getImputZbDataList(importData);//获取到指标的数据
             		for (int j = 0; j < imputZbDataList.size(); j++) {//保存指标数据、保存关系数据
             			Map<String, String> map = imputZbDataList.get(j);
+            			Map<String, String> realtionData = new HashMap<String, String>();//导入的指标与目录的关系表
             			//1、获取指标ID，更新数据
             			String zbid = map.get("id");
             			if(StringUtils.isNotBlank(zbid)) {
             				frameMapper.updateBcsbzcZbById(map);
+            			}else {
+            				zbid = UUID.randomUUID().toString().replaceAll("-", "");//UUID生成 导入数据的ID
+            				map.put("bbh", bbh);
+            				map.put("id", zbid);
+            				map.put("bm", bm);
+                			Condition condition2 = new Condition();
+                    		condition2.setC1(map.get("yq"));
+                    		String yqid = jqsqMapper.getYqidByName(condition2);//油区ID
+                    		map.put("oilid", yqid);
+                    		
+                    		realtionData.put("code", bm);
+                    		realtionData.put("oilid", yqid);
+                    		realtionData.put("bbh", bbh);
+                    		realtionData.put("zhid", mlId);
+                    		realtionData.put("bcid", zbid);
+                    		
+                    		frameMapper.addBcsbzcZb(map);//新增的油区信息
+                    		frameMapper.saveBcsbzcMlZbRealtion(realtionData);//保存导入的Excel数据到····指标-目录关系表
             			}
-            			mlDataMap.put("zbid", zbid);
-            			mlDataMap.put("lb", map.get("lb"));
-            			mlDataMap.put("mc", map.get("mc"));
             		}
+            		
+            		mlDataMap.put("id", mlId);
+            		mlDataMap.put("lb", importData.get("lb"));
+            		mlDataMap.put("mc", importData.get("mc"));
             		//2、更新指标的关联目录
         			frameMapper.updateBcsbzcMlById(mlDataMap);
 				}

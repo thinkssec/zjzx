@@ -1241,9 +1241,11 @@ END;
         SET
         	t1.name = #{mc},
         	t1.master = #{lb}
-        WHERE id = (
-        	select zhid from app_sbzc_mlralation where bcid = #{zbid}
-        )
+        WHERE id = #{id}
     </update>
+    
+    <select id="getMlIdByParam" resultType="java.lang.String">
+       select id from APP_SBZC_ML where code = #{bm} and bbh = #{bbh}
+    </select>
     
 </mapper>

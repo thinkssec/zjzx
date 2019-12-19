@@ -140,5 +140,6 @@ public interface FrameMapper extends MainMapper {
     List<Map<String,String>> getExportZbDataByid(@Param("zbid")String zbid);
     void updateBcsbzcZbById(Map<String, String> map);
     void updateBcsbzcMlById(Map<String, String> map);
+    String getMlIdByParam(@Param("bm")String bm,@Param("bbh")String bbh);
     
 }
