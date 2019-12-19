@@ -200,7 +200,6 @@ public class SysService {
             List<HashMap> all = emailMapper.getMail1Attach(params);
             List<Map> ls = new ArrayList();
             for (HashMap el : all) {
-                System.out.println((String) params.get("ID"));
                 String apath = (String) el.get("PATH");
                 String lb = (String) params.get("LB");
                 String fullPath = "";
@@ -224,7 +223,6 @@ public class SysService {
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
-                System.out.println(fullPath);
             }
             rp.setDatas(JsonMapper.toJsonString(ls));
         } catch (Exception e) {
@@ -253,7 +251,6 @@ public class SysService {
         User u = UserUtils.getUser();
         params.put("USERID", u.getId());
         try {
-            System.out.println(params);
             List<String> el = emailMapper.getMailList2(params);
             rp.setDatas(JsonMapper.toJsonString(el));
         } catch (Exception e) {
@@ -754,7 +751,6 @@ public class SysService {
                 HashMap m = new HashMap();
                 m.put("list", h);
                 for(int i = 0; i < h.size(); i++){
-                	System.out.println("++++++++++++="+h.get(i));
                     }
                 jqsqMapper.saveJqsqty(m);
             } catch (Exception e) {
@@ -3430,14 +3426,12 @@ public class SysService {
         ResponseBody rp = new ResponseBody(params, "1", "获取原始补充指标成功", id, rq.getTaskid());
         try {
             ObjectMapper objectMapper = new ObjectMapper();
-            System.out.println("params======================="+rq.getParams());
             Condition condition = objectMapper.readValue(rq.getParams(), Condition.class);
 
             User user = UserUtils.getUser();
             Map pa = new HashMap();
             pa.put("DEPTID", user.getDeptCode().substring(0, 4));
             //pa.put("DEPTID", 1093);
-            System.out.println("deptid======================="+user.getDeptCode().substring(0, 4));
             //params.put("DEPTID", "1045");
             try {
                 List<HashMap> bbls = bczbMapper.getYsBczb(pa);
@@ -5390,7 +5384,6 @@ public class SysService {
             Map pa = new HashMap();
             pa.put("c1", condition.getC1());
             //params.put("DEPTID", "1045");
-            System.out.println(pa);
             try {
                 List<HashMap> bbls = bczbMapper.getBczbByFz(pa);
                 //转换后的指标Map
@@ -5631,9 +5624,6 @@ public class SysService {
             ObjectMapper objectMapper = new ObjectMapper();
             Condition condition = objectMapper.readValue(rq.getParams(), Condition.class);
             User user = UserUtils.getUser();
-            System.out.println("condition的c1="+condition.getC1());
-            System.out.println("condition的c1="+condition.getC5());
-            System.out.println("condition的c1="+condition.getC6());
             try {
                 List<HashMap> lszb = bczbMapper.getZbByFz(condition);
                 String xml = "";
@@ -5764,7 +5754,6 @@ public class SysService {
                     mm.put("@" + mmm, m.get("P_" + mmm.toUpperCase()) == null ? "" : m.get("P_" + mmm.toUpperCase()));
                 }
             else {
-                System.out.println(m.get("OTYPE"));
             }
             //mm.put("#text",m.get("P_TEXT")==null?"":m.get("P_TEXT"));
 
@@ -5910,7 +5899,6 @@ public class SysService {
                     mm.put("@" + mmm, m.get("P_" + mmm.toUpperCase()) == null ? "" : m.get("P_" + mmm.toUpperCase()));
                 }
             else {
-                System.out.println(m.get("OTYPE"));
             }
             //mm.put("#text",m.get("P_TEXT")==null?"":m.get("P_TEXT"));
 
@@ -6421,7 +6409,6 @@ public class SysService {
         ResponseBody rp = new ResponseBody(params, "1", "获取成功", id, rq.getTaskid());
         User user = UserUtils.getUser();
         int c = frameMapper.isAdmin(user.getId());
-        System.out.println("管理员提交-------------"+user.getId());
         if (c > 0) {
             String textFromFile = "";
             BASE64Decoder decoder = new BASE64Decoder();
@@ -6716,7 +6703,6 @@ public class SysService {
             Condition condition = objectMapper.readValue(rq.getParams(), Condition.class);
             //System.out.println(rq.getParams());
             User user = UserUtils.getUser();
-            System.out.println("user.getDeptCode()====" + user.getDeptCode());
             condition.setDwdm(user.getDeptCode().substring(0, 4));
             try {
                 List<HashMap> lsHt = bczbMapper.getZhzbList(condition);
@@ -6774,7 +6760,6 @@ public class SysService {
             User user = UserUtils.getUser();
             condition.setDwdm(user.getDeptCode().substring(0, 4));
             try {
-                System.out.println("dwdm====" + condition);
                 List<HashMap> lsHt = bczbMapper.getJsrList(condition);
                 rp.setDatas(com.common.annotation.mapper.JsonMapper.toJsonString(lsHt));
             } catch (Exception e) {
@@ -7729,9 +7714,9 @@ public class SysService {
                 }else if(!mlTreeList.contains("2") && mlTreeList.contains("9")){
                 	returnData = "yeszb";
                 }else {
-                	System.out.println("=======Error Info============");
-                	System.out.println("mz and zb type is not right! ");
-                	System.out.println("=======Error Info============");
+//                	System.out.println("=======Error Info============");
+//                	System.out.println("mz and zb type is not right! ");
+//                	System.out.println("=======Error Info============");
                 }
                 rp.setDatas(returnData);
             }catch (Exception e) {
@@ -7936,7 +7921,6 @@ public class SysService {
                 if(bczbMapper.getMlRelationNum(m) == 0 ) {
                 	bczbMapper.delMlWhenNull(m);
                 }
-                System.out.println("123123");
                 //原来的设计
                 //region
                 {
@@ -8561,7 +8545,6 @@ public class SysService {
                         //l.add(file2.getAbsolutePath());
                         traverseFolder2(l, file2.getAbsolutePath(), doc);
                     } else {
-                        System.out.println("文件:" + file2.getPath());
                         l.add(file2.getPath().substring(file2.getPath().
                                 indexOf(Global.USERFILES) + Global.USERFILES.length()));
                         //l.add(file2.getPath());
@@ -8631,7 +8614,6 @@ public class SysService {
     
   //补充指标统计采集
     public ResponseBody bczbtjCj(RequestBody rq, Map params, String id) {
-        //System.out.println("----------------------------------------------------");
         ResponseBody rp = new ResponseBody(params, "1", "获取成功", id, rq.getTaskid());
         try {
             User user = UserUtils.getUser();
@@ -8639,7 +8621,6 @@ public class SysService {
             BASE64Decoder decoder = new BASE64Decoder();
             try {
             	textFromFile = new String(decoder.decodeBuffer((String) params.get("BCZBDATA")), "UTF-8");
-                //System.out.println(textFromFile);
                 if (StringUtils.isBlank(textFromFile)) return rp;
             } catch (Exception e) {
                 e.printStackTrace();

@@ -849,7 +849,8 @@ END;
     </select>
 
     <select id="getMlZbAList" resultType="java.util.HashMap">
-        with a as
+        select * from (
+        	with a as
              (select a.id
                 from SYS_OFFICE a
               connect by prior id = PARENT_ID
@@ -857,7 +858,7 @@ END;
                       and type = 2
                       and substr(code, 1, 4) = #{CODE}
                       and substr(code, 7, 8) = '03'
-                      ORDER SIBLINGS BY code desc)
+                      )
             select b.*,
                    b.bczbid bm,
                    (select p_mc
@@ -871,6 +872,7 @@ END;
              <if test="OILIDS!=null and OILIDS!=''">
                  and b.oilid in (${OILIDS})
              </if>
+        ) order by code
     </select>
     <select id="bcsbzcMlLists" resultType="com.common.sys.entity.Office">
         select level grade,a.*
