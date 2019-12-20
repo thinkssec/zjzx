@@ -9099,27 +9099,47 @@ public class SysService {
             			Map<String, String> realtionData = new HashMap<String, String>();//导入的指标与目录的关系表
             			//1、获取指标ID，更新数据
             			String zbid = map.get("id");
+            			String yq = map.get("yq");
+            			Condition condition2 = new Condition();
+                		condition2.setC1(map.get("yq"));
+                		String yqid = jqsqMapper.getYqidByName(condition2);//油区ID
+                		
             			if(StringUtils.isNotBlank(zbid)) {
-            				frameMapper.updateBcsbzcZbById(map);
-            			}else {
-            				zbid = UUID.randomUUID().toString().replaceAll("-", "");//UUID生成 导入数据的ID
-            				map.put("bbh", bbh);
-            				map.put("id", zbid);
-            				map.put("bm", bm);
-                			Condition condition2 = new Condition();
-                    		condition2.setC1(map.get("yq"));
-                    		String yqid = jqsqMapper.getYqidByName(condition2);//油区ID
-                    		map.put("oilid", yqid);
-                    		
-                    		realtionData.put("code", bm);
-                    		realtionData.put("oilid", yqid);
-                    		realtionData.put("bbh", bbh);
-                    		realtionData.put("zhid", mlId);
-                    		realtionData.put("bcid", zbid);
-                    		
-                    		frameMapper.addBcsbzcZb(map);//新增的油区信息
-                    		frameMapper.saveBcsbzcMlZbRealtion(realtionData);//保存导入的Excel数据到····指标-目录关系表
+            				if(idAndYqIsRight(zbid,yqid)) {
+            					frameMapper.updateBcsbzcZbById(map);
+            				}else {
+            					zbid = UUID.randomUUID().toString().replaceAll("-", "");//UUID生成 导入数据的ID
+                				map.put("bbh", bbh);
+                				map.put("id", zbid);
+                				map.put("bm", bm);
+                        		map.put("oilid", yqid);
+                        		
+                        		realtionData.put("code", bm);
+                        		realtionData.put("oilid", yqid);
+                        		realtionData.put("bbh", bbh);
+                        		realtionData.put("zhid", mlId);
+                        		realtionData.put("bcid", zbid);
+                        		
+                        		frameMapper.addBcsbzcZb(map);//新增的油区信息
+                        		frameMapper.saveBcsbzcMlZbRealtion(realtionData);//保存导入的Excel数据到····指标-目录关系表
+            				}
             			}
+//            			else {
+//            				zbid = UUID.randomUUID().toString().replaceAll("-", "");//UUID生成 导入数据的ID
+//            				map.put("bbh", bbh);
+//            				map.put("id", zbid);
+//            				map.put("bm", bm);
+//                    		map.put("oilid", yqid);
+//                    		
+//                    		realtionData.put("code", bm);
+//                    		realtionData.put("oilid", yqid);
+//                    		realtionData.put("bbh", bbh);
+//                    		realtionData.put("zhid", mlId);
+//                    		realtionData.put("bcid", zbid);
+//                    		
+//                    		frameMapper.addBcsbzcZb(map);//新增的油区信息
+//                    		frameMapper.saveBcsbzcMlZbRealtion(realtionData);//保存导入的Excel数据到····指标-目录关系表
+//            			}
             		}
             		
             		mlDataMap.put("id", mlId);
@@ -9139,6 +9159,16 @@ public class SysService {
             e.printStackTrace();
         }
         return rp;
+    }
+    
+    public boolean idAndYqIsRight(String id, String yqid) {
+    	
+    	int count = frameMapper.sbzcIsExist(id,yqid);
+    	if(count == 0) {
+    		return false;
+    	}else {
+    		return true;
+    	}
     }
     
     public static Map<String,String> getStringToMap(String mapStr){

@@ -1248,4 +1248,8 @@ END;
        select id from APP_SBZC_ML where code = #{bm} and bbh = #{bbh}
     </select>
     
+    <select id="sbzcIsExist" resultType="int">
+       select count(*) from APP_SBZC_BC where id = #{id} and oilid = #{yqid}
+    </select>
+    
 </mapper>

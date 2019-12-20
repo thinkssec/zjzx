@@ -141,5 +141,7 @@ public interface FrameMapper extends MainMapper {
     void updateBcsbzcZbById(Map<String, String> map);
     void updateBcsbzcMlById(Map<String, String> map);
     String getMlIdByParam(@Param("bm")String bm,@Param("bbh")String bbh);
+    int sbzcIsExist(@Param("id")String id,@Param("yqid")String yqid);
+    
     
 }

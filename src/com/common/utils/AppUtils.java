@@ -1248,9 +1248,6 @@ public class AppUtils {
             Map m = new HashMap();
             String mlcode =  r.getCode();
             String deptCode = mlcode.substring(0, 8);
-            System.out.println("=========================");
-            System.out.println("mlCode=" + mlcode);
-            System.out.println("=========================");
             if(StringUtils.isNotBlank(mlcode) && "undefined" != mlcode ) {
             	mlcode = mlcode.replace(deptCode, "B");
             }
@@ -1302,10 +1299,16 @@ public class AppUtils {
         Map<String, Object> doc = new LinkedHashMap<String, Object>();
         Office r=objdic.get(root);
         if(r!=null) {
+        	String mlcode =  r.getCode();
+            String deptCode = mlcode.substring(0, 8);
+            if(StringUtils.isNotBlank(mlcode) && "undefined" != mlcode ) {
+            	mlcode = mlcode.replace(deptCode, "");
+            }
+        	
             Map m = new HashMap();
             m.put("Level", r.getGrade()==null?"":r.getGrade());
-            m.put("Code", r.getId()==null?"":r.getId());
-            m.put("BzCode", r.getId()==null?"":r.getCode());
+            m.put("Code", r.getId()==null?"":mlcode);//r.getId()
+            m.put("BzCode", r.getId()==null?"": mlcode);//r.getCode()
             m.put("Text", r.getName()==null?"":r.getName());
             List ccc=new ArrayList();
             List ddd=new ArrayList();
@@ -1325,7 +1328,11 @@ public class AppUtils {
                 List<Map> lll=zbM.get(root);
                 for(Map o:lll){
                     Map sss=new HashMap();
-                    sss.put("BM",o.get("BM")==null?"":o.get("BM"));
+                    String bm = String.valueOf(o.get("BM"));
+                    if(StringUtils.isNotBlank(bm) && "undefined" != bm ) {
+                    	bm = bm.replace(deptCode, "");
+                    }
+                    sss.put("BM",o.get("BM")==null?"":bm);
                     sss.put("OILID",o.get("OILID")==null?"":o.get("OILID"));
                     sss.put("MC",o.get("MC")==null?"":o.get("MC"));
                     sss.put("DW",o.get("DW")==null?"":o.get("DW"));
