@@ -210,6 +210,9 @@ public class SysService {
                 } else {
                     fullPath = Global.getUserfilesBaseDir() + apath;
                 }
+                System.out.println("=================================");
+                System.out.println("====Read return path is:"+ fullPath);
+                System.out.println("=================================");
                 try {
                     /*File file = new File(fullPath);
                     String fileStr = FileCopyUtils.copyToString(new FileReader(file));*/
@@ -6169,7 +6172,7 @@ public class SysService {
                         return rp;
                     }
                     map = XmlUtils.Xml2MapWithAttr(textFromFile, true);
-                    String sql = AppUtils.readMap2Sql3(map, "-1", "", dw, (String) rq.getCpu(), user.getId(), "");
+                    String sql = AppUtils.readMap2Sql3(map, "-1", "", dw, (String) rq.getCpu(), user.getId(), "","");
                     HashMap h = new HashMap();
                     h.put("sql", sql);
                     bczbMapper.mergeProject3(h);
@@ -6190,7 +6193,7 @@ public class SysService {
 
                 }
                 sss = "(" + sss + ")";
-                List<HashMap> llll = bczbMapper.getZbByServerId(sss);
+                List<HashMap> llll = bczbMapper.getZbByServerId(sss,"");
                 for (HashMap dd : llll) {
                     Document n = getMapFromDb3((String) dd.get("OID"));
                     ls.add(n.getRootElement());
@@ -6407,6 +6410,7 @@ public class SysService {
 //用户补充指标入库
     public ResponseBody yhbczbRk(RequestBody rq, Map params, String id) {
         ResponseBody rp = new ResponseBody(params, "1", "获取成功", id, rq.getTaskid());
+        String bz = UUID.randomUUID().toString().replaceAll("-", "");
         User user = UserUtils.getUser();
         int c = frameMapper.isAdmin(user.getId());
         if (c > 0) {
@@ -6426,9 +6430,7 @@ public class SysService {
                 map = XmlUtils.Xml2MapWithAttr(textFromFile, true);
                 String sql = AppUtils.readMap2Sql4(map, "-1", "", dw, (String) rq.getCpu(), user.getId(), "");
                 HashMap h = new HashMap();
-
                 h.put("sql", sql);
-
                 bczbMapper.mergeProject4(h);
             } catch (Exception e) {
                 e.printStackTrace();
@@ -6457,7 +6459,7 @@ public class SysService {
                         return rp;
                     }
                     map = XmlUtils.Xml2MapWithAttr(textFromFile, true);
-                    String sql = AppUtils.readMap2Sql3(map, "-1", "", dw, (String) rq.getCpu(), user.getId(), "");
+                    String sql = AppUtils.readMap2Sql3(map, "-1", "", dw, (String) rq.getCpu(), user.getId(), "",bz);
                     HashMap h = new HashMap();
                     h.put("sql", sql);
                     bczbMapper.mergeProject3(h);
@@ -6478,7 +6480,7 @@ public class SysService {
 
                 }
                 sss = "(" + sss + ")";
-                List<HashMap> llll = bczbMapper.getZbByServerId(sss);
+                List<HashMap> llll = bczbMapper.getZbByServerId(sss,bz);
                 for (HashMap dd : llll) {
                     Document n = getMapFromDb3((String) dd.get("ID"));
                     ls.add(n.getRootElement());
@@ -6501,6 +6503,9 @@ public class SysService {
                 }catch (UnsupportedEncodingException e){
                 	e.printStackTrace();
                 }
+                System.out.println("=============================");
+                System.out.println("======FileName: "+ii+"======");
+                System.out.println("=============================");
                 FileUtils.writeToFile(saveDirectoryPath, xml, false);
                 for (HashMap tm : adm) {
                     Map mail = new HashMap();
@@ -6521,6 +6526,9 @@ public class SysService {
                 rp.setMessage("操作失败！");
                 e.printStackTrace();
             }
+            System.out.println("=============================");
+            System.out.println("=======not admin======");
+            System.out.println("=============================");
         }
         return rp;
     }
@@ -9123,23 +9131,22 @@ public class SysService {
                         		frameMapper.addBcsbzcZb(map);//新增的油区信息
                         		frameMapper.saveBcsbzcMlZbRealtion(realtionData);//保存导入的Excel数据到····指标-目录关系表
             				}
+            			}else {
+            				zbid = UUID.randomUUID().toString().replaceAll("-", "");//UUID生成 导入数据的ID
+            				map.put("bbh", bbh);
+            				map.put("id", zbid);
+            				map.put("bm", bm);
+                    		map.put("oilid", yqid);
+                    		
+                    		realtionData.put("code", bm);
+                    		realtionData.put("oilid", yqid);
+                    		realtionData.put("bbh", bbh);
+                    		realtionData.put("zhid", mlId);
+                    		realtionData.put("bcid", zbid);
+                    		
+                    		frameMapper.addBcsbzcZb(map);//新增的油区信息
+                    		frameMapper.saveBcsbzcMlZbRealtion(realtionData);//保存导入的Excel数据到····指标-目录关系表
             			}
-//            			else {
-//            				zbid = UUID.randomUUID().toString().replaceAll("-", "");//UUID生成 导入数据的ID
-//            				map.put("bbh", bbh);
-//            				map.put("id", zbid);
-//            				map.put("bm", bm);
-//                    		map.put("oilid", yqid);
-//                    		
-//                    		realtionData.put("code", bm);
-//                    		realtionData.put("oilid", yqid);
-//                    		realtionData.put("bbh", bbh);
-//                    		realtionData.put("zhid", mlId);
-//                    		realtionData.put("bcid", zbid);
-//                    		
-//                    		frameMapper.addBcsbzcZb(map);//新增的油区信息
-//                    		frameMapper.saveBcsbzcMlZbRealtion(realtionData);//保存导入的Excel数据到····指标-目录关系表
-//            			}
             		}
             		
             		mlDataMap.put("id", mlId);

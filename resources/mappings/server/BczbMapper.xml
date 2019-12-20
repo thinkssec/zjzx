@@ -813,7 +813,7 @@
         select * from APP_OPROPERTY_YHBCZB where okey='SERVERID' and ovalue in ${SCOPE}
     </select>
     <select id="getZbByServerId" resultType="java.util.HashMap">
-        select * from APP_OBJECT_YHBCZB where p_serverid in ${SCOPE}
+        select * from APP_OBJECT_YHBCZB where p_serverid in ${SCOPE} and bz = #{bz}
     </select>
     <select id="getDwBczbTreeById_bak" resultType="java.util.LinkedHashMap">
         select * from (select a.*,b.ovalue oder from APP_OBJECT_DWCBBCZB a left join

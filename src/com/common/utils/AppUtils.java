@@ -374,14 +374,14 @@ public class AppUtils {
                     }else if (property instanceof Map) {
                         Map<String, Object> child1 = new HashMap<String, Object>();
                         child1.put(okey, (Map<String, Object>) property);
-                        sql.append(readMap2Sql3(child1, "",pkey,deptid,cpuid,userid,oilCode));
+                        sql.append(readMap2Sql3(child1, "",pkey,deptid,cpuid,userid,oilCode,""));
                     } else if (property instanceof List) {
                         for (int i = 0; i < ((List) property).size(); i++) {
                             /*if((Map<String, Object>) ((List) property).get(i) instanceof Map)
                             else*/
                             Map<String, Object> child1 = new HashMap<String, Object>();
                             child1.put(okey, ((List) property).get(i));
-                            sql.append(readMap2Sql3(child1, "",pkey,deptid,cpuid,userid,oilCode));
+                            sql.append(readMap2Sql3(child1, "",pkey,deptid,cpuid,userid,oilCode,""));
                         }
                     }
                 }
@@ -399,14 +399,14 @@ public class AppUtils {
                     }else if (property instanceof Map) {
                         Map<String, Object> child1 = new HashMap<String, Object>();
                         child1.put(okey, (Map<String, Object>) property);
-                        sql.append(readMap2Sql3(child1, "",pkey,deptid,cpuid,userid,oilid));
+                        sql.append(readMap2Sql3(child1, "",pkey,deptid,cpuid,userid,oilid,""));
                     } else if (property instanceof List) {
                         for (int i = 0; i < ((List) property).size(); i++) {
                             /*if((Map<String, Object>) ((List) property).get(i) instanceof Map)
                             else*/
                             Map<String, Object> child1 = new HashMap<String, Object>();
                             child1.put(okey, ((List) property).get(i));
-                            sql.append(readMap2Sql3(child1, "",pkey,deptid,cpuid,userid,oilid));
+                            sql.append(readMap2Sql3(child1, "",pkey,deptid,cpuid,userid,oilid,""));
                         }
                     }
                 }
@@ -425,12 +425,12 @@ public class AppUtils {
                         else if (property instanceof Map) {
                             Map<String, Object> child1 = new HashMap<String, Object>();
                             child1.put(okey, (Map<String, Object>) property);
-                            sql.append(readMap2Sql3(child1, uuid,"",deptid,cpuid,userid,oilid));
+                            sql.append(readMap2Sql3(child1, uuid,"",deptid,cpuid,userid,oilid,""));
                         } else if (property instanceof List) {
                             for (int i = 0; i < ((List) property).size(); i++) {
                                 Map<String, Object> child1 = new HashMap<String, Object>();
                                 child1.put(okey, ((List) property).get(i));
-                                sql.append(readMap2Sql3(child1, uuid,"",deptid,cpuid,userid,oilid));
+                                sql.append(readMap2Sql3(child1, uuid,"",deptid,cpuid,userid,oilid,""));
                             }
                         }
                     }
@@ -439,7 +439,7 @@ public class AppUtils {
         }
         return sql.toString();
     }
-    public static String readMap2Sql3(Map<String, Object> map, String pid,String pk,String deptid,String cpuid,String userid,String oilid) {
+    public static String readMap2Sql3(Map<String, Object> map, String pid,String pk,String deptid,String cpuid,String userid,String oilid,String bz) {
         StringBuffer sql = new StringBuffer("");
         for (String key : map.keySet()) {
             //Map<String, Object> node = (Map<String, Object>) map.get(key);
@@ -456,14 +456,14 @@ public class AppUtils {
                     }else if (property instanceof Map) {
                         Map<String, Object> child1 = new HashMap<String, Object>();
                         child1.put(okey, (Map<String, Object>) property);
-                        sql.append(readMap2Sql3(child1, "",pkey,deptid,cpuid,userid,oilCode));
+                        sql.append(readMap2Sql3(child1, "",pkey,deptid,cpuid,userid,oilCode,bz));
                     } else if (property instanceof List) {
                         for (int i = 0; i < ((List) property).size(); i++) {
                             /*if((Map<String, Object>) ((List) property).get(i) instanceof Map)
                             else*/
                             Map<String, Object> child1 = new HashMap<String, Object>();
                             child1.put(okey, ((List) property).get(i));
-                            sql.append(readMap2Sql3(child1, "",pkey,deptid,cpuid,userid,oilCode));
+                            sql.append(readMap2Sql3(child1, "",pkey,deptid,cpuid,userid,oilCode,bz));
                         }
                     }
                 }
@@ -480,14 +480,14 @@ public class AppUtils {
                     }else if (property instanceof Map) {
                         Map<String, Object> child1 = new HashMap<String, Object>();
                         child1.put(okey, (Map<String, Object>) property);
-                        sql.append(readMap2Sql3(child1, "",pkey,deptid,cpuid,userid,oilid));
+                        sql.append(readMap2Sql3(child1, "",pkey,deptid,cpuid,userid,oilid,bz));
                     } else if (property instanceof List) {
                         for (int i = 0; i < ((List) property).size(); i++) {
                             /*if((Map<String, Object>) ((List) property).get(i) instanceof Map)
                             else*/
                             Map<String, Object> child1 = new HashMap<String, Object>();
                             child1.put(okey, ((List) property).get(i));
-                            sql.append(readMap2Sql3(child1, "",pkey,deptid,cpuid,userid,oilid));
+                            sql.append(readMap2Sql3(child1, "",pkey,deptid,cpuid,userid,oilid,bz));
                         }
                     }
                 }
@@ -497,8 +497,8 @@ public class AppUtils {
                 if(StringUtils.isBlank(pid)) pid="-1";
                 if (node instanceof String) {
                 } else {
-                    String bef="insert into APP_OBJECT_YHBCZB(ord,ID,PID,OTYPE,LB,DEPTID,USERID,OILID ";
-                    String aft=" VALUES (SEQ_NODEORD.NEXTVAL,'" + uuid + "','" + pid + "','" + decodeSpecialChars(key) + "','1','"+deptid+"','"+userid+"','"+oilid+"'";
+                    String bef="insert into APP_OBJECT_YHBCZB(ord,ID,PID,OTYPE,LB,DEPTID,USERID,OILID, BZ";
+                    String aft=" VALUES (SEQ_NODEORD.NEXTVAL,'" + uuid + "','" + pid + "','" + decodeSpecialChars(key) + "','1','"+deptid+"','"+userid+"','"+oilid+"','"+bz+"'";
                     for (String okey : ((Map<String, Object>) node).keySet()) {
                         Object property = ((Map<String, Object>) node).get(okey);
                         if (property instanceof String) {
@@ -507,12 +507,12 @@ public class AppUtils {
                         }else if (property instanceof Map) {
                             Map<String, Object> child1 = new HashMap<String, Object>();
                             child1.put(okey, (Map<String, Object>) property);
-                            sql.append(readMap2Sql3(child1, uuid,"",deptid,cpuid,userid,oilid));
+                            sql.append(readMap2Sql3(child1, uuid,"",deptid,cpuid,userid,oilid,bz));
                         } else if (property instanceof List) {
                             for (int i = 0; i < ((List) property).size(); i++) {
                                 Map<String, Object> child1 = new HashMap<String, Object>();
                                 child1.put(okey, ((List) property).get(i));
-                                sql.append(readMap2Sql3(child1, uuid,"",deptid,cpuid,userid,oilid));
+                                sql.append(readMap2Sql3(child1, uuid,"",deptid,cpuid,userid,oilid,bz));
                             }
                         }
                     }
@@ -539,14 +539,14 @@ public class AppUtils {
                     }else if (property instanceof Map) {
                         Map<String, Object> child1 = new HashMap<String, Object>();
                         child1.put(okey, (Map<String, Object>) property);
-                        sql.append(readMap2Sql3(child1, "",pkey,deptid,cpuid,userid,oilCode));
+                        sql.append(readMap2Sql3(child1, "",pkey,deptid,cpuid,userid,oilCode,""));
                     } else if (property instanceof List) {
                         for (int i = 0; i < ((List) property).size(); i++) {
                             /*if((Map<String, Object>) ((List) property).get(i) instanceof Map)
                             else*/
                             Map<String, Object> child1 = new HashMap<String, Object>();
                             child1.put(okey, ((List) property).get(i));
-                            sql.append(readMap2Sql3(child1, "",pkey,deptid,cpuid,userid,oilCode));
+                            sql.append(readMap2Sql3(child1, "",pkey,deptid,cpuid,userid,oilCode,""));
                         }
                     }
                 }
@@ -563,14 +563,14 @@ public class AppUtils {
                     }else if (property instanceof Map) {
                         Map<String, Object> child1 = new HashMap<String, Object>();
                         child1.put(okey, (Map<String, Object>) property);
-                        sql.append(readMap2Sql3(child1, "",pkey,deptid,cpuid,userid,oilid));
+                        sql.append(readMap2Sql3(child1, "",pkey,deptid,cpuid,userid,oilid,""));
                     } else if (property instanceof List) {
                         for (int i = 0; i < ((List) property).size(); i++) {
                             /*if((Map<String, Object>) ((List) property).get(i) instanceof Map)
                             else*/
                             Map<String, Object> child1 = new HashMap<String, Object>();
                             child1.put(okey, ((List) property).get(i));
-                            sql.append(readMap2Sql3(child1, "",pkey,deptid,cpuid,userid,oilid));
+                            sql.append(readMap2Sql3(child1, "",pkey,deptid,cpuid,userid,oilid,""));
                         }
                     }
                 }
@@ -590,12 +590,12 @@ public class AppUtils {
                         }else if (property instanceof Map) {
                             Map<String, Object> child1 = new HashMap<String, Object>();
                             child1.put(okey, (Map<String, Object>) property);
-                            sql.append(readMap2Sql3(child1, uuid,"",deptid,cpuid,userid,oilid));
+                            sql.append(readMap2Sql3(child1, uuid,"",deptid,cpuid,userid,oilid,""));
                         } else if (property instanceof List) {
                             for (int i = 0; i < ((List) property).size(); i++) {
                                 Map<String, Object> child1 = new HashMap<String, Object>();
                                 child1.put(okey, ((List) property).get(i));
-                                sql.append(readMap2Sql3(child1, uuid,"",deptid,cpuid,userid,oilid));
+                                sql.append(readMap2Sql3(child1, uuid,"",deptid,cpuid,userid,oilid,""));
                             }
                         }
                     }

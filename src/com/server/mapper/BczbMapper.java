@@ -48,7 +48,7 @@ public interface BczbMapper {
 	List<HashMap> getDwGcfByDw(Map c);
 	List<HashMap> getDwQdByDw(Map c);
 	List<HashMap> getBcsbzcByDw(Map c);
-	List<HashMap> getZbByServerId(@Param("SCOPE") String scope);
+	List<HashMap> getZbByServerId(@Param("SCOPE") String scope,@Param("bz") String bz);
 	List<HashMap> getZbzxByServerId(@Param("SCOPE") String scope);
 	List<HashMap> getDwZbByServerId(@Param("SCOPE") String scope);
 	List<HashMap> getYhBczb(Map c);

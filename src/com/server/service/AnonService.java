@@ -1342,7 +1342,7 @@ public class AnonService {
                         return rp;
                     }
                     map = XmlUtils.Xml2MapWithAttr(textFromFile, true);
-                    String sql = AppUtils.readMap2Sql3(map, "-1", "", dw, (String) rq.getCpu(), user.getId(), "");
+                    String sql = AppUtils.readMap2Sql3(map, "-1", "", dw, (String) rq.getCpu(), user.getId(), "","AnonService");
                     HashMap h = new HashMap();
                     h.put("sql", sql);
                     bczbMapper.mergeProject3(h);
@@ -1363,7 +1363,7 @@ public class AnonService {
 
                 }
                 sss = "(" + sss + ")";
-                List<HashMap> llll = bczbMapper.getZbByServerId(sss);
+                List<HashMap> llll = bczbMapper.getZbByServerId(sss,"AnonService");
                 for (HashMap dd : llll) {
                     Document n = getMapFromDb3((String) dd.get("ID"));
                     ls.add(n.getRootElement());
