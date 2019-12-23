@@ -1729,6 +1729,11 @@ public class SysService {
                     }
                 }
                 HashMap m = toTree2(lsHt, children, rootId);
+                /**
+                 * haspmap内部排序
+                 * */
+                List sbzcMlData = (List)m.get("children");
+                orderDwbcsbzcTree(m,sbzcMlData);
                 
                 List mm = new ArrayList();
                 mm.add(m);
@@ -1746,6 +1751,50 @@ public class SysService {
         return rp;
     }
 
+    /**
+          * 单位补充设备主材的树排序
+     * */
+    public void orderDwbcsbzcTree(Map mlMap, List mlMapContainsList) {
+    	if(mlMapContainsList != null && mlMapContainsList.size() > 0) {
+			List newOrderMlList = orderDwbcsbzcMl(mlMapContainsList);
+			mlMap.put("children", newOrderMlList);
+        	for (int i = 0; i < mlMapContainsList.size(); i++) {
+        		HashMap nextMl = (HashMap)mlMapContainsList.get(i);//3级目录
+        		List nextMlList = (List)nextMl.get("children");//3级目录包含的多个指标
+        		orderDwbcsbzcTree(nextMl,nextMlList);	
+    		}
+    	}
+    }
+    
+    /**
+     * 对List根据Code排序，
+     * 生成“根据code有序的” list
+     * */
+    public List orderDwbcsbzcMl(List mlDataList) {
+    	List newMlList = new ArrayList<>();
+		List<String> codeList = new ArrayList<String>();
+		if(mlDataList != null && mlDataList.size() > 0) {
+			for (int i = 0; i < mlDataList.size(); i++) {
+				HashMap mlMap = (HashMap)mlDataList.get(i);
+				String code = String.valueOf(mlMap.get("code"));
+				codeList.add(code);
+			}
+			Collections.sort(codeList); 
+			
+			for (int j = 0; j < codeList.size(); j++) {
+				String orderCode = codeList.get(j);
+				for (int k = 0; k < mlDataList.size(); k++) {
+					HashMap mlMap = (HashMap)mlDataList.get(k);
+    				String code = String.valueOf(mlMap.get("code"));
+    				if(orderCode.equals(code)) {
+    					newMlList.add(mlMap);
+    				}
+				}
+			}
+		}
+		return newMlList;
+    }
+    
     public ResponseBody xtxmMlLists(RequestBody rq, Map params, String id) {
         ResponseBody rp = new ResponseBody(params, "1", "获取数据列表", id, rq.getTaskid());
         try {
@@ -1912,8 +1961,9 @@ public class SysService {
     public HashMap toTree2(HashMap<String, Office> dic, HashMap<String, List<Office>> children, String rootId) {
         HashMap h = new HashMap();
         Office m = dic.get(rootId);
+        String deptCode = "B"+ m.getCode().substring(8);
         h.put("id", m.getId());
-        h.put("code", m.getCode().substring(8));
+        h.put("code", deptCode);
         h.put("text", m.getName());
         h.put("rksj", m.getCreateDate());
         h.put("bz", m.getRemarks());

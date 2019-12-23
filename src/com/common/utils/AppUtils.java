@@ -1302,7 +1302,7 @@ public class AppUtils {
         	String mlcode =  r.getCode();
             String deptCode = mlcode.substring(0, 8);
             if(StringUtils.isNotBlank(mlcode) && "undefined" != mlcode ) {
-            	mlcode = mlcode.replace(deptCode, "");
+            	mlcode = mlcode.replace(deptCode, "B");
             }
         	
             Map m = new HashMap();
