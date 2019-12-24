@@ -772,10 +772,6 @@ public class AnonService {
                     }
                     Map<String, Object> docStr = AppUtils.getSbzcMlMap(lsHt, children, rootId, zbchildren);
                     String xml = "";
-                    HashMap xmlData = (HashMap)docStr.get("BCSBZCClass");
-                    List xmlContainsMlList = (List)((HashMap)xmlData.get("BCSBZCClasses")).get("BCSBZCClass");//1级目录
-                    orderDwbcsbzcTreeXml(xmlData,xmlContainsMlList);
-                    
                     Document doc = XmlUtils.Map2Xml(docStr);
                     String saveDirectoryPath = Global.getConfig("upLoadPath") + "/" + dwbcsbzcPath + "/" + rq.getCpu();
                     xml = XmlUtils.FormatXml(doc);
@@ -801,44 +797,6 @@ public class AnonService {
         }
         return rp;
     }
-    
-    public void orderDwbcsbzcTreeXml(HashMap xmlData,List xmlContainMlList) {
-    	if(xmlContainMlList != null && xmlContainMlList.size() > 0) {
-			List dwbczbTreeXml = dwbcsbzcTreeXmlList(xmlContainMlList);
-            ((HashMap)xmlData.get("BCSBZCClasses")).put("BCSBZCClass", dwbczbTreeXml);
-        	for (int k = 0; k < xmlContainMlList.size(); k++) {
-        		HashMap xmlMap = (HashMap)xmlContainMlList.get(k);//指标目录
-        		List xmlMapContainsList = (List)((HashMap)xmlMap.get("BCSBZCClasses")).get("BCSBZCClass");
-        		orderDwbcsbzcTreeXml(xmlMap,xmlMapContainsList);
-        	}
-        }
-    }
-    
-    public List dwbcsbzcTreeXmlList(List xmlDataList) {
-    	List newResultList = new ArrayList<>();
-		List<String> codeList = new ArrayList<String>();
-		if(xmlDataList != null && xmlDataList.size() > 0) {
-        	for (int i = 0; i < xmlDataList.size(); i++) {
-        		HashMap zbxmlMl = (HashMap)xmlDataList.get(i);//指标
-        		String code = String.valueOf(zbxmlMl.get("BzCode"));
-        		codeList.add(code);
-        	}
-        	Collections.sort(codeList); 
-        	
-        	for (int j = 0; j < codeList.size(); j++) {
-				String orderCode = codeList.get(j);
-				for (int p = 0; p < xmlDataList.size(); p++) {
-					HashMap zbMl = (HashMap)xmlDataList.get(p);
-    				String code = String.valueOf(zbMl.get("BzCode"));
-    				if(orderCode.equals(code)) {
-    					newResultList.add(zbMl);
-    				}
-				}
-			}
-        }
-    	return newResultList;
-    }
-
     
     public ResponseBody getSbzcBbList(RequestBody rq, Map params, String id){
         ResponseBody rp = new ResponseBody(params, "1", "获取单位补充设备主材更新列表成功", id, rq.getTaskid());
@@ -903,6 +861,10 @@ public class AnonService {
                             //System.out.println("-----------2"+zbchildren);
                             Map<String, Object> docStr = AppUtils.getSbzcMlMap(lsHt, children, rootId, zbchildren);
                             String xml = "";
+                            HashMap xmlData = (HashMap)docStr.get("BCSBZCClass");
+                            List xmlContainsMlList = (List)((HashMap)xmlData.get("BCSBZCClasses")).get("BCSBZCClass");//1级目录
+                            orderDwbcsbzcTreeXml(xmlData,xmlContainsMlList);
+                            
                             Document doc = XmlUtils.Map2Xml(docStr);
                             String saveDirectoryPath = Global.getConfig("upLoadPath") + "/" + dwbcsbzcPath + "/" + rq.getCpu()+bbh_last+bbh;
                             xml = XmlUtils.FormatXml(doc);
@@ -930,6 +892,80 @@ public class AnonService {
         }
         return rp;
     }
+    public void orderDwbcsbzcTreeXml(HashMap xmlData,List xmlContainMlList) {
+    	if(xmlContainMlList != null && xmlContainMlList.size() > 0) {//目录排序
+			List dwbczbTreeXml = dwbcsbzcTreeXmlList(xmlContainMlList);
+            ((HashMap)xmlData.get("BCSBZCClasses")).put("BCSBZCClass", dwbczbTreeXml);
+        	for (int k = 0; k < xmlContainMlList.size(); k++) {
+        		HashMap xmlMap = (HashMap)xmlContainMlList.get(k);//指标目录
+        		if(String.valueOf(xmlMap.get("Level")).equals("4")) {
+        			List xmlMapContainsList =  (List)((HashMap)xmlMap.get("BCSBZCs")).get("BCSBZC");
+                	if(xmlMapContainsList != null && xmlMapContainsList.size() > 0) {//
+                		List orderdwbcsbzcZbList = orderdwbcsbzcZbList(xmlMapContainsList);
+            			((HashMap)xmlMap.get("BCSBZCs")).put("BCSBZC", orderdwbcsbzcZbList);
+                	}
+        		}else {
+	        		List xmlMapContainsList = (List)((HashMap)xmlMap.get("BCSBZCClasses")).get("BCSBZCClass");
+	    			orderDwbcsbzcTreeXml(xmlMap,xmlMapContainsList);
+        		}
+        	}
+        }
+    }
+    
+    public List dwbcsbzcTreeXmlList(List xmlDataList) {
+    	List newResultList = new ArrayList<>();
+		List<String> codeList = new ArrayList<String>();
+		if(xmlDataList != null && xmlDataList.size() > 0) {
+        	for (int i = 0; i < xmlDataList.size(); i++) {
+        		HashMap zbxmlMl = (HashMap)xmlDataList.get(i);//指标
+        		String code = String.valueOf(zbxmlMl.get("BzCode"));
+        		codeList.add(code);
+        	}
+        	Collections.sort(codeList); 
+        	
+        	for (int j = 0; j < codeList.size(); j++) {
+				String orderCode = codeList.get(j);
+				for (int p = 0; p < xmlDataList.size(); p++) {
+					HashMap zbMl = (HashMap)xmlDataList.get(p);
+    				String code = String.valueOf(zbMl.get("BzCode"));
+    				if(orderCode.equals(code)) {
+    					newResultList.add(zbMl);
+    				}
+				}
+			}
+        }
+    	return newResultList;
+    }
+
+    public List orderdwbcsbzcZbList(List xmlDataList) {
+    	List newResultList = new ArrayList<>();
+		List<String> codeList = new ArrayList<String>();
+		if(xmlDataList != null && xmlDataList.size() > 0) {
+        	for (int i = 0; i < xmlDataList.size(); i++) {
+        		HashMap zbxmlMl = (HashMap)xmlDataList.get(i);//指标
+        		String code = String.valueOf(zbxmlMl.get("BM"));
+        		codeList.add(code);
+        	}
+        	
+        	HashSet resultSet = new HashSet(codeList);
+        	codeList.clear();
+        	codeList.addAll(resultSet);
+        	Collections.sort(codeList); 
+        	
+        	for (int j = 0; j < codeList.size(); j++) {
+				String orderCode = codeList.get(j);
+				for (int p = 0; p < xmlDataList.size(); p++) {
+					HashMap zbMl = (HashMap)xmlDataList.get(p);
+    				String code = String.valueOf(zbMl.get("BM"));
+    				if(orderCode.equals(code)) {
+    					newResultList.add(zbMl);
+    				}
+				}
+			}
+        }
+    	return newResultList;
+    }
+    
     public ResponseBody milGet1Attach(RequestBody rq, Map params, String id) {
         ResponseBody rp = new ResponseBody(params, "1", "获取邮件附件信息成功！", id, rq.getTaskid());
         /*try {

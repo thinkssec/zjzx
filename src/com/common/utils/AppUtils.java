@@ -1333,7 +1333,6 @@ public class AppUtils {
                     	bm = bm.replace(deptCode, "B");
                     }
                     sss.put("BM",o.get("BM")==null?"":bm);
-                    sss.put("BzCode",o.get("BM")==null?"":bm);
                     sss.put("OILID",o.get("OILID")==null?"":o.get("OILID"));
                     sss.put("MC",o.get("MC")==null?"":o.get("MC"));
                     sss.put("DW",o.get("DW")==null?"":o.get("DW"));
