@@ -81,6 +81,7 @@ public class AnonService {
     BczbMapper bczbMapper;
     @Autowired
     EmailMapper emailMapper;
+    
     String bczbXfPath = Global.YSBCZBXF_BASE_URL;
     String yhbczbPath = Global.YHBCZBXF_BASE_URL;
     String dwbczbPath = Global.DWBCZBXF_BASE_URL;
@@ -709,7 +710,11 @@ public class AnonService {
                         c.add(z);
                     }
                     Map<String, Object> docStr = AppUtils.getMlMap(lsHt, children, rootId, zbchildren);
+                    HashMap xmlData = (HashMap)docStr.get("BCZBLocalClass");
+                    List xmlContainsMlList = (List)((HashMap)xmlData.get("BCZBLocalClasses")).get("BCZBLocalClass");//1级目录
+                    sysService.orderDwbczbTreeXml(xmlData,xmlContainsMlList);
                     String xml = "";
+                    
                     Document doc = XmlUtils.Map2Xml(docStr);
                     String saveDirectoryPath = Global.getConfig("upLoadPath") + "/" + dwbczbPath + "/" + rq.getCpu();
 
