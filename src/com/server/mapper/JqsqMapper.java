@@ -46,6 +46,7 @@ public interface JqsqMapper {
 	List<HashMap> getYq(Condition condition);
 	List<HashMap> getbb(Condition condition);
     void saveJqsqpz(HashMap map);
+    void saveJqsqpz2(HashMap map);
     HashMap isRegist(Map map);
 	HashMap isRegist2(Map map);
 	HashMap isRegistUser(Map map);

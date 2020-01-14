@@ -846,7 +846,7 @@
         <if test="c1 != null">
             and s.zhid=#{c1}
         </if>
-        order by t.rksj desc
+        order by t.bm, t.oilid
     </select>
     <select id="getBcsbzcByMl" resultType="java.util.HashMap">
         select a.* from APP_SBZC_BC a,APP_SBZC_MLRALATION  b

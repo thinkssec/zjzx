@@ -77,7 +77,8 @@
     </select>
     <select id="getUserListD" resultType="java.util.HashMap">
         <include refid="com.base.baseMapper.pageStart"/>
-        select r.userid,
+        select * from (
+        	select r.userid,
             r.username,
             r.loginname,
             r.pwd,
@@ -90,35 +91,36 @@
             r.fpz,
             r.email,
             r.bzxx,
-        (select b.id
-        from SYS_USERROLE a, V_OFFICE b
-        where b.type in ('1','2','3') and a.userid = r.userid
-        and a.roleid = b.id) admin,
-        (select b.name
-        from SYS_USERROLE a, V_OFFICE b
-        where b.type in ('1','2','3') and a.userid = r.userid
-        and a.roleid = b.id) adminmc,
-        to_char(createtime, 'yyyymmdd hh24:mi:ss') createtime
-        from app_user r
-        where isdel = '0'
-        and r.userid != '1'
-        and r.userid != '2'
-        and r.userid !=#{userid}
-        and (exists
-        (select 1
-        from SYS_USERROLE s, v_office t
-        where r.userid = s.userid
-        and s.roleid = t.id
-        and t.rt = #{dwdm}) or not exists
-        (select 1
-        from SYS_USERROLE s, v_office t
-        where r.userid = s.userid
-        and s.roleid = t.id
-        and t.rt != #{dwdm}
-        and t.type in ('1', '2', '3')))
-        <if test="c1 != null">
-            and r.username like '%'||#{c1}||'%'
-        </if>
+	        (select b.id
+	        from SYS_USERROLE a, V_OFFICE b
+	        where b.type in ('1','2','3') and a.userid = r.userid
+	        and a.roleid = b.id) admin,
+	        (select b.name
+	        from SYS_USERROLE a, V_OFFICE b
+	        where b.type in ('1','2','3') and a.userid = r.userid
+	        and a.roleid = b.id) adminmc,
+	        to_char(createtime, 'yyyymmdd hh24:mi:ss') createtime
+	        from app_user r
+	        where isdel = '0'
+	        and r.userid != '1'
+	        and r.userid != '2'
+	        and r.userid !=#{userid}
+	        and (exists
+	        (select 1
+	        from SYS_USERROLE s, v_office t
+	        where r.userid = s.userid
+	        and s.roleid = t.id
+	        and t.rt = #{dwdm}) or not exists
+	        (select 1
+	        from SYS_USERROLE s, v_office t
+	        where r.userid = s.userid
+	        and s.roleid = t.id
+	        and t.rt != #{dwdm}
+	        and t.type in ('1', '2', '3')))
+	        <if test="c1 != null">
+	            and r.username like '%'||#{c1}||'%'
+	        </if>
+        ) where adminmc is null
         order by createtime desc
         <include refid="com.base.baseMapper.pageEnd"/>
     </select>

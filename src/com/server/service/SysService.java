@@ -837,6 +837,49 @@ public class SysService {
         return rp;
     }
 
+    public ResponseBody savejqsqpz2(RequestBody rq, Map params, String id) {
+        ResponseBody rp = new ResponseBody(params, "1", "保存成功！", id, rq.getTaskid());
+        try {
+            ObjectMapper objectMapper = new ObjectMapper();
+            Condition condition = objectMapper.readValue(rq.getParams(), Condition.class);
+            try {
+                //String updL = StringEscapeUtils.unescapeHtml(condition.getC6());
+                String updL = condition.getC6();
+                String HPDWMC = condition.getC1();
+                JavaType javaType = JsonMapper.getInstance().getTypeFactory().constructParametricType(List.class, HashMap.class);
+                List<HashMap> h = JsonMapper.getInstance().fromJson(updL, javaType);
+                if(h.size()==0){
+                	HashMap map = new HashMap();
+                	if(condition.getC4().equals("del")){
+                		map.put("HPDWMC", null);
+                        map.put("HPDW", null);
+                        map.put("HPYQSJ", null);
+                        map.put("HPYQSJMC", null);
+                	}if(condition.getC4().equals("save")){
+                		map.put("HPDWMC", HPDWMC);
+                        map.put("HPDW", condition.getC2());
+                        map.put("HPYQSJ", "8200,8300,8400,8100,8500,8600,8900,9000,9100");
+                        map.put("HPYQSJMC", "中原,河南,江汉,胜利,江苏,西北,华北,西南,长输");
+                	}
+                	map.put("CPUID", condition.getC3());
+                    h.add(map);
+                }
+                HashMap m = new HashMap();
+                m.put("list", h);
+                jqsqMapper.saveJqsqpz2(m);
+            } catch (Exception e) {
+                e.printStackTrace();
+                rp.setIssuccess("0");
+                rp.setMessage("操作失败！" + e.getMessage());
+            }
+        } catch (Exception e) {
+            rp.setIssuccess("0");
+            rp.setMessage("操作失败！" + e.getMessage());
+            e.printStackTrace();
+        }
+        return rp;
+    }
+    
     public ResponseBody jqsqbty(RequestBody rq, Map params, String id) {
         ResponseBody rp = new ResponseBody(params, "1", "保存成功！", id, rq.getTaskid());
         try {

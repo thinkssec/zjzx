@@ -147,6 +147,23 @@
         COMMIT;
         END;
     </update>
+    
+    <update id="saveJqsqpz2">
+        BEGIN
+        <foreach collection="list" item="record" index="index">
+            UPDATE 
+            	SYS_JQRZ_HP 
+            SET	
+            	hpdw=#{record.HPDW},
+            	hpdwmc=#{record.HPDWMC},
+            	hpyqsj=#{record.HPYQSJ},
+            	hpyqsjmc=#{record.HPYQSJMC}
+            where cpuid=#{record.CPUID};
+        </foreach>
+        COMMIT;
+        END;
+    </update>
+    
     <update id="regist">
         DECLARE
         v_status varchar2(100):='-1';
