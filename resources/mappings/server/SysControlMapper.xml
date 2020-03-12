@@ -68,12 +68,27 @@
         delete from sys_request
     </delete>
     <select id="getRequestList" resultType="java.util.HashMap">
-        select b.username username,b.dw dw,t.CALL,t.STATUS,t.ID,to_char(intime,'yyyymmdd hh24:mi:ss') i,
-        to_char(outtime,'yyyymmdd hh24:mi:ss') o,
-        decode(status,1,'正在接收','接收成功') s
-        from sys_request t, APP_USER b where 1=1 and to_char(intime,'yyyyMMdd')=to_char(sysdate,'yyyyMMdd') and b.LOGINNAME=t.USERNAME and t.username is not null
-        
-        order by intime desc
+        	select b.username username,
+			       b.dw dw,
+			       t.CALL,
+			       t.STATUS,
+			       t.ID,
+			       to_char(intime, 'yyyy-mm-dd hh24:mi:ss') i,
+			       to_char(outtime, 'yyyy-mm-dd hh24:mi:ss') o,
+			       decode(status, 1, '正在接收', '接收成功') s
+			  from sys_request t, APP_USER b
+			 where 1 = 1
+			   and to_char(intime, 'yyyyMMdd') = to_char(sysdate, 'yyyyMMdd')
+			   and b.LOGINNAME = t.USERNAME
+			   and t.username is not null
+			   <if test="startTime != '' and  !startTime.equals('')">
+		           and intime <![CDATA[ >= ]]> to_date(#{startTime}, 'yyyy-mm-dd hh24:mi')
+		        </if>
+		        <if test="endTime != '' and  !endTime.equals('')">
+		           and intime <![CDATA[ <= ]]> to_date(#{endTime}, 'yyyy-mm-dd hh24:mi')
+		        </if>
+			 order by intime desc
+
     </select>
     <select id="getRequestOne" resultType="java.util.HashMap">
         select * from sys_request where id=#{id} and status=1

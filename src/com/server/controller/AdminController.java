@@ -1,28 +1,18 @@
 package com.server.controller;
 
-import com.common.mapper.JsonMapper;
-import com.server.mapper.SysControlMapper;
-import com.server.service.AdminService;
+import java.util.HashMap;
+import java.util.List;
 
-import org.apache.commons.io.FilenameUtils;
-import org.apache.commons.lang.ArrayUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
-import org.springframework.web.multipart.commons.CommonsMultipartFile;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpSession;
-
-import java.io.File;
-import java.io.IOException;
-import java.sql.Date;
-import java.util.HashMap;
-import java.util.List;
+import com.common.mapper.JsonMapper;
+import com.server.mapper.SysControlMapper;
+import com.server.service.AdminService;
 
 /**
  * Created by Administrator on 2017/11/20.
@@ -30,7 +20,7 @@ import java.util.List;
 @Controller
 @RequestMapping(value = "${emPath}")
 public class AdminController{
-    private String uploadFolderName="upload";
+    private String uploadFolderName = "upload";
     @Autowired
     AdminService adminService;
     @Autowired
@@ -52,16 +42,16 @@ public class AdminController{
     @RequestMapping("getRequestList")
     @ResponseBody
     public String getRequestList(@RequestParam String  c1, @RequestParam String c2) {
-        List<HashMap> u=sysControlMapper.getRequestList(c1,c2);
-        String jdata= JsonMapper.getInstance().toJson(u);
-        return jdata;
+        List<HashMap<String, String>> data = sysControlMapper.getRequestList(c1,c2);
+        String jdata = JsonMapper.getInstance().toJson(data);
+         return jdata;
     }
 
     @RequestMapping("getHandleMsgList")
     @ResponseBody
     public String getHandleMsgList() {
-        List<HashMap> u=sysControlMapper.getHandleMsgList();
-        String jdata= JsonMapper.getInstance().toJson(u);
+    	List<HashMap<String, String>> data = sysControlMapper.getHandleMsgList();
+        String jdata = JsonMapper.getInstance().toJson(data);
         return jdata;
     }
 

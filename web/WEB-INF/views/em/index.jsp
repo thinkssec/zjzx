@@ -22,41 +22,25 @@
 
 </script>
 <body>
+
 <div>
-<form:form id="searchForm" action="../em/getRequestList" method="post" class="breadcrumb form-search" onsubmit="loading('正在载入，请稍等...');">
-    <table id="datatable" title="请求列表">
-     <input class="easyui-datetimebox" name="c1" id="c1" 
-    data-options="required:true,showSeconds:false" style="width:150px"><font font-family="Sans-serif" font-size="2.5em">  --  </font> 
-    <input class="easyui-datetimebox" name="c2" id="c2" 
-    data-options="required:true,showSeconds:false" style="width:150px"> 
-    <input id="btnSubmit" class="btn btn-primary" type="submit" value="查询"/>
-</table>
-    <%-- <div style="margin-top:8px;">
-        <input id="hid_c2" type="hidden" name="c2" value="">
-        <input type="hidden" name="c7" value="${condition.c7}">
-        <input type="hidden" name="c5" value="${condition.c5}">查询标志
-        <input name="c1" class="easyui-textbox" labelPosition="left"
-               data-options="prompt:'在此输入关键字...'" style="width:300px" value="${condition.c1}">
-        &nbsp;&nbsp;&nbsp;<input id="btnSubmit" class="btn btn-primary" type="submit" value="查询"/>
-    </div> --%>
-</form:form>
-<!-- <table id="datatable" title="请求列表">
-     <input class="easyui-datetimebox" name="time1" id="time1"
-    data-options="required:true,showSeconds:false" style="width:150px"><font font-family="Sans-serif" font-size="2.5em">  --  </font> 
-    <input class="easyui-datetimebox" name="time2" id="time2"
-    data-options="required:true,showSeconds:false" style="width:150px"> 
-</table> -->
+    <input class="easyui-datetimebox" id="c1" data-options="required:true,showSeconds:false" style="width:150px">
+    <font font-family="Sans-serif" font-size="2.5em">  --  </font> 
+    <input class="easyui-datetimebox" id="c2"  data-options="required:true,showSeconds:false" style="width: 150px">
+	<input id="submitBtn" class="btn btn-primary" type="button" value="查询"/>
+
+	<table id="datatable" title="请求列表"></table>
 </div>
 <div style="padding-top:10px">
-<table id="datatable2" title="业务处理队列">
-</table>
+	<table id="datatable2" title="业务处理队列"></table>
 </div>
 <script type="text/javascript">
-    var toolbar = [{
-        text:'手动刷新',
-        iconCls:'icon-reload',
-        handler:function(){clearInterval(i1);$('#datatable').datagrid("load")}
-    },
+    var toolbar = [
+    	{
+	        text:'手动刷新',
+	        iconCls:'icon-reload',
+	        handler:function(){clearInterval(i1);$('#datatable').datagrid("load")}
+	    },
         {
             text:'开启自动刷新',
             iconCls:'icon-reload',
@@ -77,11 +61,12 @@
             }
         }
     ];
-    var toolbar2 = [{
-        text:'手动刷新',
-        iconCls:'icon-reload',
-        handler:function(){clearInterval(i2);$('#datatable2').datagrid("load")}
-    },
+    var toolbar2 = [
+    	{
+	        text:'手动刷新',
+	        iconCls:'icon-reload',
+	        handler:function(){clearInterval(i2);$('#datatable2').datagrid("load")}
+	    },
         {
             text:'开启自动刷新',
             iconCls:'icon-reload',
@@ -94,8 +79,9 @@
         //fit: true,
         height:300,
         border: true,
-        url: '<%=request.getContextPath()%>/em/getRequestList',
+        url: '',
         method: 'post',
+        cache: false,
         //oolbar: '#tb',
         /*pageSize: 20,
          pagination: true,*/
@@ -144,26 +130,36 @@
             {field: 'S', title: '状态', width: 180}
         ]],
         onLoadSuccess:function(data){
-            //console.log(data);
+        
         }
     };
-    $(document).ready(function(){
-        //setInterval("load()",500);
-        load1();
-        load2();
-    });
 
     function load1() {
-        $('#datatable').datagrid(dgOptions);
-        //$('#datatable2').datagrid(dgOptions2);
+         $('#datatable').datagrid(dgOptions);
+         var c1 = $('#c1').datetimebox('getValue');	
+         var c2 = $('#c2').datetimebox('getValue');	
+    	 var op = $("#datatable").datagrid("options");//获取 option设置对象
+         op.url = '<%=request.getContextPath()%>/em/getRequestList?c1='+ c1 +'&c2='+ c2;//设置url
+         $("#datatable").datagrid("load");//重新加载
     }
     function load2() {
-        //$('#datatable').datagrid(dgOptions);
         $('#datatable2').datagrid(dgOptions2);
     }
      function stockPrizeExport(){
        $('#datatable').datagrid('toExcel','请求列表.xls');
     } 
+     
+    $("#submitBtn").click(function(){
+    	c1 = $('#c1').val();
+        c2 = $('#c2').val();
+        load1();
+    });
+     
+     $(document).ready(function(){
+         //setInterval("load()",500);
+          load1();
+          load2();
+     });
 </script>
 </body>
 </html>
